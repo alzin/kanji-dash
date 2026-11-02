@@ -43,7 +43,7 @@ async function answerOpenEncounter(page: Page) {
       await page.getByLabel("Word reading", { exact: true }).fill(vocab.r);
       await page.getByRole("button", { name: "Offer the word" }).click();
     } else {
-      const meaning = await page.getByRole("heading", { name: "Every word holds a little light." }).isVisible();
+      const meaning = await page.getByRole("heading", { name: "Wake the lantern." }).isVisible();
       await page.getByRole("group", { name: "Choose an answer" }).getByText(meaning ? vocab.m : vocabKana(vocab), { exact: true }).click();
     }
     await expect(page.locator(".forest-feedback")).toHaveCount(0);

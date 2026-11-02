@@ -33,6 +33,7 @@ import { completeCrossing } from "./game/forest/crossing";
 import { LanternDashEncounter } from "./game/forest/LanternDashEncounter";
 import { completeLanternDash } from "./game/forest/lantern-dash";
 import { ReminderOffer } from "./DailyReminder";
+import { BrandMark } from "./BrandMark";
 
 function ForestDialog({
   children,
@@ -314,7 +315,7 @@ export function ForestAdventure() {
           onClick={leaveToMap}
           aria-label="Kanji Dash: back to the map"
         >
-          <span className="forest-seal">森</span>
+          <BrandMark />
           <span>
             KANJI DASH<small>THE SPIRIT TRAIL</small>
           </span>
@@ -594,7 +595,7 @@ export function ForestAdventure() {
           </div>
           <h2>
             {current.kind === "meaning"
-              ? "Every word holds a little light."
+              ? "Wake the lantern."
               : current.kind === "reading"
                 ? "Give the river its voice."
                 : area.recallPrompt}
@@ -682,7 +683,7 @@ export function ForestAdventure() {
                 {feedback.correct
                   ? hinted
                     ? "Found it together."
-                    : "A little more light."
+                    : "The lantern brightens."
                   : "Let’s keep this word close."}
               </strong>
               <p>
@@ -794,7 +795,7 @@ export function ForestAdventure() {
               className="forest-text-button"
               onClick={() => setResults(false)}
             >
-              Stay a little longer
+              Keep exploring
             </button>
           </div>
         </ForestDialog>
@@ -809,8 +810,8 @@ export function ForestAdventure() {
           }}
           className="forest-pause"
         >
-          <span className="forest-eyebrow">{leaving ? "BACK TO THE MAP" : "A QUIET MOMENT"}</span>
-          <h2>{leaving ? "Leave the trail?" : "The forest can wait."}</h2>
+          <span className="forest-eyebrow">{leaving ? "BACK TO THE MAP" : "PAUSED"}</span>
+          <h2>{leaving ? "Leave the trail?" : "Take a breather."}</h2>
           <p>
             {leaving
               ? "Landmarks restored on this walk won’t be saved until all three are awake."

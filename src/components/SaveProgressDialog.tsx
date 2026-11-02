@@ -14,7 +14,7 @@ function atRisk(runs: number, gates: number, coins: number) {
   if (gates) parts.push(`${gates} ${gates === 1 ? "checkpoint" : "checkpoints"}`);
   if (coins) parts.push(`${coins} mon`);
   const earned = parts.length ? `${parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`}` : "Your progress";
-  return `${earned} — saved only in this tab, and gone once you close it. Sign in to keep everything on every device.`;
+  return `Saved only in this tab: ${earned}. Closing the tab loses all of it. Sign in to keep everything on every device.`;
 }
 
 export function SaveProgressDialog() {
@@ -102,7 +102,7 @@ export function SaveProgressDialog() {
           )}
           {!account.user && <GoogleSignInButton disabled={account.phase === "checking"} />}
           <button className={quietClass} onClick={dismissAccountPrompt}>
-            {account.user ? "Close" : "Not now — keep learning"}
+            {account.user ? "Close" : "Not now"}
           </button>
         </div>
       </div>

@@ -11,9 +11,9 @@ import { vocabKana } from "@/lib/words";
 export const Route = createFileRoute("/collection")({
   head: () => ({
     meta: [
-      { title: "Kanji Collection — Kanji Dash" },
+      { title: "Kanji Collection · Kanji Dash" },
       { name: "description", content: `${allKanji.length} kanji across the N5, N4, N3 and N2 study roads, with readings, mnemonics, vocabulary, and mastery progress.` },
-      { property: "og:title", content: "Kanji Collection — Kanji Dash" },
+      { property: "og:title", content: "Kanji Collection · Kanji Dash" },
       { property: "og:description", content: "Explore N5, N4, N3 and N2 kanji and track your mastery." },
     ],
   }),

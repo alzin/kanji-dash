@@ -166,7 +166,7 @@ export function StrokePractice({ kanji }: { kanji: Kanji }) {
         >
           {result
             ? result.pass
-              ? `Stamped! About ${result.pct}% coverage. Beautiful brushwork.`
+              ? `Stamped! About ${result.pct}% coverage.`
               : `About ${result.pct}% coverage. Trace more of the guide and stay on the lines.`
             : "Swipe outside the square to scroll."}
         </p>

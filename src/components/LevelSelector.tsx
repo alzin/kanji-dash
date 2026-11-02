@@ -1,4 +1,4 @@
-import { LEVELS, kanjiOfLevel, type JLPTLevel } from "@/data";
+import { LEVELS, kanjiOfLevel, levelWeeks, type JLPTLevel } from "@/data";
 import { selectLevel } from "@/lib/srs";
 
 export function LevelSelector({ level, onChange }: { level: JLPTLevel; onChange?: () => void }) {
@@ -10,10 +10,11 @@ export function LevelSelector({ level, onChange }: { level: JLPTLevel; onChange?
             onClick={() => { selectLevel(option); onChange?.(); }}
             className={`min-h-11 min-w-0 flex-1 rounded-lg px-2 py-2 text-sm font-bold transition-colors ${option === level ? "bg-card text-primary shadow-e1" : "text-muted-foreground hover:text-foreground"}`}>
             {option} <span className="block text-xs font-normal sm:ml-1 sm:inline">{kanjiOfLevel(option).length} kanji</span>
+            <span className="block text-xs font-normal opacity-80">~{levelWeeks(option)} weeks</span>
           </button>
         ))}
       </div>
-      <p className="mt-2 text-xs text-muted-foreground">Start at any level. Your progress is saved separately for each road.</p>
+      <p className="mt-2 text-xs text-muted-foreground">Start at any level. Each road saves its own progress. Weeks assume one region a day.</p>
     </div>
   );
 }

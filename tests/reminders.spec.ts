@@ -62,7 +62,7 @@ test.describe("on browsers with Web Push", () => {
     const api = await fakeApi(page, "B".repeat(87));
     await finishSheet(page);
     const offer = page.getByTestId("reminder-offer");
-    await expect(offer).toContainText("Never miss a day");
+    await expect(offer).toContainText("Daily reminder");
     await offer.getByLabel("Reminder time").selectOption("20");
     await offer.getByRole("button", { name: "Remind me" }).click();
     await expect(offer).toContainText("Reminders on");

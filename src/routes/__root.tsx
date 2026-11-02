@@ -89,13 +89,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-title", content: "Kanji Dash" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black" },
-      { title: "Kanji Dash — Master JLPT Kanji by Running" },
+      { title: "Kanji Dash · Learn JLPT Kanji by Playing" },
       {
         name: "description",
         content:
           "Kanji Dash turns JLPT N5, N4, N3 and N2 kanji study into a 2D runner game: daily missions, spaced repetition, stroke practice, and checkpoint runs.",
       },
-      { property: "og:title", content: "Kanji Dash — Master JLPT Kanji by Running" },
+      { property: "og:title", content: "Kanji Dash · Learn JLPT Kanji by Playing" },
       {
         property: "og:description",
         content:
@@ -118,7 +118,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: appCss,
       },
       { rel: "icon", href: `${import.meta.env.BASE_URL}favicon.ico`, sizes: "any" },
-      { rel: "icon", href: `${import.meta.env.BASE_URL}favicon.svg`, type: "image/svg+xml" },
     ],
   }),
   shellComponent: RootShell,

@@ -81,6 +81,12 @@
   border-radius: 3px 3px 15px 3px;
   background: #1c383033;
 }
+.brand-mark {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  filter: drop-shadow(0 2px 6px #0b1d1766);
+}
 .forest-hud-right {
   display: flex;
   align-items: center;
@@ -885,6 +891,10 @@
     width: 34px;
     height: 38px;
     font-size: 21px;
+  }
+  .brand-mark {
+    width: 40px;
+    height: 40px;
   }
   .forest-hud-right {
     gap: 6px;

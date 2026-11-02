@@ -20,6 +20,7 @@ import { localDay } from "@/lib/stack-progress";
 import { CampPanel } from "./CampPanel";
 import { JourneyLogPanel } from "./JourneyLogPanel";
 import { TitleCard } from "./TitleCard";
+import { BrandMark } from "@/components/BrandMark";
 
 export type HubPanel = "camp" | "journey";
 export type HubSearch = { panel?: HubPanel; stop?: number; title?: true };
@@ -168,7 +169,7 @@ export function WorldHub({ search }: { search: HubSearch }) {
 
       <header className="forest-hud hub-hud">
         <button type="button" className="forest-wordmark hub-wordmark" onClick={showTitleAgain} aria-label="Kanji Dash title screen">
-          <span className="forest-seal" aria-hidden="true">森</span>
+          <BrandMark />
           <span>KANJI DASH<small>THE SPIRIT TRAIL</small></span>
         </button>
         <div className="forest-hud-right">
