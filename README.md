@@ -47,7 +47,7 @@ The test and production environments share this repository and differ only in bu
 inputs and the cloud resources they target.
 
 - **Test** — pushes to `main` publish the static build to GitHub Pages at
-  `https://alzin.github.io/kanji-quest/`, backed by the `kanji-quest-api` Cloud Run
+  `https://alzin.github.io/kanji-dash/`, backed by the `kanji-quest-api` Cloud Run
   service and the Neon test project.
 - **Production** — pushes to `production` build both containers and deploy them to
   Cloud Run behind `https://kanji.nipporia.com` and `https://kanji-api.nipporia.com`,
