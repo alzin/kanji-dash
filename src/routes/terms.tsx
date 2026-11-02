@@ -5,7 +5,7 @@ import { CONTACT_EMAIL, GOVERNING_LAW, SITE_NAME } from "@/lib/legal";
 export const Route = createFileRoute("/terms")({
   head: () => ({
     meta: [
-      { title: `Terms of Service — ${SITE_NAME}` },
+      { title: `Terms of Service · ${SITE_NAME}` },
       { name: "description", content: `The terms you agree to when using ${SITE_NAME}.` },
       { name: "robots", content: "index" },
     ],

@@ -29,7 +29,7 @@ test("the world map is home: every road, opened on the learner's own checkpoint"
   await expect(canvas(page)).toBeVisible();
   await expect(page).toHaveURL(/\/$/);
   // A traveller with progress is never shown the title card.
-  await expect(page.getByRole("heading", { name: "A little Japanese. A whole new world." })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Learn kanji by playing." })).toHaveCount(0);
   await expect(canvas(page)).toHaveAttribute("data-here", String(HERE));
   await expect(canvas(page)).toHaveAttribute("data-stop", String(HERE));
   await expect(page.getByRole("heading", { name: "You are on the N4 road" })).toBeVisible();

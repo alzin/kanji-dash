@@ -27,7 +27,7 @@ test("keeps due reviews, partial mastery, and exact checkpoint seals consistent 
   cards["六"] = progress(3, Date.now() - 1_000);
   await seedSave(page, cards, [3]);
   await page.goto("camp", { waitUntil: "domcontentloaded" });
-  await expect(page.getByText("1 word is ready to meet you again.", { exact: true })).toBeVisible();
+  await expect(page.getByText("1 word is due for review.", { exact: true })).toBeVisible();
   await expect(page.getByTestId("mastery-summary")).toHaveText("1/96 mastered · 5% mastery progress");
   await expect(page.getByTestId("mastery-summary")).toBeVisible();
   await expect(page.getByTestId("stat-runs")).toHaveText("4");
@@ -59,7 +59,7 @@ test("does not display 100% before every kanji is mastered", async ({ page }) =>
   await page.goto("camp", { waitUntil: "domcontentloaded" });
   await expect(page.getByTestId("mastery-summary")).toHaveText("95/96 mastered · 99% mastery progress");
   await expect(page.getByTestId("mastery-summary")).toBeVisible();
-  await expect(page.getByText("A small adventure is enough for today.", { exact: true })).toBeVisible();
+  await expect(page.getByText("No reviews due right now.", { exact: true })).toBeVisible();
 });
 
 test("offers a replayable adventure when all eligible kanji are waiting for their review date", async ({ page }) => {
@@ -68,7 +68,7 @@ test("offers a replayable adventure when all eligible kanji are waiting for thei
   page.on("pageerror", (error) => errors.push(error.message));
   await seedSave(page, cards);
   await page.goto("camp", { waitUntil: "domcontentloaded" });
-  await expect(page.getByText("A small adventure is enough for today.", { exact: true })).toBeVisible();
+  await expect(page.getByText("No reviews due right now.", { exact: true })).toBeVisible();
   await page.goto("run?mode=runner", { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("main", { name: "Firefly Rescue" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Light the lantern" })).toBeEnabled();
@@ -93,9 +93,9 @@ test("refreshes due reviews over time while guest progress stays isolated to its
   await seedSave(page, { "一": progress(1, start.getTime() + 60_000) });
   await page.goto("camp", { waitUntil: "domcontentloaded" });
   await expect(page.getByTestId("stat-mon")).toHaveText("37");
-  await expect(page.getByText("1 word is ready to meet you again.", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("1 word is due for review.", { exact: true })).toHaveCount(0);
   await page.clock.runFor(61_000);
-  await expect(page.getByText("1 word is ready to meet you again.", { exact: true })).toBeVisible();
+  await expect(page.getByText("1 word is due for review.", { exact: true })).toBeVisible();
 
   const other = await context.newPage();
   await other.goto("camp", { waitUntil: "domcontentloaded" });

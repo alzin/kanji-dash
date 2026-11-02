@@ -62,12 +62,12 @@ export function CrossingEncounter({
         {stage === "complete"
           ? "A way across."
           : stage === "retry"
-            ? "The river can wait."
-            : "Words make a bridge."}
+            ? "Not across yet."
+            : "Rebuild the crossing."}
       </h2>
       <p>
         {stage === "complete"
-          ? "You brought the scattered words together. Their light can rebuild the crossing — the shrine is waiting on the other bank."
+          ? "You matched the scattered words, and the crossing is back. The shrine is on the other bank."
           : stage === "retry"
             ? "The stones filled the river. Let’s give them some room and try again. Your first attempts still count toward your learning."
             : "The lantern revealed these words. Now match their written forms, readings, and meanings to bring the crossing back."}

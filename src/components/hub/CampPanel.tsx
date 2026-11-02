@@ -20,9 +20,9 @@ export function CampPanel({ onClose, onShowTitle }: { onClose: () => void; onSho
   const encountered = all.filter((k) => (save.progress[k.c]?.mastery ?? 0) > 0).length;
   const stack = stackOf(save), today = localDay();
   const quests = [
-    { title: "Follow your curiosity", detail: "Walk today’s trail", done: save.streak.last === today, to: "/run", mode: "expedition" },
-    { title: "Trust your memory", detail: "Complete a typed recall challenge", done: stack.quests.day === today && stack.quests.typed > 0, to: "/run", mode: "expedition" },
-    { title: "Make your mark", detail: "Trace a kanji in the dojo", done: stack.strokeDay === today, to: "/practice", mode: undefined },
+    { title: "Walk today’s trail", detail: "About 5 minutes in the forest", done: save.streak.last === today, to: "/run", mode: "expedition" },
+    { title: "Type a reading from memory", detail: "No multiple choice", done: stack.quests.day === today && stack.quests.typed > 0, to: "/run", mode: "expedition" },
+    { title: "Trace a kanji", detail: "In the Stroke Dojo", done: stack.strokeDay === today, to: "/practice", mode: undefined },
   ] as const;
   const completed = quests.filter((q) => q.done).length;
 
@@ -37,7 +37,7 @@ export function CampPanel({ onClose, onShowTitle }: { onClose: () => void; onSho
           </div>
         </div>
         <div className="camp-xp">
-          <span>Every recall is a step forward</span>
+          <span>XP to the next level</span>
           <b>{rank.progress} / 200 XP</b>
         </div>
         <div className="world-meter" aria-hidden="true"><span style={{ width: `${rank.progress / 2}%` }} /></div>
@@ -50,7 +50,7 @@ export function CampPanel({ onClose, onShowTitle }: { onClose: () => void; onSho
 
       <section className="camp-section" aria-labelledby="camp-quests">
         <div className="camp-section-head">
-          <h3 id="camp-quests">Today’s little quests</h3>
+          <h3 id="camp-quests">Today’s quests</h3>
           <b>{completed}/3</b>
         </div>
         <div className="camp-quests">
@@ -63,7 +63,7 @@ export function CampPanel({ onClose, onShowTitle }: { onClose: () => void; onSho
           ))}
         </div>
         <p className="camp-fine">
-          {completed === 3 ? "A lovely day’s work. See you on the trail." : due ? `${due} ${due === 1 ? "word is" : "words are"} ready to meet you again.` : "A small adventure is enough for today."}
+          {completed === 3 ? "All three quests done for today." : due ? `${due} ${due === 1 ? "word is" : "words are"} due for review.` : "No reviews due right now."}
         </p>
       </section>
 

@@ -10,9 +10,9 @@ import { useSave, getCard, isChapterUnlocked } from "@/lib/srs";
 export const Route = createFileRoute("/practice")({
   head: () => ({
     meta: [
-      { title: "Stroke Dojo — Kanji Dash" },
+      { title: "Stroke Dojo · Kanji Dash" },
       { name: "description", content: "Trace kanji stroke by stroke over a guide glyph and get instant coverage feedback." },
-      { property: "og:title", content: "Stroke Dojo — Kanji Dash" },
+      { property: "og:title", content: "Stroke Dojo · Kanji Dash" },
       { property: "og:description", content: "Trace kanji over the guide and stamp your practice." },
     ],
   }),

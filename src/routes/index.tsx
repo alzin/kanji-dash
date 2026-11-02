@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { WorldHub, type HubSearch } from "@/components/hub/WorldHub";
+import { BrandMark } from "@/components/BrandMark";
 import { levelOfChapter } from "@/data";
 
 const stopOf = (value: unknown): number | undefined => {
@@ -19,16 +20,16 @@ export const Route = createFileRoute("/")({
   },
   head: () => ({
     meta: [
-      { title: "Kanji Dash — The Spirit Trail" },
+      { title: "Kanji Dash · Learn Kanji by Playing" },
       {
         name: "description",
         content:
-          "A little Japanese. A whole new world. Walk the Kanji Journey from N5 to N1 with Aki: explore forest trails, restore forgotten places, and earn a seal at every checkpoint.",
+          "Learn kanji by playing. About five minutes a day of forest runs, falling-word puzzles and writing practice takes you through JLPT N5 to N2, one checkpoint at a time.",
       },
-      { property: "og:title", content: "Kanji Dash — The Spirit Trail" },
+      { property: "og:title", content: "Kanji Dash · Learn Kanji by Playing" },
       {
         property: "og:description",
-        content: "Walk the woods. Find their words. A playable Japanese learning adventure, N5 to N1.",
+        content: "Learn JLPT kanji through a five-minute daily game, from N5 to N2. Made by someone who lived in Japan for ten years and still couldn’t read kanji.",
       },
     ],
   }),
@@ -45,9 +46,9 @@ function Hub() {
     return (
       <main className="forest-game hub-splash">
         <div className="forest-loading">
-          <span className="forest-seal" aria-hidden="true">森</span>
-          <h1>Kanji Dash — The Spirit Trail</h1>
-          <p>A little Japanese. A whole new world. Unrolling the map…</p>
+          <BrandMark className="brand-mark-splash" />
+          <h1>Kanji Dash · The Spirit Trail</h1>
+          <p>Unrolling the map…</p>
           <nav aria-label="Legal" className="hub-splash-links">
             <Link to="/privacy">Privacy</Link>
             <Link to="/terms">Terms</Link>

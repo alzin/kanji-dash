@@ -471,11 +471,10 @@ export function LanternRunnerGame({
             pause.current(false);
           }}
         >
-          <span className="forest-eyebrow">A QUIET MOMENT</span>
-          <h2>Keep the lantern close.</h2>
+          <span className="forest-eyebrow">PAUSED</span>
+          <h2>Take a breather.</h2>
           <p>
-            Your path will wait. Choose the correct reading or meaning before
-            the gates reach you.
+            Choose the correct reading or meaning before the gates reach you.
           </p>
           <button
             className="forest-primary"

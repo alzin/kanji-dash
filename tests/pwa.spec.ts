@@ -6,7 +6,7 @@ import type { AddressInfo } from "node:net";
 async function prepareOfflineCopy(page: Page, origin = "./") {
   await page.goto(origin, { waitUntil: "domcontentloaded" });
   // A first visit opens on the world map under the title card.
-  await expect(page.getByRole("heading", { name: "A little Japanese. A whole new world." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Learn kanji by playing." })).toBeVisible();
   // Wait for activation to claim this page before a reload can interrupt setup.
   await page.waitForFunction(() => navigator.serviceWorker.controller !== null);
   // Exercise a document served by the installed worker as well as the first SSR load.
@@ -112,7 +112,7 @@ test("opens every game screen offline after visiting only home", async ({ page, 
     await page.goto(`${origin}/run?mode=runner&gate=1`, { waitUntil: "domcontentloaded" });
     await completePreparation(page, { advanceClock: true, pauseClock: true });
     await expect(page.getByLabel("Kanji runner game")).toBeVisible();
-    await expect(page.locator(".dash-subtitle")).toContainText("The First Five — Checkpoint");
+    await expect(page.locator(".dash-subtitle")).toContainText("The First Five · Checkpoint");
     await expect(page).toHaveURL(/\/run\/?\?mode=runner&gate=1$/);
     await page.getByRole("button", { name: "Pause game", exact: true }).click();
     await expect(page.getByRole("button", { name: "Resume game", exact: true })).toHaveAttribute("aria-pressed", "true");
@@ -139,7 +139,7 @@ test("opens every game screen offline after visiting only home", async ({ page, 
     await page.goto(`${origin}/run?mode=runner&gate=7`, { waitUntil: "domcontentloaded" });
     await completePreparation(page, { advanceClock: true, pauseClock: true });
     await expect(page.getByLabel("Kanji runner game")).toBeVisible();
-    await expect(page.locator(".dash-subtitle")).toContainText("Me & My Neighborhood — Checkpoint");
+    await expect(page.locator(".dash-subtitle")).toContainText("Me & My Neighborhood · Checkpoint");
     await page.clock.resume();
     await page.goto(`${origin}/run?mode=stack`, { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("heading", { name: "Meet your new words" })).toBeVisible();
@@ -150,7 +150,7 @@ test("opens every game screen offline after visiting only home", async ({ page, 
     await expect(page.getByTestId("stack-game")).toBeVisible();
     await expect(page.locator(".river-canvas canvas[data-ready]")).toBeVisible();
     await page.getByRole("button", { name: "Pause game", exact: true }).click();
-    await expect(page.getByRole("heading", { name: "A quiet pause" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Take a breather." })).toBeVisible();
     const trailResponse = await page.goto(`${origin}/run?mode=expedition`, { waitUntil: "domcontentloaded" });
     expect(trailResponse?.fromServiceWorker()).toBe(true);
     // This learner travels the N4 road, so the trail opens in Kiso Post Town.
@@ -197,7 +197,7 @@ test("opens a checkpoint directly before any service worker is installed", async
   expect(response?.status()).toBe(200);
   await completePreparation(page);
   await expect(page.getByLabel("Kanji runner game")).toBeVisible();
-  await expect(page.locator(".dash-subtitle")).toContainText("The First Five — Checkpoint");
+  await expect(page.locator(".dash-subtitle")).toContainText("The First Five · Checkpoint");
   await expect(page).toHaveURL(/\/run\/?\?mode=runner&gate=1$/);
   await page.getByRole("button", { name: "Pause game", exact: true }).click();
 });

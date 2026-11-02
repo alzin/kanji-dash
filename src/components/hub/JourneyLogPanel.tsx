@@ -59,7 +59,7 @@ export function JourneyLogPanel({ newSeals, onClose, onShowOnMap }: {
     <GameDrawer label="Journey log" eyebrow="五街道 · JOURNEY LOG" title="The Kanji Journey" onClose={onClose} className="journey-drawer">
       <div ref={body}>
         <p className="game-drawer-lead">
-          Five roads from your first 一 to N1, walked in small wins of 4–6 kanji. Each checkpoint is three steps — learn &amp; write, stack &amp; recall, Firefly Rescue — then a typed seal. Clear a checkpoint or reach 55% mastery progress to open the next.
+          Five roads from your first kanji (一) to N1, walked in regions of 4–6 kanji. Each checkpoint has three steps (learn &amp; write, stack &amp; recall, Firefly Rescue) and then a typed seal. Clear a checkpoint or reach 55% mastery progress to open the next.
         </p>
         <JourneyOverview save={save} here={here} onTravel={travel} onFindHere={findHere} onShowOnMap={() => onShowOnMap(journeyHere(getSnapshot()).ch)} />
         <div className="journey mt-2">

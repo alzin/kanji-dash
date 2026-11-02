@@ -28,9 +28,9 @@ export const Route = createFileRoute("/run")({
   },
   head: () => ({
     meta: [
-      { title: "Play — Kanji Dash" },
-      { name: "description", content: "Explore the Spirit Trail, weave words in Tsumiji, or carry light through Lantern Dash. A little kanji adventure every day." },
-      { property: "og:title", content: "Play — Kanji Dash" },
+      { title: "Play · Kanji Dash" },
+      { name: "description", content: "Explore the Spirit Trail, weave words in Tsumiji, or carry light through Lantern Dash." },
+      { property: "og:title", content: "Play · Kanji Dash" },
       { property: "og:description", content: "Learn kanji through forest expeditions, word puzzles, and running adventures." },
     ],
   }),
@@ -86,7 +86,7 @@ function RunSessionContent({ gate }: { gate: number | undefined }) {
     setSession((value) => value + 1);
   };
 
-  const title = gate ? `${CHAPTER_NAMES[gate]!.name} — Checkpoint` : level === "N5" ? "Daily run" : `Daily run · ${level}`;
+  const title = gate ? `${CHAPTER_NAMES[gate]!.name} · Checkpoint` : level === "N5" ? "Daily run" : `Daily run · ${level}`;
   const pendingCheckpoint = !gate ? LEVEL_CHAPTERS[level].find((ch) => isChapterUnlocked(getSnapshot(), ch) && !isGateCleared(getSnapshot(), ch)) : undefined;
 
   // One ceremony per results object: the hanko thump for 合格, an open question for 再挑戦,

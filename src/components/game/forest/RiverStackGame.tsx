@@ -374,11 +374,11 @@ export function RiverStackGame({
             {forest ? "02 / THE CROSSING" : "THE WORDKEEPER’S TRIAL"}
           </span>
           <h2>
-            {forest ? "Build a way\nacross." : "Let the words\nflow again."}
+            {forest ? "Build a way\nacross." : "Match every\nword."}
           </h2>
           <p>
-            Bring each word to its partner. A match returns a little light to
-            the river.
+            Bring each word to its partner. Every match clears a stone from the
+            river.
           </p>
           <div className="river-bridge-art" aria-hidden="true">
             {Array.from({ length: words.length }, (_, i) => (
@@ -591,7 +591,7 @@ export function RiverStackGame({
           <p>
             {view.phase === "ink"
               ? "A word slipped away. Find its partner again to wash the ink away."
-              : "Words travel together. Read the stone, find its partner, then let it land."}
+              : "Read the stone, find its partner, then drop it beside or on top of it."}
           </p>
           <div className="river-next" aria-label="Next three words">
             <span className="forest-eyebrow">UPSTREAM</span>
@@ -640,9 +640,9 @@ export function RiverStackGame({
           pauseAction.current(false);
         }}
       >
-        <span className="forest-eyebrow">A QUIET MOMENT</span>
-        <h2>A quiet pause</h2>
-        <p>Your stones will wait.</p>
+        <span className="forest-eyebrow">PAUSED</span>
+        <h2>Take a breather.</h2>
+        <p>The stones stop falling until you resume.</p>
         <button
           className="forest-primary"
           onClick={() => pauseAction.current(false)}

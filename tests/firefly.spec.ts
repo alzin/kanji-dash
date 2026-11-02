@@ -112,7 +112,7 @@ for (const first of ["grove", "bramble"] as const) for (const second of ["bridge
     await page.screenshot({ path: info.outputPath(`delivery-${first}-${second}.png`) });
     await travel(page, 1900);
     await expect(page.getByRole("dialog", { name: "Adventure results" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Every light has a home." })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "You made it to the shrine." })).toBeVisible();
     await expect(page.getByTestId("ff-word-row")).toHaveCount(distinctWords(state));
     const saved = await savedFirefly(page);
     expect(saved.progress).toEqual(before.progress);
@@ -133,7 +133,7 @@ for (const first of ["grove", "bramble"] as const) for (const second of ["bridge
       await page.getByRole("button", { name: "Leave this adventure" }).click();
       await page.getByRole("button", { name: /Spirit journal/ }).click();
       const journal = page.getByRole("dialog", { name: "Spirit journal" });
-      await expect(journal.getByText("6 of 9 woodland friends found.", { exact: false })).toBeVisible();
+      await expect(journal.getByText("6 of 9 spirits found.", { exact: false })).toBeVisible();
       await journal.getByRole("button", { name: /River glass/ }).click();
       await expect(journal.getByRole("button", { name: /River glass/ })).toHaveAttribute("aria-pressed", "true");
       await page.reload({ waitUntil: "domcontentloaded" });

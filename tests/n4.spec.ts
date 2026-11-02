@@ -38,7 +38,7 @@ test("the selected road persists across home, searchable collection, dojo, and o
   await unlockN4(page, true);
   await page.goto("camp", { waitUntil: "domcontentloaded" });
   await expect(page.getByTestId("mastery-summary")).toHaveText(`0/${kanjiOfLevel("N4").length} mastered · 0% mastery progress`);
-  await expect(page.getByText("1 word is ready to meet you again.", { exact: true })).toBeVisible();
+  await expect(page.getByText("1 word is due for review.", { exact: true })).toBeVisible();
   await page.goto("collection", { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("status")).toHaveText(`${kanjiOfLevel("N4").length} kanji · All regions`);
   await page.getByRole("button", { name: /^1 / }).click();
