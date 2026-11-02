@@ -6,7 +6,7 @@ passed testing is the same code that ships.
 
 | | Test | Production |
 | --- | --- | --- |
-| Frontend | GitHub Pages, `https://alzin.github.io/kanji-quest/` | Cloud Run `kanji-quest-web`, `https://kanji.nipporia.com` |
+| Frontend | GitHub Pages, `https://alzin.github.io/kanji-dash/` | Cloud Run `kanji-quest-web`, `https://kanji.nipporia.com` |
 | Frontend build | `npm run build:pages` (static) | `npm run build` (SSR, `Dockerfile`) |
 | API | Cloud Run `kanji-quest-api` | Cloud Run `kanji-quest-api-prod`, `https://kanji-api.nipporia.com` |
 | Database | Neon *Kanji Quest Test* | Neon *Kanji Quest Production* (`gentle-violet-12126837`) |
@@ -114,7 +114,7 @@ Shell. It prompts once for the Neon **owner** connection string (the direct one,
 without `-pooler`) and then does the rest without printing a secret:
 
 ```bash
-cd ~/kanji-quest && git pull && bash scripts/bootstrap-prod-db.sh
+cd ~/kanji-dash && git pull && bash scripts/bootstrap-prod-db.sh
 ```
 
 It applies migrations, creates `kq_cloud_run` with a generated 40-character
@@ -344,15 +344,15 @@ gcloud iam workload-identity-pools providers create-oidc kanji-quest \
   --location=global --workload-identity-pool=github \
   --issuer-uri="https://token.actions.githubusercontent.com" \
   --attribute-mapping="google.subject=assertion.sub,attribute.repository=assertion.repository,attribute.ref=assertion.ref" \
-  --attribute-condition="assertion.repository == 'alzin/kanji-quest' && assertion.ref == 'refs/heads/production'"
+  --attribute-condition="assertion.repository == 'alzin/kanji-dash' && assertion.ref == 'refs/heads/production'"
 
 gcloud iam service-accounts add-iam-policy-binding "$DEPLOY_SA" \
   --role=roles/iam.workloadIdentityUser \
-  --member="principalSet://iam.googleapis.com/projects/$PROJECT_NUMBER/locations/global/workloadIdentityPools/github/attribute.repository/alzin/kanji-quest"
+  --member="principalSet://iam.googleapis.com/projects/$PROJECT_NUMBER/locations/global/workloadIdentityPools/github/attribute.repository/alzin/kanji-dash"
 ```
 
 The `attribute-condition` is the security boundary. Matching only on the
-repository would let **any** workflow in `alzin/kanji-quest` mint a token for
+repository would let **any** workflow in `alzin/kanji-dash` mint a token for
 the deployer - including one added in a pull request branch - so the condition
 also pins the ref to `refs/heads/production`. With the required reviewer on the
 `production` environment, a deploy then needs both a push to that branch and a
