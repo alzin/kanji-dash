@@ -366,7 +366,8 @@
   .camp-drawer footer { margin-left: -18px; margin-right: -18px; }
   .hub-title { background: linear-gradient(180deg, #102d2c88, #183a30cc 38%, #142f2ef5 70%); }
   .hub-title-inner { justify-content: flex-end; padding-left: 24px; }
-  .hub-title-brand { position: absolute; top: max(18px, env(safe-area-inset-top)); left: 18px; margin: 0; padding: 0; }
+  /* In flow, not pinned: on short phones the content would otherwise slide up under the logo. */
+  .hub-title-brand { padding-bottom: 24px; }
   .hub-title h1 { font-size: clamp(34px, 10vw, 44px); margin: 16px 0; }
   .hub-title-inner > p { font-size: 14px; margin-bottom: 18px; }
   .hub-title-founder { margin-bottom: 24px; }
