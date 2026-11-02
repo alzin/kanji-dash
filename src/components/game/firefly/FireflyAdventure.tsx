@@ -80,29 +80,29 @@ export function FireflyAdventure({ checkpoint }: { checkpoint?: FireflyCheckpoin
         <div className="ff-checkpoint-rail">{checkpoint.rail}</div>
         <h1>Firefly<br /><em>Rescue</em><span lang="ja">灯を、ともに。</span></h1>
         <p className="ff-intro">Carry {CHAPTER_NAMES[checkpoint.chapter]!.name}’s words to the shrine.</p>
-        <p className="ff-description">Every word gate asks one you have just stacked: <span lang="ja" className="ff-region-kanji">{region.map(k => k.c).join(" ")}</span><br />Bring the lights home, then type their readings for your seal.</p>
+        <p className="ff-description">Every word gate asks one you have just stacked: <span lang="ja" className="ff-region-kanji">{region.map(k => k.c).join(" ")}</span><br />Bring the spirits home, then type their readings for your seal.</p>
         {modes}{launch}
         <div className="ff-play-meta"><span>{GATES_PER_ADVENTURE} word gates · {region.reduce((n, k) => n + k.vocab.length, 0)} words · about 2 minutes</span>{best > 0 && <span>Best {best.toLocaleString()}</span>}</div>
         <button className="ff-text-button" onClick={() => setDrawer("study")}>Meet the words again <span>optional →</span></button>
       </div>
-      <div className="ff-lobby-spirit" aria-hidden="true"><SpiritMark id="komorebi" /><span>Your words light the way.</span></div>
+      <div className="ff-lobby-spirit" aria-hidden="true"><SpiritMark id="komorebi" /><span>{count} of 9 spirits found</span></div>
       <footer className="ff-lobby-footer"><span><b>01</b> Steer by the words</span><span><b>02</b> Reach the shrine</span><span><b>03</b> Earn the seal</span></footer>
     </> : <>
       <nav className="ff-nav"><Link to="/">← Map</Link><span>LANTERN DASH</span>{navActions}</nav>
       <div className="ff-lobby-content">
-        <div className="ff-eyebrow"><span /> A LITTLE LIGHT. A BIG ADVENTURE.</div>
+        <div className="ff-eyebrow"><span /> THE SPIRIT TRAIL</div>
         <h1>Firefly<br /><em>Rescue</em><span lang="ja">灯を、ともに。</span></h1>
-        <p className="ff-intro">Somewhere in the forest, a little light is waiting for you.</p>
-        <p className="ff-description">Run with Aki and steer by the words.<br />Break the spirit cages. Bring your glowing friends home.</p>
+        <p className="ff-intro">Firefly spirits are caged along the forest trail.</p>
+        <p className="ff-description">Run with Aki and steer through the word gates.<br />Break the cages and bring the spirits home.</p>
         {modes}{launch}
         <div className="ff-play-meta"><span>{GATES_PER_ADVENTURE} word gates · about 2 minutes · {level}</span>{best > 0 && <span>Best {best.toLocaleString()}</span>}</div>
         <button className="ff-text-button" onClick={() => setDrawer("study")}>Meet the words first <span>optional →</span></button>
       </div>
-      <div className="ff-lobby-spirit" aria-hidden="true"><SpiritMark id="komorebi" /><span>One more light to bring home.</span></div>
+      <div className="ff-lobby-spirit" aria-hidden="true"><SpiritMark id="komorebi" /><span>{count} of 9 spirits found</span></div>
       <footer className="ff-lobby-footer"><span><b>01</b> Steer by the words</span><span><b>02</b> Burst to rescue</span><span><b>03</b> Find your way home</span></footer>
     </>}
     {drawer === "collection" && <Panel label="Spirit journal" onClose={() => setDrawer(null)}>
-      <p className="ff-eyebrow">LITTLE LIGHTS, SAFE AT HOME</p><h2>Your spirit journal</h2><p>{count} of 9 woodland friends found. Bring them to the shrine to keep their stories.</p>
+      <p className="ff-eyebrow">RESCUED SPIRITS</p><h2>Your spirit journal</h2><p>{count} of 9 spirits found. Each one you bring to the shrine joins this journal.</p>
       <div className="ff-collection">{SPIRITS.map(s => <div key={s.id} className={progress.rescued.includes(s.id) ? "found" : ""}><SpiritMark id={s.id} hidden={!progress.rescued.includes(s.id)} /><strong>{progress.rescued.includes(s.id) ? s.name : "Unknown"}</strong><small>{progress.rescued.includes(s.id) ? s.title : STAGES[s.stage].name}</small></div>)}</div>
       <h3>A lantern of your own</h3><div className="ff-lanterns">{LANTERNS.map(l => <button key={l.id} disabled={count < l.required} aria-pressed={l.id === progress.equippedLantern} onClick={() => equipRunnerLantern(l.id)}><i style={{ background: l.color }} /><span>{l.name}<small>{count < l.required ? `Find ${l.required} spirits` : l.id === progress.equippedLantern ? "Equipped" : "Equip"}</small></span></button>)}</div>
     </Panel>}
@@ -317,7 +317,7 @@ function FireflyRun({ ticket, onAgain, onExit, onSeal }: { ticket: Ticket; onAga
   const asked = summary.reduce((n, w) => n + w.attempts.length, 0), right = summary.reduce((n, w) => n + w.attempts.filter(Boolean).length, 0);
   const sightings = summary.reduce((n, w) => n + w.attempts.length + Number(w.introduced), 0);
   return <main className="ff-shell ff-playing" data-testid="firefly-adventure">
-    <aside className="ff-side ff-side-left" aria-hidden="true"><span>灯</span><p>A little courage.<br />A little light.</p></aside>
+    <aside className="ff-side ff-side-left" aria-hidden="true"><span>灯</span><p>lamp ·<br />light</p></aside>
     <div className="ff-playfield">
       <div ref={host} className="ff-canvas" role="img" aria-label="A lantern runner steering Aki through word gates and rescuing forest spirits" onPointerDown={e => {
         if (control.current.blocked || state.phase !== "running") return;
@@ -350,24 +350,24 @@ function FireflyRun({ ticket, onAgain, onExit, onSeal }: { ticket: Ticket; onAga
         </footer>
       </>}
       <div className="ff-announcement" role="status" key={announcement}>{announcement}</div>
-      {hud.phase === "delivery" && !receipt && <div className="ff-delivery"><span>おかえり</span><h2>Welcome home,<br />little lights.</h2></div>}
+      {hud.phase === "delivery" && !receipt && <div className="ff-delivery"><span>おかえり</span><h2>Welcome home!</h2></div>}
       {!ready && <div className="ff-loading" role={failed ? "alert" : "status"}><span>灯</span><h2>{failed ? "The trail couldn’t load." : "Waking the fireflies…"}</h2>{failed && <button className="ff-primary" onClick={onExit}>Back to the lantern</button>}</div>}
     </div>
     <aside className="ff-side ff-side-right" aria-hidden="true"><p>THE SPIRIT TRAIL</p><div>{STAGES.map((stage, i) => <span key={stage.name} className={i === hud.stage ? "active" : ""}><i>{stage.kanji}</i>{stage.name}</span>)}</div><small>MOVE ← → / 1 2 3<br />BURST SPACE</small></aside>
-    {invalid && <Panel label="Your progress changed"><p className="ff-eyebrow">A FRESH START</p><h2>Your trail has changed.</h2><p>Your account or saved progress changed. Start a new adventure with the current save.</p><button className="ff-primary" onClick={onExit}>Return to the lantern</button></Panel>}
-    {!invalid && paused && !receipt && <Panel label="Adventure paused" onClose={() => setPaused(false)}><p className="ff-eyebrow">A QUIET MOMENT</p><h2>Keep the lantern close.</h2><p>Your little friends will wait.</p><button className="ff-primary" onClick={() => setPaused(false)}>Back to the trail →</button><div className="ff-audio"><SoundToggle variant="inline" /><MusicToggle /></div><button className="ff-text-button" onClick={onExit}>Leave this adventure</button></Panel>}
-    {!invalid && !paused && !receipt && hud.phase === "fork" && <Panel label="Choose your next trail"><p className="ff-eyebrow">TWO PATHS. YOUR ADVENTURE.</p><h2>Where shall we go?</h2><p>Take a gift from the forest. It stays with you until you reach home.</p><div className="ff-forks">{(hud.stage === 0 ? ["grove", "bramble"] : ["bridge", "moonpath"]).map(id => {
+    {invalid && <Panel label="Your progress changed"><p className="ff-eyebrow">A FRESH START</p><h2>Your save changed.</h2><p>Your account or saved progress changed. Start a new adventure with the current save.</p><button className="ff-primary" onClick={onExit}>Return to the lantern</button></Panel>}
+    {!invalid && paused && !receipt && <Panel label="Adventure paused" onClose={() => setPaused(false)}><p className="ff-eyebrow">PAUSED</p><h2>Take a breather.</h2><p>Your run picks up right where you left it.</p><button className="ff-primary" onClick={() => setPaused(false)}>Back to the trail →</button><div className="ff-audio"><SoundToggle variant="inline" /><MusicToggle /></div><button className="ff-text-button" onClick={onExit}>Leave this adventure</button></Panel>}
+    {!invalid && !paused && !receipt && hud.phase === "fork" && <Panel label="Choose your next trail"><p className="ff-eyebrow">CHOOSE A TRAIL</p><h2>Where shall we go?</h2><p>Take a gift from the forest. It stays with you until you reach home.</p><div className="ff-forks">{(hud.stage === 0 ? ["grove", "bramble"] : ["bridge", "moonpath"]).map(id => {
       const trail = TRAILS[id as TrailId]; return <button key={id} onClick={() => { chooseTrail(state, id as TrailId); play("paceUp"); setAnnouncement(`${trail.boon} received · the trail quickens`); refresh(); }}><span className="ff-fork-kanji">{trail.kanji}</span><small>{trail.risk}</small><h3>{trail.name}</h3><b>+ {trail.boon}</b><p>{trail.description}</p><span className="ff-fork-go">Take this path →</span></button>;
     })}</div></Panel>}
-    {receipt && <Panel label="Adventure results"><p className="ff-eyebrow">{receipt.stepCompleted ? "STEP 3 OF 3 · COMPLETE" : hud.phase === "delivery" ? "THE FOREST REMEMBERS" : "THERE’S ALWAYS ANOTHER TRAIL"}</p><h2>{hud.phase === "delivery" ? "Every light has a home." : "Rest your lantern."}</h2><p>{hud.phase === "delivery" ? `${hud.rescued.length} little ${hud.rescued.length === 1 ? "spirit followed" : "spirits followed"} you safely to the shrine.` : "The forest kept your friends safe. Try another path and bring them home."}{receipt.stepCompleted ? " One last gate remains: type the readings to earn this region’s seal." : ticket.deck.checkpoint !== undefined && hud.phase === "lost" ? ` Reach the shrine to finish this step.${ticket.deck.difficulty === "standard" ? " The Gentle journey has five hearts and a slower trail." : ""}` : ""}</p>
-      <div className="ff-results-spirits">{hud.rescued.map(id => <div key={id}><SpiritMark id={id} /><small>{SPIRITS.find(s => s.id === id)!.name}</small>{receipt.newSpirits.includes(id) && <b>NEW FRIEND</b>}</div>)}{!hud.rescued.length && <div><SpiritMark id="komorebi" hidden /><small>A little light is waiting</small></div>}</div>
+    {receipt && <Panel label="Adventure results"><p className="ff-eyebrow">{receipt.stepCompleted ? "STEP 3 OF 3 · COMPLETE" : hud.phase === "delivery" ? "SHRINE REACHED" : "RUN OVER"}</p><h2>{hud.phase === "delivery" ? "You made it to the shrine." : "Rest your lantern."}</h2><p>{hud.phase === "delivery" ? `${hud.rescued.length} ${hud.rescued.length === 1 ? "spirit followed" : "spirits followed"} you to the shrine.` : "The caged spirits are still on the trail. Try another path to free them."}{receipt.stepCompleted ? " Next, type the readings to earn this region’s seal." : ticket.deck.checkpoint !== undefined && hud.phase === "lost" ? ` Reach the shrine to finish this step.${ticket.deck.difficulty === "standard" ? " The Gentle journey has five hearts and a slower trail." : ""}` : ""}</p>
+      <div className="ff-results-spirits">{hud.rescued.map(id => <div key={id}><SpiritMark id={id} /><small>{SPIRITS.find(s => s.id === id)!.name}</small>{receipt.newSpirits.includes(id) && <b>NEW SPIRIT</b>}</div>)}{!hud.rescued.length && <div><SpiritMark id="komorebi" hidden /><small>No spirits rescued this run</small></div>}</div>
       <div className="ff-result-score"><strong>{hud.score.toLocaleString()}</strong><span>{hud.score > receipt.previousBest ? "A NEW PERSONAL BEST" : `BEST ${receipt.best.toLocaleString()}`} · {ticket.deck.difficulty.toUpperCase()}</span></div>
       {summary.length > 0 && <section className="ff-words" data-testid="ff-words" aria-label="Words on this trail">
         <p className="ff-words-total"><b>{summary.length}</b> {summary.length === 1 ? "word" : "words"} · <b>{sightings}</b> sightings · <b>{right}/{asked}</b> right{receipt.earned > 0 && <> · +{receipt.earned} mon</>}</p>
         <div className="ff-words-list">{summary.map(w => <div key={w.word} data-testid="ff-word-row"><b lang="ja">{w.word}</b><span><span lang="ja">{w.kana}</span><small>{w.meaning}</small></span><i role="img" aria-label={`${w.attempts.filter(Boolean).length} of ${w.attempts.length} right`}>{w.attempts.map((ok, i) => <em key={i} className={ok ? "ok" : "miss"} />)}</i>{w.introduced && <strong>NEW</strong>}</div>)}</div>
       </section>}
       <ReminderOffer />
-      <p className="ff-collection-progress">{count}/9 friends found{nextMilestone ? ` · ${nextMilestone - count} more for your next lantern` : " · Every lantern unlocked"}</p>
+      <p className="ff-collection-progress">{count}/9 spirits found{nextMilestone ? ` · ${nextMilestone - count} more for your next lantern` : " · Every lantern unlocked"}</p>
       {receipt.stepCompleted && onSeal ? <>
         <button className="ff-primary" onClick={() => onSeal(receipt)}>Continue to the seal <span aria-hidden="true">→</span></button>
         <button className="ff-text-button" onClick={onAgain}>Run again</button>

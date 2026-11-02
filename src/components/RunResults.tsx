@@ -29,7 +29,7 @@ export function RunResults({ gate, questions, results, pendingCheckpoint, restar
               <div className="ink-in font-serif text-5xl font-bold">{gate ? "再挑戦" : "完了"}</div>
             )}
             <h1 className="mt-4 font-serif text-2xl font-bold">
-              {gate ? (pass ? "Checkpoint cleared!" : "Not yet — train and return") : unattempted > 0 ? "Run ended" : "Run complete!"}
+              {gate ? (pass ? "Checkpoint cleared!" : "Not yet. Train and try again") : unattempted > 0 ? "Run ended" : "Run complete!"}
             </h1>
             <p className="mt-2 text-sm text-muted-foreground">
               {attempted} / {questions.length} answered{unattempted > 0 ? ` · ${unattempted} not reached` : ""}

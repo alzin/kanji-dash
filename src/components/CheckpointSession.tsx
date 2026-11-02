@@ -110,7 +110,7 @@ function CheckpointJourney({ gate }: { gate: number }) {
     <h1 className="font-serif text-3xl font-bold">{outcome?.passed ? "Checkpoint cleared!" : "Keep practising your seal"}</h1>
     <p>{region.name} · {outcome?.typed ?? 0}/3 typed{outcome?.earned ? ` · +${outcome.earned} mon` : ""}</p>
     {outcome?.passed
-      ? <p className="text-sm text-muted-foreground">{nextOpen ? `Next region open: ${CHAPTER_NAMES[next]!.name} · ${kanjiOfChapter(next).length} kanji` : `Every step of the ${level} road leads here. Keep revisiting your words.`}</p>
+      ? <p className="text-sm text-muted-foreground">{nextOpen ? `Next region open: ${CHAPTER_NAMES[next]!.name} · ${kanjiOfChapter(next).length} kanji` : `That was the last region on the ${level} road. Keep reviewing your words.`}</p>
       : <p className="text-sm text-muted-foreground">Type at least {SEAL_PASS} of 3 readings correctly. Carry the words through Firefly Rescue once more, then the seal opens again.</p>}
     <p className="text-sm">Day {streakCount(getSnapshot())} of your streak</p>
     <ReminderOffer />

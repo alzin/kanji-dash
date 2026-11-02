@@ -5,7 +5,7 @@ import { CONTACT_EMAIL, SITE_NAME } from "@/lib/legal";
 export const Route = createFileRoute("/privacy")({
   head: () => ({
     meta: [
-      { title: `Privacy Policy — ${SITE_NAME}` },
+      { title: `Privacy Policy · ${SITE_NAME}` },
       { name: "description", content: `How ${SITE_NAME} handles your data: what is stored, why, where, and how to have it deleted.` },
       { name: "robots", content: "index" },
     ],

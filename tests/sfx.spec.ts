@@ -128,7 +128,7 @@ test("a miss schedules the taiko and the paper fwip, the third miss adds the tem
       await expect(page.getByRole("button", { name: "Keep running", exact: true })).toBeVisible();
       await expect(page.getByText(`${5 - miss} left`, { exact: true })).toBeVisible();
     } else {
-      await expect(page.getByRole("heading", { name: "Not yet — train and return", exact: true })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Not yet. Train and try again", exact: true })).toBeVisible();
     }
     const log = await readLog(page);
     const taiko = log.filter((voice) => voice.type === "sine" && voice.freq === 150);
@@ -152,7 +152,7 @@ test("a miss schedules the taiko and the paper fwip, the third miss adds the tem
     expect(plucks).toHaveLength(plucksBefore + 1);
     expect(Math.abs(plucks[plucks.length - 1]!.at - 0.05)).toBeLessThan(0.001);
   }
-  await expect(page.getByRole("heading", { name: "Not yet — train and return", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Not yet. Train and try again", exact: true })).toBeVisible();
   expect(errors).toEqual([]);
 });
 

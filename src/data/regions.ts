@@ -251,6 +251,13 @@ export const LEVEL_CHAPTERS: Record<JLPTLevel, readonly number[]> = {
   N3: REGIONS.filter((r) => r.level === "N3").map((r) => r.id),
   N2: REGIONS.filter((r) => r.level === "N2").map((r) => r.id),
 };
+/**
+ * Rough weeks to finish a level at one region a day: a daily run introduces up to five new
+ * kanji (about one region), and clearing that region's checkpoint opens the next.
+ */
+export function levelWeeks(level: JLPTLevel): number {
+  return Math.max(1, Math.round(LEVEL_CHAPTERS[level].length / 7));
+}
 export const CHAPTER_NAMES: Record<number, { name: string; jp: string }> = Object.fromEntries(
   REGIONS.map((r) => [r.id, { name: r.name, jp: r.jp }]),
 );

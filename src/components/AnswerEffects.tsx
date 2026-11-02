@@ -23,7 +23,7 @@ export function AnswerEffects({ correct, light, mon, combo, lostCombo }: { corre
   return <div className={`answer-effects ${correct ? "is-correct" : "is-miss"}`} aria-hidden="true" data-testid="answer-effects">
     <span className="answer-ring" />
     {correct && Array.from({ length: 10 }, (_, i) => <i key={i} style={{ "--angle": `${i * 36}deg`, "--distance": `${65 + i % 3 * 16}px`, "--delay": `${i % 3 * 30}ms` } as CSSProperties}>✦</i>)}
-    <div className="answer-score-pop"><strong>{correct ? `+${light} light` : "Keep going!"}</strong><span>{correct ? mon > 0 ? `+${mon} mon` : "A word made clearer" : lostCombo ? "A fresh start for your streak" : "Every try helps you learn"}</span></div>
+    <div className="answer-score-pop"><strong>{correct ? `+${light} light` : "Keep going!"}</strong><span>{correct ? mon > 0 ? `+${mon} mon` : "Correct" : lostCombo ? "Combo reset" : "Missed words come back for review"}</span></div>
     {correct && combo > 0 && combo % 3 === 0 && <span className="answer-combo-banner">✦ {combo} IN A ROW ✦</span>}
   </div>;
 }

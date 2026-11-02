@@ -5,7 +5,7 @@ import { n2Kanji } from "./n2";
 import type { Kanji } from "./n5/types";
 
 import type { JLPTLevel } from "./regions";
-export { CHAPTER_NAMES, CHAPTER_COUNT, CURRICULUM_VERSION, LEVELS, LEVEL_CHAPTERS, REGIONS, LEGACY_CHAPTERS, levelOfChapter, nextChapter, previousLevel, nextLevel } from "./regions";
+export { CHAPTER_NAMES, CHAPTER_COUNT, CURRICULUM_VERSION, LEVELS, LEVEL_CHAPTERS, REGIONS, LEGACY_CHAPTERS, levelOfChapter, levelWeeks, nextChapter, previousLevel, nextLevel } from "./regions";
 export type { JLPTLevel } from "./regions";
 export { JOURNEY_STOPS, ROADS, journeyNumber, roadOfLevel } from "./journey";
 export type { Road, RoadId } from "./journey";

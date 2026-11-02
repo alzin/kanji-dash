@@ -64,7 +64,7 @@ export function LanternDashEncounter({
           ? "The light made it home."
           : stage === "retry"
             ? "Aki kept an ember."
-            : "Carry a little light."}
+            : "Carry the lantern through the mist."}
       </h2>
       <p>
         {stage === "complete"

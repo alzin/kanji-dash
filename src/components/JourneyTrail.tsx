@@ -36,7 +36,7 @@ export function JourneyOverview({ save, here, onTravel, onFindHere, onShowOnMap 
   return (
     <section className="mt-5 rounded-2xl border border-border bg-card p-4 shadow-e1" aria-label="Journey progress">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-sm font-bold">One journey. {total} checkpoints.</span>
+        <span className="text-sm font-bold">{total} checkpoints from N5 to N1</span>
         <span className="shrink-0 whitespace-nowrap text-xs font-bold text-primary tabular-nums">{journeySeals(save)} / {total} earned</span>
       </div>
       <div className="journey-overview-bar mt-3" aria-hidden="true">
@@ -146,7 +146,7 @@ export function JourneyRoad({ road, index, save, here, active, newSeals, onToggl
           return (
             <JourneyStop key={ch} ch={ch} i={i} count={count} save={save} state={states[i]!} here={ch === here} active={ch === active}
               previous={road.regions[i - 1]} sealDelay={sealIndex >= 0 ? 200 + sealIndex * 80 : undefined} onToggle={onToggle} onShowOnMap={onShowOnMap}
-              note={i === noteAt ? <p className="journey-note">The road ahead opens one region at a time — clear a checkpoint, or reach 55% mastery progress.</p> : null} />
+              note={i === noteAt ? <p className="journey-note">The road ahead opens one region at a time. Clear a checkpoint or reach 55% mastery progress to open the next.</p> : null} />
           );
         })}
       </ol>
@@ -293,7 +293,7 @@ function RoadMilestone({ road, save, onTravel }: { road: Road; save: SaveData; o
           <p className="text-sm text-muted-foreground">
             {next
               ? `Every checkpoint on the ${level} road is sealed. The journey continues on the ${next} road.`
-              : `Every checkpoint on the ${level} road is sealed. The N1 road is still being charted — keep revisiting your words to build lasting mastery.`}
+              : `Every checkpoint on the ${level} road is sealed. The N1 road isn’t open yet, so keep reviewing your words until it is.`}
           </p>
           {offer && (
             <button type="button" onClick={() => onTravel(next)} className="mt-2 min-h-11 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-e1 transition-colors hover:bg-primary-hover">

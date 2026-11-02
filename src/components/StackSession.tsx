@@ -57,10 +57,10 @@ function StackSessionContent({ kind }: { kind: StackMode }) {
   }, [stage]);
 
   const hud = <GameHud minimal title="Tsumiji" />;
-  if (!frozen.words.length) return <>{hud}<div className="stack-page"><span className="font-serif text-6xl text-primary">完</span><h1 className="font-serif text-3xl font-bold">{kind === "daily" ? "Your sheets are up to date" : "Fluency comes with practice"}</h1><p className="text-muted-foreground">{kind === "daily" ? "No new words or reviews are due. Your next checkpoint is waiting on the map." : "These extra sheets unlock when you have reviewing or mastered words that are not due."}</p><Link to="/" className={primary}>Back to the map</Link></div></>;
+  if (!frozen.words.length) return <>{hud}<div className="stack-page"><span className="font-serif text-6xl text-primary">完</span><h1 className="font-serif text-3xl font-bold">{kind === "daily" ? "Your sheets are up to date" : "Fluency sheets are locked"}</h1><p className="text-muted-foreground">{kind === "daily" ? "No new words or reviews are due. Your next checkpoint is waiting on the map." : "These extra sheets unlock when you have reviewing or mastered words that are not due."}</p><Link to="/" className={primary}>Back to the map</Link></div></>;
   if (stage === "learn" && frozen.fresh.length) return <RunPreparation questions={frozen.fresh} title="Tsumiji · new words" learnOnly onStart={() => setStage("intro")} />;
   if (stage === "intro" || stage === "learn") return <>{hud}<div className="stack-page">
-    <span className="font-serif text-6xl text-primary">積み字</span><p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">A little recall. A little rhythm.</p>
+    <span className="font-serif text-6xl text-primary">積み字</span><p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Match falling words before the ink rises</p>
     <h1 className="font-serif text-3xl font-bold">{kind === "daily" ? "Today’s sheets" : kind === "fluency" ? "Fluency sheet" : "Marathon"}</h1>
     <div className="rounded-2xl border border-border bg-card p-5 text-left text-sm leading-relaxed"><p>Match a falling word with its reading or meaning tile. Matches below or beside it both count.</p><p className="mt-3">Tap a column to move. Tap again or swipe down to drop. Tap the word to hold it once.</p><p className="mt-3">Misses leave ink. Match that word later to wash it away.</p><p className="mt-3 text-muted-foreground">{kind === "marathon" ? "The ink rises every 12 seconds. Each sheet gets a little faster." : `${frozen.sheets.length} ${frozen.sheets.length === 1 ? "sheet" : "sheets"} · no hearts · pause whenever you need`}</p></div>
     <button className={primary} data-testid="stack-start" onClick={() => { finished.current = false; setStage("play"); }}>Start sheet</button><Link to="/" className="min-h-11 p-3 font-bold text-muted-foreground">Back to the map</Link>
@@ -91,7 +91,7 @@ function StackSessionContent({ kind }: { kind: StackMode }) {
     }} />;
 
   if (stage === "between") return <>{hud}<div className="stack-page"><span className="stamp-in font-serif text-6xl text-primary">一枚</span><h1 className="font-serif text-3xl font-bold">Sheet cleared</h1><p>{latest?.correct} matches · {latest?.score.toLocaleString()} points</p><p className="text-sm text-muted-foreground">{rest > 0 ? `Take a breath · ${rest}s` : "Ready when you are."}</p>
-    {stopSuggested && <p className="rounded-xl bg-secondary p-4 text-sm">Twenty minutes of practice. A good place to rest.</p>}
+    {stopSuggested && <p className="rounded-xl bg-secondary p-4 text-sm">You’ve practised for twenty minutes, which is a good place to stop.</p>}
     {stopSuggested && <Link to="/" className={primary}>Done for today</Link>}
     <button className={stopSuggested ? secondary : primary} onClick={() => { finished.current = false; missed.current.clear(); setSheet((v) => v + 1); setStage("play"); }}>Next sheet</button><button className={stopSuggested ? "min-h-11 p-3 text-sm" : secondary} onClick={() => setStage("results")}>Finish for now</button></div></>;
 
@@ -106,7 +106,7 @@ function StackSessionContent({ kind }: { kind: StackMode }) {
     <div className="grid grid-cols-3 gap-2 text-sm"><div><b data-testid="result-score" className="block text-xl">{totals.score.toLocaleString()}</b>Score</div><div><b className="block text-xl">×{totals.bestCombo}</b>Best combo</div><div><b data-testid="result-mon" className="block text-xl">+{earned}</b>Mon</div></div>
     <p className="text-sm text-accent">{newBest ? "A new personal best" : `Personal best · ${frozen.best.toLocaleString()}`}{totals.redeemed ? ` · ${totals.redeemed} ink tiles washed` : ""}</p>
     <p className="text-sm">Day {streakCount(getSnapshot())} · {stack.freezes.count} free {stack.freezes.count === 1 ? "freeze" : "freezes"}{stack.freezes.lastUsedDay === localDay() ? " · A freeze kept your streak" : ""}</p>
-    {streakCount(getSnapshot()) === 7 && <p className="rounded-xl border border-gold p-4 font-serif text-lg">七日 · A week of words. Your road is taking shape.</p>}
+    {streakCount(getSnapshot()) === 7 && <p className="rounded-xl border border-gold p-4 font-serif text-lg">七日 · Seven days in a row.</p>}
     <ul className="space-y-1 text-left text-xs text-muted-foreground">{dailyQuests(getSnapshot()).map((q) => <li key={q.key}>{q.value === q.target ? "✓" : "○"} {q.label} · {q.value}/{q.target}</li>)}</ul>
     <ReminderOffer />
     <Link to="/" className={primary}>Done for today · streak safe</Link>

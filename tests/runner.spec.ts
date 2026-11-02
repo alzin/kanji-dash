@@ -72,7 +72,7 @@ test("lesson pauses and three hearts preserve attempted counts and restart state
     await page.getByRole("button", { name: "Keep running", exact: true }).click();
   }
   await page.clock.fastForward(100_000);
-  await expect(page.getByRole("heading", { name: "Not yet — train and return", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Not yet. Train and try again", exact: true })).toBeVisible();
   await expect(page.getByText("3 / 5 answered · 2 not reached", { exact: true })).toBeVisible();
   for (const [label, value] of [["Correct", "0"], ["Missed", "3"], ["Best combo", "×0"], ["Score", "0"], ["Answer accuracy", "0%"], ["Mon earned", "+0"]]) {
     await expectResult(page, label!, value!);
@@ -134,9 +134,9 @@ test("a finished run offers to save it, and declining leaves the game untouched"
   await page.clock.fastForward(20_000);
   const dialog = page.getByRole("dialog");
   await expect(dialog.getByRole("heading", { name: "Keep your progress" })).toBeVisible();
-  await expect(dialog.getByText("1 run, 1 checkpoint and 50 mon — saved only in this tab, and gone once you close it. Sign in to keep everything on every device.")).toBeVisible();
+  await expect(dialog.getByText("Saved only in this tab: 1 run, 1 checkpoint and 50 mon. Closing the tab loses all of it. Sign in to keep everything on every device.")).toBeVisible();
   await expect(dialog.getByRole("button", { name: "Continue with Google" })).toBeVisible();
-  await dialog.getByRole("button", { name: "Not now — keep learning" }).click();
+  await dialog.getByRole("button", { name: "Not now", exact: true }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Checkpoint cleared!", exact: true })).toBeVisible();
   expect(await savedTotals(page)).toEqual({ correct: 5, wrong: 0, coins: 50, runsCompleted: 1 });

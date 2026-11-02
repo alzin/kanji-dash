@@ -238,7 +238,7 @@ async function completeTrail(
         await page.getByRole("button", { name: "Offer the word" }).click();
       } else {
         const meaning = await page
-          .getByRole("heading", { name: "Every word holds a little light." })
+          .getByRole("heading", { name: "Wake the lantern." })
           .isVisible();
         const answer = meaning ? vocab.m : vocabKana(vocab);
         const choices = page.getByRole("group", { name: "Choose an answer" });
@@ -281,13 +281,13 @@ test("a full walk restores all landmarks and saves exactly one reward and four g
   await page.goto("./");
   await expect(
     page.getByRole("heading", {
-      name: "A little Japanese. A whole new world.",
+      name: "Learn kanji by playing.",
     }),
   ).toBeVisible();
   await expect(page.locator("canvas[data-ready]")).toBeVisible();
   await page.screenshot({ path: info.outputPath("title.png") });
   // The title card sits over the world map; starting sets the traveller down at the trailhead.
-  await page.getByRole("button", { name: "Start your journey" }).click();
+  await page.getByRole("button", { name: "Start playing" }).click();
   const trailhead = page.getByRole("region", { name: "The First Five checkpoint" });
   await expect(trailhead.getByText("YOU ARE HERE · N5 · REGION 1 OF 19")).toBeVisible();
   await page.screenshot({ path: info.outputPath("map.png") });
@@ -309,7 +309,7 @@ test("a full walk restores all landmarks and saves exactly one reward and four g
   ).toBe(2);
   expect(save.stack.quests.typed).toBe(1);
   await page.screenshot({ path: info.outputPath("results.png") });
-  await page.getByRole("button", { name: "Stay a little longer" }).click();
+  await page.getByRole("button", { name: "Keep exploring" }).click();
   await page.screenshot({ path: info.outputPath("restored-shrine.png") });
   await page.getByRole("button", { name: "View your discoveries" }).click();
   save = await saved(page);
@@ -321,7 +321,7 @@ test("a full walk restores all landmarks and saves exactly one reward and four g
   await page.reload();
   // A traveller with a walk behind them goes straight to the map, never the title.
   await expect(page.locator("canvas[data-ready]")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "A little Japanese. A whole new world." })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Learn kanji by playing." })).toHaveCount(0);
   await expect(page.getByLabel("42 mon coins", { exact: true })).toBeVisible();
   expect(errors).toEqual([]);
 });

@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { AppIcon } from "@/components/AppIcon";
 import { AccountStatus } from "@/components/AccountStatus";
+import { BrandMark } from "@/components/BrandMark";
 import { SoundToggle } from "@/components/SoundToggle";
 import { streakCount, useSave } from "@/lib/srs";
 
@@ -43,7 +44,7 @@ export function GameHud({ back = {}, title, minimal = false }: { back?: MapTarge
         )}
         {title && (
           <span className="game-hud-title">
-            <span className="forest-seal" aria-hidden="true">森</span>
+            <BrandMark />
             <span>{title}</span>
           </span>
         )}

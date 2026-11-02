@@ -5,7 +5,7 @@ import { silenceSavePrompt } from "./helpers/savePrompt";
 import { campPanel, journeyLog } from "./helpers/hub";
 
 const canvas = (page: Page) => page.locator("canvas[data-ready]");
-const title = (page: Page) => page.getByRole("heading", { name: "A little Japanese. A whole new world." });
+const title = (page: Page) => page.getByRole("heading", { name: "Learn kanji by playing." });
 
 test.beforeEach(({ page }) => silenceSavePrompt(page));
 
@@ -16,7 +16,7 @@ test("a new traveller meets the title over the map, starts at the trailhead, and
   await expect(title(page)).toBeVisible();
   await expect(canvas(page)).toBeVisible();
   await page.screenshot({ path: info.outputPath("title-over-map.png") });
-  await page.getByRole("button", { name: "Start your journey" }).click();
+  await page.getByRole("button", { name: "Start playing" }).click();
   await expect(title(page)).toHaveCount(0);
   const trailhead = page.getByRole("region", { name: "The First Five checkpoint" });
   await expect(trailhead.getByText("YOU ARE HERE · N5 · REGION 1 OF 19")).toBeVisible();
@@ -32,7 +32,7 @@ test("a new traveller meets the title over the map, starts at the trailhead, and
   await page.getByRole("button", { name: "Kanji Dash title screen" }).click();
   await expect(title(page)).toBeVisible();
   await expect(page).toHaveURL(/title=true/);
-  await page.getByRole("button", { name: "Start your journey" }).click();
+  await page.getByRole("button", { name: "Start playing" }).click();
   await expect(page).toHaveURL(/\/$/);
   expect(errors).toEqual([]);
 });

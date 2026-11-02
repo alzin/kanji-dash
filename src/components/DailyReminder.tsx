@@ -41,8 +41,8 @@ export function ReminderOffer() {
   if (reminders.support !== "ready" || reminders.blocked) return null;
   return (
     <section className="reminder-offer" data-testid="reminder-offer" aria-labelledby={`${hourId}-title`}>
-      <p id={`${hourId}-title`}><strong>Never miss a day</strong></p>
-      <p className="reminder-copy">Get one gentle reminder, only on days you haven’t played yet.</p>
+      <p id={`${hourId}-title`}><strong>Daily reminder</strong></p>
+      <p className="reminder-copy">One gentle reminder, only on days you haven’t played yet.</p>
       <div className="reminder-row">
         <label htmlFor={hourId} className="sr-only">Reminder time</label>
         <HourSelect id={hourId} hour={hour} onChange={setChosen} disabled={reminders.busy} />

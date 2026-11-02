@@ -144,7 +144,7 @@ export const KODAMA: AreaDefinition = {
   },
   recallPrompt: "What does the forest remember?",
   remembered: "The forest remembers.",
-  results: ["A lantern glows. A river can be crossed.", "And a few more words feel like old friends."],
+  results: ["Aki’s lantern is lit and the bridge is back.", "Kodama Woods has its words again."],
 };
 
 const KISO_SITES = [
@@ -242,7 +242,7 @@ export const KISO: AreaDefinition = {
   },
   recallPrompt: "What does the pass remember?",
   remembered: "The pass remembers.",
-  results: ["An andon glows. The stream can be crossed.", "And the road north feels a little shorter."],
+  results: ["The inn’s andon is lit and the footbridge stands again.", "The post town has its words again."],
 };
 
 /** Areas in walking order along the journey. N3, N2 and N1 areas are not built yet. */
