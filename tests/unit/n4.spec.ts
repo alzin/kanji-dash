@@ -93,7 +93,7 @@ test("N4 queues retain N5 reviews and select new cards only from the current unl
   const save = unlocked();
   save.progress["一"] = card(3, NOW - 2_000);
   save.progress["私"] = card(2, NOW - 1_000);
-  save.progress["字"] = card(2, NOW - 3_000); // Later N4 region is still locked.
+  save.progress["字"] = card(2, NOW - 3_000);
   expect(dueCount(save, NOW)).toBe(2);
   const queue = buildRunQueue(save, NOW);
   expect(queue).toHaveLength(7);
@@ -126,7 +126,6 @@ test("N4 meaning distractors exclude overlapping glosses and verb forms", () => 
     const kanji = kanjiByChar.get(character)!;
     for (const vocab of kanji.vocab) {
       const own = keys(vocab.m);
-      // Request the entire distractor pool, so rare random choices are checked too.
       const choices = meaningChoices({ kanji, vocab, kana: vocabKana(vocab) }, () => 0.5, 1_000);
       expect(choices.length).toBeGreaterThan(2);
       for (const choice of choices) expect(keys(choice).some((key) => own.includes(key)), `${vocab.w}: ${choice}`).toBe(false);

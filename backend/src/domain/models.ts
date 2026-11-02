@@ -1,6 +1,5 @@
 export type User = { id: string; email: string; name: string; picture: string | null };
 
-/** Identity accepted only after the authentication adapter verifies Google's token. */
 export type GoogleIdentity = { subject: string; email: string; name: string; picture: string | null };
 
 export type CardProgress = {
@@ -45,7 +44,6 @@ export type SaveData = {
   checkpointSteps?: CheckpointSteps;
 };
 
-/** Regions whose checkpoint steps are complete; each list is a subset of the one before it. */
 export type CheckpointSteps = { learned: number[]; stacked: number[]; rescued: number[] };
 
 export const RUNNER_SPIRITS = ["komorebi", "take", "kohaku", "mizu", "shizuku", "kawa", "hoshi", "tsuki", "akari"] as const;
@@ -57,5 +55,4 @@ export type RunnerProgress = {
   tutorialSeen: boolean;
 };
 
-/** Version zero means that the account has never uploaded a save. */
 export type ProgressSnapshot = { save: SaveData | null; version: number };

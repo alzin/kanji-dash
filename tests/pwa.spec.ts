@@ -5,11 +5,8 @@ import type { AddressInfo } from "node:net";
 
 async function prepareOfflineCopy(page: Page, origin = "./") {
   await page.goto(origin, { waitUntil: "domcontentloaded" });
-  // A first visit opens on the world map under the title card.
   await expect(page.getByRole("heading", { name: "Learn kanji by playing." })).toBeVisible();
-  // Wait for activation to claim this page before a reload can interrupt setup.
   await page.waitForFunction(() => navigator.serviceWorker.controller !== null);
-  // Exercise a document served by the installed worker as well as the first SSR load.
   await page.reload({ waitUntil: "domcontentloaded" });
   await page.waitForFunction(() => navigator.serviceWorker.controller !== null);
 }
@@ -54,8 +51,6 @@ test("serves install metadata and valid Android/iOS icons", async ({ page, reque
 });
 
 test("opens every game screen offline after visiting only home", async ({ page, context, baseURL, browserName }) => {
-  // This walks a dozen screens. WebKit's actionability checks wait for real frames,
-  // and the WebGL map and game canvases render slowly there, so the walk takes ~60s.
   test.slow(browserName === "webkit", "Long offline walk through every screen");
   await page.clock.install();
   // Use a private origin so shutting its server down doesn't interrupt other tests.
@@ -117,7 +112,6 @@ test("opens every game screen offline after visiting only home", async ({ page, 
     await page.getByRole("button", { name: "Pause game", exact: true }).click();
     await expect(page.getByRole("button", { name: "Resume game", exact: true })).toHaveAttribute("aria-pressed", "true");
 
-    // Let the next document hydrate; preparation pauses its clock again.
     await page.clock.resume();
     await page.goto(`${origin}/run?mode=runner`, { waitUntil: "domcontentloaded" });
     await page.getByRole("button", { name: "Light the lantern" }).click();
@@ -153,7 +147,6 @@ test("opens every game screen offline after visiting only home", async ({ page, 
     await expect(page.getByRole("heading", { name: "Take a breather." })).toBeVisible();
     const trailResponse = await page.goto(`${origin}/run?mode=expedition`, { waitUntil: "domcontentloaded" });
     expect(trailResponse?.fromServiceWorker()).toBe(true);
-    // This learner travels the N4 road, so the trail opens in Kiso Post Town.
     await expect(page.getByRole("heading", { name: "Light the inn’s paper lantern" })).toBeVisible();
     await expect(page.locator("canvas[data-player-x]")).toBeVisible();
     await page.getByRole("button", { name: "Open field notes" }).click();
@@ -174,7 +167,6 @@ test("shows platform installation help and handles the Android prompt", async ({
     await expect(page.getByText("If shown, turn on Open as Web App, then tap Add.")).toBeVisible();
     await expect(page.getByRole("button", { name: "Install app", exact: true })).toHaveAttribute("aria-expanded", "true");
   } else {
-    // Browser install dialogs require a real device. Exercise the one-use event contract here.
     await page.evaluate(() => {
       const event = new Event("beforeinstallprompt", { cancelable: true });
       Object.assign(event, {
@@ -226,7 +218,6 @@ test("keeps a pending install prompt across game navigation", async ({ page }) =
 });
 
 test("explains the secure preview requirement on an insecure connection", async ({ page }) => {
-  // Model a phone visiting the server's LAN HTTP address; loopback itself is trusted.
   await page.addInitScript(() => {
     Object.defineProperty(window, "isSecureContext", { get: () => false });
   });

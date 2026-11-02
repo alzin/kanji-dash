@@ -11,7 +11,6 @@ test("dictionary indexes respect reading restrictions and reject ambiguous compo
 });
 
 test("level builds require complete reviewed authorship and additive identities", () => {
-  // Deliberately synthetic XML fixtures: no dictionary corpus is bundled with the tests.
   const chars = "現政経法";
   const xml = [...chars].map((c) => `<character><literal>${c}</literal><stroke_count>10</stroke_count><reading r_type="ja_on">カ</reading></character>`).join("");
   const words = [...chars].flatMap((c) => ["一", "二", "三"].map((suffix) => `<entry><k_ele><keb>${c}${suffix}</keb></k_ele><r_ele><reb>かな</reb></r_ele></entry>`)).join("");

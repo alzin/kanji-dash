@@ -1,4 +1,3 @@
-// Serve only static files, with GitHub Pages-style directory redirects and 404s.
 import { createServer } from "node:http";
 import { readFile, stat } from "node:fs/promises";
 import { extname, resolve, sep } from "node:path";

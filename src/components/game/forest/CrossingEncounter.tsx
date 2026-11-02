@@ -15,7 +15,6 @@ export function CrossingEncounter({
   onPause: () => void;
   onComplete: (recalls: CrossingRecalls) => void;
 }) {
-  // Same vocabulary as the lantern; separate homophones so every partner is unambiguous.
   const sheets = useMemo(
     () =>
       composeSheets(words.map((q) => ({ q, mastery: 1, fresh: false, rt: 0 }))),

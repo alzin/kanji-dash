@@ -19,7 +19,6 @@ const keys = { p256dh: 'B'.repeat(87), auth: 'A'.repeat(22) };
 const sub = (patch: Partial<ReminderSubscription> = {}): ReminderSubscription => ({
   endpoint, keys, timeZone: 'Asia/Tokyo', hour: 19, lastPlayedOn: '2026-10-18', streak: 4, freezes: 0, lastSentOn: null, rejectedSince: null, ...patch,
 });
-// 2026-10-19 10:30 UTC is 19:30 in Tokyo and 06:30 in New York.
 const evening = new Date('2026-10-19T10:30:00Z');
 
 test('reminders fall due on the player\'s own clock, once a day, only when they have not played', () => {
@@ -191,7 +190,6 @@ test('a subscription the push service keeps refusing is tried once a day, then d
   const sender = new FakeSender({ [endpoint]: 'rejected' });
   let now = evening;
   const service = new ReminderService(repository, sender, () => now);
-  // Never played, so the 30-day lapse never applies and every evening is due.
   await repository.save({ endpoint, keys, timeZone: 'Asia/Tokyo', hour: 19, lastPlayedOn: null, streak: 0, freezes: 0 });
 
   assert.deepEqual(await service.dispatch(), { checked: 1, sent: 0, removed: 0, rejected: 1, failed: 0 });

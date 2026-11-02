@@ -1,7 +1,6 @@
 import type Phaser from "phaser";
 import { SPIRITS } from "@/lib/firefly-catalog";
 
-/** Whole four-frame strips use one scale and a shared bottom-centre anchor. */
 export function makeFireflyArt(scene: Phaser.Scene) {
   for (const spirit of SPIRITS) {
     const key = `rescue-${spirit.id}`;

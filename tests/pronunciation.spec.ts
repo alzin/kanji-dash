@@ -75,8 +75,6 @@ test("Firefly optional word study speaks only on request and retains manual pron
 test("run speaks active gates and cancels speech on pause", async ({ page }) => {
   await page.clock.install();
   await page.goto("run?mode=runner&gate=1");
-  // Freeze before the runner mounts so module loading and browser IPC do not
-  // consume a gate's answer time.
   await completePreparation(page, { advanceClock: true, pauseClock: true });
   await page.clock.runFor(500);
   await expect.poll(() => page.evaluate(() => (window as any).__runSpeechLog.length)).toBeGreaterThan(0);

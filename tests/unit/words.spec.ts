@@ -125,8 +125,6 @@ test("reading questions offer three distinct spellings with exactly one correct"
         buildQuestion(kanji, "reading", vocab));
       const where = `${kanji.c} ${vocab.w} seed ${seed}: ${question.choices.join(" | ")}`;
 
-      // Native assertions keep exhaustive curriculum checks from recording hundreds
-      // of thousands of Playwright report steps; failure messages still identify the word/seed.
       assert.equal(question.type, "reading", where);
       assert.equal(question.prompt, vocab.w, where);
       assert.equal(question.answer, kana, where);
@@ -146,7 +144,6 @@ test("reading questions offer three distinct spellings with exactly one correct"
 });
 
 test("a word's other genuine readings are never offered as a wrong answer", () => {
-  // Audited collisions: readings a teacher would have to accept for that word.
   const audited: [string, string][] = [
     ["十", "じゅう"], ["何", "なん"], ["間", "かん"], ["間", "けん"], ["中", "ちゅう"],
     ["上", "じょう"], ["下", "げ"], ["月", "げつ"], ["水", "すい"], ["木", "もく"],
@@ -178,7 +175,6 @@ test("reading distractors mostly reuse a real reading of a kanji in the word", (
     const question = withSeed(kanji.c.codePointAt(0)!, () => buildQuestion(kanji, "reading", vocab));
     for (const choice of question.choices.filter((c) => c !== question.answer)) {
       total += 1;
-      // A swap keeps every other span intact, so some real reading still prefixes or suffixes it.
       const swapped = vocab.f.some((span, i) =>
         [...span.t].length === 1 && span.r
         && readingsOf(span.t).some((reading) =>

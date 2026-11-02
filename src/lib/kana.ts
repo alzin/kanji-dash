@@ -29,7 +29,6 @@ for (const [consonant, row] of GOJUON) {
   });
 }
 
-// Rows that swap when a reading picks up (or drops) a dakuten in compounds.
 const VOICING: [string, string][] = [["k", "g"], ["s", "z"], ["t", "d"], ["h", "b"], ["h", "p"], ["b", "p"]];
 
 function rowKana(consonant: string, vowel: string): string | undefined {
@@ -38,7 +37,6 @@ function rowKana(consonant: string, vowel: string): string | undefined {
   return kana === "・" ? undefined : kana;
 }
 
-/** Every dakuten/handakuten sibling of a kana, e.g. か → が, は → ば/ぱ. */
 export function voicingVariants(kana: string): string[] {
   const consonant = consonantOf.get(kana);
   const vowel = vowelOf.get(kana);
@@ -58,7 +56,6 @@ const LARGE_TO_SMALL: Record<string, string> = Object.fromEntries(Object.entries
 
 export const SOKUON = "っ";
 
-// っ only ever precedes a voiceless obstruent.
 const GEMINABLE = new Set(["k", "s", "t", "p"]);
 
 export function isSmallKana(kana: string): boolean {
@@ -80,24 +77,20 @@ export function hasKanji(text: string): boolean {
   return [...text].some(isKanji);
 }
 
-/** Katakana on'yomi and hiragana kun'yomi have to meet in one alphabet to compare. */
 export function toHiragana(text: string): string {
   return text.replace(/[ァ-ヶ]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0x60));
 }
 
-/** "おお(きい)" → "おお": the stem a compound actually contributes. */
 export function readingStem(reading: string): string {
   return toHiragana(reading).replace(/\(.*?\)/g, "").replace(/[\s・.,、]/g, "").trim();
 }
 
-/** Split a data field such as "ダイ, タイ" or "ちい(さい), こ" into its stems. */
 export function readingList(field: string): string[] {
   if (!field || field === "—") return [];
   return [...new Set(field.split(/[,、]/).map(readingStem).filter((r) => r.length > 0 && isHiragana(r)))];
 }
 
 
-/** Long vowels the kana script writes with a trailing う (こう) or お (おお). */
 function longVowelMate(kana: string): string | null {
   const vowel = vowelOf.get(kana);
   if (vowel === "o") return "う";
@@ -112,8 +105,6 @@ function replaceAt(chars: string[], index: number, value: string): string {
 const PALATALIZABLE = new Set(["き", "し", "ち", "に", "ひ", "み", "り", "ぎ", "じ", "び", "ぴ"]);
 const SMALL_Y = new Set(["ゃ", "ゅ", "ょ"]);
 
-/** Whether a kana string could be a Japanese word at all — a distractor that
- *  breaks the writing system's own rules is a giveaway, not a near-miss. */
 export function isPlausibleReading(text: string): boolean {
   if (!isHiragana(text)) return false;
   const chars = [...text];
@@ -122,18 +113,12 @@ export function isPlausibleReading(text: string): boolean {
   if (chars.at(-1) === SOKUON) return false;
   return chars.every((kana, i) => {
     const next = chars[i + 1];
-    // っ only ever doubles a following voiceless obstruent.
     if (kana === SOKUON) return next !== undefined && GEMINABLE.has(consonantOf.get(next) ?? "");
-    // ゃゅょ only ever follow an i-column kana.
     if (SMALL_Y.has(kana)) return i > 0 && PALATALIZABLE.has(chars[i - 1]!);
     return true;
   });
 }
 
-/**
- * Near-misses of a reading that a learner plausibly confuses it with:
- * long vowels, small tsu, small ya/yu/yo, and dakuten.
- */
 export function phoneticVariants(reading: string): string[] {
   const chars = [...reading];
   const out: string[] = [];
@@ -144,7 +129,6 @@ export function phoneticVariants(reading: string): string[] {
   chars.forEach((kana, i) => {
     const next = chars[i + 1];
 
-    // こう ⇄ こ, おお ⇄ お — dropping or adding the long vowel.
     const mate = longVowelMate(kana);
     if (mate && (next === mate || (vowelOf.get(kana) === "o" && next === "お"))) {
       add([...chars.slice(0, i + 1), ...chars.slice(i + 2)].join(""));
@@ -153,23 +137,20 @@ export function phoneticVariants(reading: string): string[] {
       add([...chars.slice(0, i + 1), mate, ...chars.slice(i + 1)].join(""));
     }
     if (vowelOf.get(kana) === "o" && next === "う") {
-      add(replaceAt(chars, i + 1, "お")); // こう ⇄ こお
+      add(replaceAt(chars, i + 1, "お"));
     }
 
-    // がっこう ⇄ がこう — the sokuon a compound gains or loses.
     if (kana === SOKUON) {
       add([...chars.slice(0, i), ...chars.slice(i + 1)].join(""));
     } else if (i > 0 && vowelOf.has(chars[i - 1]!) && GEMINABLE.has(consonantOf.get(kana) ?? "")) {
       add([...chars.slice(0, i), SOKUON, ...chars.slice(i)].join(""));
     }
 
-    // しょう ⇄ しよう, and じゅう ⇄ じゆう.
     const large = SMALL_TO_LARGE[kana];
     if (large && kana !== SOKUON) add(replaceAt(chars, i, large));
     const small = LARGE_TO_SMALL[kana];
     if (small && i > 0 && vowelOf.get(chars[i - 1]!) === "i") add(replaceAt(chars, i, small));
 
-    // かん ⇄ がん — rendaku applied or undone.
     for (const swapped of voicingVariants(kana)) add(replaceAt(chars, i, swapped));
   });
 

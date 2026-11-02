@@ -12,7 +12,6 @@ export type AuthoredLevel = {
   level: "N3" | "N2" | "N1";
   reviewedBy: string;
   reviewedOn: string;
-  /** Include N3/N2 characters here when building a subsequent road. */
   previouslyAdded: string;
   regions: { id: number; name: string; jp: string; chars: string; legacyChapter: number }[];
   cards: { c: string; m: string; mn: string; rad: string; keyword: string; vocab: Kanji["vocab"] }[];
@@ -85,7 +84,6 @@ export function buildLevel(level: string, kanjidic: string, jmdict: string, list
   return { level, cards, regions: authored.regions.map((r) => ({ ...r, level })), reviewedBy: authored.reviewedBy, reviewedOn: authored.reviewedOn };
 }
 
-/** A compound wave is accepted only if each hole fits exactly one candidate. */
 export function uniqueCompoundHoles(dictionary: Map<string, Set<string>>, candidates: string[], holes: string[]): boolean {
   return holes.every((hole) => hole.split("＿").length === 2 && candidates.filter((c) => dictionary.has(hole.replace("＿", c))).length === 1);
 }
@@ -97,7 +95,6 @@ async function main() {
   const result = buildLevel(level, kanjidic!, jmdict!, list!, JSON.parse(authoredText!));
   const out = resolve(outPath);
   await mkdir(out, { recursive: true });
-  // Refuse to overwrite an earlier authored release; no source files are modified.
   const manifest = { ...result, curriculumVersion: 2, hashes: [kanjidic, jmdict, list, authoredText].map((data) => createHash("sha256").update(data!).digest("hex")), sources: ["https://www.edrdg.org/edrdg/licence.html", "https://www.tanos.co.uk/jlpt/sharing/"] };
   await writeFile(join(out, `${level.toLowerCase()}-reviewed.json`), JSON.stringify(manifest, null, 2) + "\n", { flag: "wx" });
   console.log(`${level}: ${result.cards.length} reviewed cards, ${result.regions.length} additive regions. Integrate explicitly, then regenerate the backend manifest.`);

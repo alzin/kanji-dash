@@ -3,7 +3,6 @@ import { KODAMA, type AreaDefinition, type Grade } from "./areas";
 import { onTrail, riverX, seeded, WORLD } from "./world";
 
 const CHARACTERS = ["forest-player", "forest-fox"];
-// Light keeps its warmth in every season; only the land and its buildings are graded.
 const UNGRADED = [...CHARACTERS, "forest-glow", "forest-spark", "forest-rain"];
 
 function hsl(r: number, g: number, b: number): [number, number, number] {
@@ -25,7 +24,6 @@ function rgb(h: number, s: number, l: number): [number, number, number] {
 }
 
 const graders = new Map<string, (color: string) => string>();
-/** Recolours a #rrggbb[aa] colour by an area's grade. The identity grade returns it untouched. */
 export function grader(grade: Grade): (color: string) => string {
   if (grade.hue === 0 && grade.sat === 1 && grade.light === 1) return (color) => color;
   const id = `${grade.hue}/${grade.sat}/${grade.light}`;
@@ -51,11 +49,6 @@ export function grader(grade: Grade): (color: string) => string {
 
 const isFoliage = (h: number) => h > 70 / 360 && h < 200 / 360;
 
-/**
- * Copies a canvas texture with its colours moved by a grade: one season from another.
- * Hue shifts touch only foliage greens, so bark and stone keep their colour; light and
- * saturation apply to everything (frost and snow pale the whole tree).
- */
 export function regradeTexture(scene: Phaser.Scene, source: string, target: string, grade: Grade) {
   if (scene.textures.exists(target)) return;
   const image = scene.textures.get(source).getSourceImage() as HTMLCanvasElement;
@@ -85,7 +78,6 @@ export function regradeTexture(scene: Phaser.Scene, source: string, target: stri
   scene.textures.addCanvas(target, canvas);
 }
 
-/** Original fixed-palette pixel art. All character frames share a 32×40 foot anchor. */
 export function makeForestArt(scene: Phaser.Scene, essentialsOnly = false, area: AreaDefinition = KODAMA) {
   const grade = grader(area.grade);
   let tone = grade;
@@ -95,8 +87,6 @@ export function makeForestArt(scene: Phaser.Scene, essentialsOnly = false, area:
     h: number,
     draw: (c: CanvasRenderingContext2D) => void,
   ) {
-    // Runners reuse the characters and trees without generating the large
-    // expedition ground map and its landmark textures on every replay.
     if (essentialsOnly && !["forest-player", "forest-fox", "forest-glow"].includes(key) && !key.startsWith("forest-tree-")) return;
     const canvas = document.createElement("canvas");
     canvas.width = w;
@@ -146,7 +136,6 @@ export function makeForestArt(scene: Phaser.Scene, essentialsOnly = false, area:
             ? ["#516647", "#5a704c", "#687c50"]
             : ["#31543f", "#345943", "#385b43", "#3a5e45", "#3e6247"];
         rect(c, colors[Math.floor(random() * colors.length)]!, x, y, 4, 4);
-        // Ishidatami: offset paving courses with dark grout between the stones.
         if (trail && stone) {
           if (y % 12 === 0) rect(c, "#555a52", x, y, 4, 1);
           if ((x + (Math.floor(y / 12) % 2) * 8) % 16 === 0) rect(c, "#555a52", x, y, 1, 4);
@@ -198,7 +187,6 @@ export function makeForestArt(scene: Phaser.Scene, essentialsOnly = false, area:
         rect(c, "#4c9290", x - 13 + random() * 20, y + 3, 12, 1);
       }
     }
-    // The shrine's paved courtyard and its ring of flowers, in art pixels.
     const sx = area.shrine.x / 2,
       sy = area.shrine.y / 2,
       [bloom, blossom] = area.ground.flowers;
@@ -216,7 +204,6 @@ export function makeForestArt(scene: Phaser.Scene, essentialsOnly = false, area:
       rect(c, "#799759", x, y, 1, 4);
       rect(c, random() > 0.5 ? bloom : blossom, x - 1, y, 3, 2);
     }
-    // Hydrangea-style clumps along the trail's edge where an area grows them.
     for (let placed = 0, tries = 0; placed < area.ground.trailFlowers && tries < area.ground.trailFlowers * 40; tries++) {
       const x = Math.floor(random() * 768),
         y = Math.floor(random() * 480),
@@ -326,7 +313,6 @@ export function makeForestArt(scene: Phaser.Scene, essentialsOnly = false, area:
       rect(c, "#9fa776", 33, 25, 6, 2);
       rect(c, "#819458", 30, 29, 4, 2);
     });
-  // Kiso cypress (hinoki): a tall tiered conifer on the same 100×126 foot anchor.
   texture("forest-tree-3", 100, 126, (c) => {
     const random = seeded(103),
       colors = ["#123630", "#18463a", "#225843", "#33704d", "#4f8456"];
@@ -351,7 +337,6 @@ export function makeForestArt(scene: Phaser.Scene, essentialsOnly = false, area:
       rect(c, colors[Math.floor(random() * 3) + 2]!, 50 - spread + random() * spread * 1.6, y, 2 + Math.floor(random() * 4), 1);
     }
   });
-  // A two-storey post-town inn (hatago), drawn on a bottom-centre anchor.
   texture("forest-inn", 160, 124, (c) => {
     rect(c, "#2c302c", 4, 114, 152, 8);
     rect(c, "#44312a", 10, 62, 140, 54);

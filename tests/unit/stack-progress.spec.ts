@@ -13,7 +13,6 @@ test("hiragana, katakana, romaji, sokuon, n apostrophe and long vowels", () => {
   expect(acceptsReading(gakkou, "gakko")).toBe(false);
   expect(acceptsReading(gakkou, "gakou")).toBe(false);
   expect(acceptsReading(gakkou, "garbage")).toBe(false);
-  // Phone keyboards append a full stop after a double space.
   expect(acceptsReading(gakkou, "Gakkou. ")).toBe(true);
   expect(acceptsReading(gakkou, "がっこう。")).toBe(true);
   for (const k of allKanji) for (const vocab of k.vocab) {

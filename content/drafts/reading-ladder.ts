@@ -1,4 +1,4 @@
-/** Original sentence drafts. Not imported by the application: native review is pending. */
+/** Not imported by the application: native review is pending. */
 export type SentenceDraft = { region: number; ruby: string; translation: string; slot: string; pos: "noun" | "time" | "verb" | "adjective"; reviewed: false; source: "original" };
 type DraftRow = [region: number, ruby: string, translation: string, slot: string, pos: SentenceDraft["pos"]];
 const rows: DraftRow[] = [

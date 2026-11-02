@@ -48,7 +48,6 @@ test("one-click launch supports keys, lane taps, swipes, Burst, pause, blur and 
   await page.getByRole("button", { name: /Back to the trail/ }).click();
   await page.evaluate(() => window.dispatchEvent(new Event("blur")));
   await expect(page.getByRole("dialog", { name: "Adventure paused" })).toBeVisible();
-  // Match a real return to the tab: Phaser has its own window-focus listener.
   await page.evaluate(() => window.dispatchEvent(new Event("focus")));
   await page.getByRole("button", { name: /Back to the trail/ }).click();
   const beforeResume = (await inspectFirefly(page)).elapsed;

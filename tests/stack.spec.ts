@@ -128,8 +128,6 @@ test("misses correct in place, retry grading is bounded, and holding is ungraded
 const read = (page: Page) => page.evaluate(() => JSON.parse(sessionStorage.getItem("kanji-dash-guest-v1")!));
 
 test("a checkpoint learns and stacks every region word, saves each step, then continues into Firefly Rescue", async ({ page, browserName }) => {
-  // Clearing every sheet of a region is ~150 actions. WebKit's actionability checks
-  // wait for real frames, which the WebGL canvases slow down there, so this takes ~50s.
   test.slow(browserName === "webkit", "Stacks every word of a region");
   await startSheet(page, "run?gate=1");
   expect((await read(page)).checkpointSteps).toEqual(regionSteps([1]));
@@ -147,7 +145,6 @@ test("a checkpoint learns and stacks every region word, saves each step, then co
   await expect(lobby.getByText("REGION 1 · STEP 3 OF 3")).toBeVisible();
   await expect(lobby.getByRole("list", { name: "Checkpoint steps" }).locator("[aria-current=step]")).toContainText("3. Firefly Rescue");
   await expect(lobby.getByRole("button", { name: "Light the lantern" })).toBeEnabled();
-  // Leaving keeps the place: the road and a fresh visit both resume at the rescue.
   await page.clock.resume();
   await page.goto("map", { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("link", { name: "Continue · Firefly Rescue" })).toHaveAttribute("href", /gate=1/);

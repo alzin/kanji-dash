@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { WorldBridge } from "./WorldScene";
 
-/** Hosts the Phaser overworld; Phaser loads lazily and is destroyed with its host. */
 export function WorldCanvas({ bridge }: { bridge: WorldBridge }) {
   const host = useRef<HTMLDivElement>(null);
   const [error, setError] = useState(false);

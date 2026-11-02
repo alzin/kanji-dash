@@ -1,7 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import { silenceSavePrompt } from "./helpers/savePrompt";
 
-// Observe real Web Audio nodes, including the audio clock and generated PCM buffers.
 function installProbe() {
   const w = window as any;
   w.__musicProbe = { contexts: 0, starts: 0, active: 0, max: 0, gains: [] as number[], silent: 0 };
@@ -21,7 +20,6 @@ function installProbe() {
       const ended = () => { if (tracked) { tracked = false; w.__musicProbe.active--; } };
       node.addEventListener("ended", ended);
       node.start = (...args: number[]) => {
-        // SFX noise is shorter than 1 s; music instruments are 1.35–3.2 s.
         if (node.buffer && node.buffer.duration > 1) {
           tracked = true; w.__musicProbe.starts++; w.__musicProbe.active++;
           w.__musicProbe.max = Math.max(w.__musicProbe.max, w.__musicProbe.active);

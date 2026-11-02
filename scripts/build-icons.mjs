@@ -1,5 +1,4 @@
-// Renders every app icon from the logo master in docs/brand.
-// Run after changing the logo: node scripts/build-icons.mjs
+// Run after changing the logo in docs/brand: node scripts/build-icons.mjs
 import { chromium } from "@playwright/test";
 import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
@@ -7,20 +6,14 @@ import { resolve } from "node:path";
 const root = resolve(import.meta.dirname, "..");
 const master = await readFile(resolve(root, "docs/brand/kanji-dash-logo.webp"));
 
-// `fit` is the share of the icon the logo's longest side fills. Maskable icons
-// instead fit the logo's bounding box inside the 80% safe-zone circle.
 const icons = [
   { file: "public/icons/icon-192.png", size: 192, fit: 0.86 },
   { file: "public/icons/icon-512.png", size: 512, fit: 0.86 },
   { file: "public/icons/icon-maskable-512.png", size: 512, maskable: true },
   { file: "public/apple-touch-icon.png", size: 180, fit: 0.8 },
 ];
-// The in-game wordmark drops the paper tile and repaints the navy glyph in the
-// forest theme's gold (--f-gold), so it sits on the dark HUD like the old seal.
 const gold = [0xe9, 0xc5, 0x80];
 const marks = [{ file: "public/icons/brand-mark.png", size: 256, fit: 0.98, mark: { body: gold } }];
-// Favicons are the same transparent gold mark as the in-game wordmark, cropped
-// edge to edge so the glyph stays legible at 16px.
 const favicons = [16, 32, 48, 256].map((size) => ({ size, fit: 0.97, mark: { body: gold } }));
 
 const browser = await chromium.launch();
@@ -35,7 +28,6 @@ const rendered = await page.evaluate(async ({ source, requests }) => {
   const pixels = scan.getImageData(0, 0, width, height).data;
   const background = [pixels[0], pixels[1], pixels[2]];
 
-  // Bounding box of everything that is not the paper background.
   let left = width, top = height, right = 0, bottom = 0;
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
@@ -51,7 +43,6 @@ const rendered = await page.evaluate(async ({ source, requests }) => {
   const longest = Math.max(right - left, bottom - top);
   const halfDiagonal = Math.hypot(right - left, bottom - top) / 2;
 
-  // The logo's two inks: average the clearly navy and clearly orange pixels.
   const ink = (test) => {
     const sum = [0, 0, 0];
     let count = 0;
@@ -64,8 +55,6 @@ const rendered = await page.evaluate(async ({ source, requests }) => {
   const navy = ink((r, g, b) => r < 80 && g < 80 && b > 60);
   const orange = ink((r, g, b) => r > 200 && g < 150 && b < 100);
 
-  // Splits each pixel into navy, orange and paper shares by least squares, so
-  // anti-aliased edges keep their softness once the paper turns transparent.
   const repaint = (context, size, body) => {
     const frame = context.getImageData(0, 0, size, size);
     const data = frame.data;
@@ -120,7 +109,6 @@ const pngs = rendered.map((bytes) => Buffer.from(bytes));
 const files = [...icons, ...marks];
 await Promise.all(files.map((icon, i) => writeFile(resolve(root, icon.file), pngs[i])));
 
-// favicon.ico: an ICONDIR header followed by one PNG-compressed entry per size.
 const entries = pngs.slice(files.length);
 const header = Buffer.alloc(6 + entries.length * 16);
 header.writeUInt16LE(1, 2);

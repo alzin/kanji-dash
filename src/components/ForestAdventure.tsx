@@ -70,9 +70,7 @@ export function ForestAdventure() {
   const account = useAccount();
   const [words] = useState(() => expeditionWords(getSnapshot()));
   const [level] = useState(() => learningLevel(getSnapshot()));
-  // Each JLPT level walks its own stretch of the road; the area is fixed for the session.
   const [area] = useState(() => areaForLevel(level));
-  // Where this trail sits on the whole journey, shown with a way onto the world map.
   const [{ position, hereCh }] = useState(() => {
     const here = journeyHere(getSnapshot());
     return {
@@ -267,7 +265,6 @@ export function ForestAdventure() {
       finishRun(result.earned);
       awardDailySeal(now);
       play("runComplete", { earned: result.earned });
-      // Let the player see the restored shrine before opening the report.
       setToast(`${area.remembered} Your discoveries have been recorded.`);
     }
   }, [feedback, paused, account.prompt, words.length, restored, area]);
@@ -277,7 +274,6 @@ export function ForestAdventure() {
     const timer = setTimeout(advance, 1000);
     return () => clearTimeout(timer);
   }, [feedback, paused, account.prompt, encounter, journal, advance]);
-  // Back to the map. A finished trail is already saved; an unfinished one asks first.
   const leaveToMap = () => {
     if (saved.current) {
       void navigate({ to: "/", search: mapSearch });

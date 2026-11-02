@@ -3,7 +3,6 @@ import { silenceSavePrompt } from "./helpers/savePrompt";
 
 test.beforeEach(({ page }) => silenceSavePrompt(page));
 
-// camp and map are the Camp and Journey log panels on the world map; the old paths open them.
 for (const route of ["camp", "map", "collection", "practice"] as const) {
   test(`a new learner can switch N4/N3/N2 on ${route} and keep the selection after reload`, async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 640 });

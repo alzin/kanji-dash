@@ -21,16 +21,15 @@ export const Route = createFileRoute("/collection")({
 });
 
 const TILE_CLASS = [
-  "border-border bg-card text-muted-foreground", // unseen
-  "border-gold/60 bg-gold/10 text-foreground", // learning
-  "border-accent/50 bg-accent/10 text-foreground", // reviewing
-  "border-primary/60 bg-primary/10 text-foreground", // mastered
+  "border-border bg-card text-muted-foreground",
+  "border-gold/60 bg-gold/10 text-foreground",
+  "border-accent/50 bg-accent/10 text-foreground",
+  "border-primary/60 bg-primary/10 text-foreground",
 ];
 
 const MASTERY_LABEL = ["Unseen", "Learning", "Reviewing", "Mastered"];
 const DIALOG_HEIGHT = "max-h-[calc(100dvh_-_max(1rem,env(safe-area-inset-top,0px)))] sm:max-h-[min(85dvh,calc(100dvh_-_env(safe-area-inset-top,0px)_-_env(safe-area-inset-bottom,0px)))]";
 
-// Treat hiragana and katakana as equivalent so either keyboard can find readings.
 function normalizeSearch(value: string) {
   return value.normalize("NFKC").toLowerCase().replace(/[\u30a1-\u30f6]/g, (character) =>
     String.fromCharCode(character.charCodeAt(0) - 0x60),
@@ -130,7 +129,6 @@ function CollectionPage() {
   const searchRef = useRef<HTMLInputElement>(null);
   const openerRef = useRef<HTMLButtonElement>(null);
   const railRef = useRef<HTMLDivElement>(null);
-  // A pointer cannot swipe, and the rail hides its scrollbar, so it needs arrows.
   const [rail, setRail] = useState({ start: false, end: false });
   const dismissDetail = useCallback(() => setSelected(null), []);
 
@@ -159,8 +157,7 @@ function CollectionPage() {
     el.scrollBy({ left: direction * Math.max(180, el.clientWidth * 0.8), behavior: reduced ? "auto" : "smooth" });
   };
 
-  // Drag to scroll, so a mouse can slide the rail the way a finger does. Touch already
-  // scrolls natively, and a drag that actually moved must not land as a chip click.
+  // Touch already scrolls natively, and a drag that actually moved must not land as a chip click.
   const drag = useRef<{ id: number; startX: number; startScroll: number; moved: boolean } | null>(null);
   const railDragProps = {
     onPointerDown: (event: PointerEvent<HTMLDivElement>) => {
@@ -185,7 +182,6 @@ function CollectionPage() {
       const current = drag.current;
       if (!current || event.pointerId !== current.id) return;
       if (current.moved) railRef.current?.releasePointerCapture(current.id);
-      // Cleared on the click that follows, which is where a dragged chip is suppressed.
       window.setTimeout(() => { drag.current = null; }, 0);
     },
     onPointerCancel: () => { drag.current = null; },
@@ -197,7 +193,6 @@ function CollectionPage() {
   };
 
   const searchTerms = normalizeSearch(query.trim()).split(/\s+/).filter(Boolean);
-  // A level change in another tab must not leave an incompatible region filter.
   const activeFilter = filter !== null && LEVEL_CHAPTERS[level].includes(filter) ? filter : null;
   const shown = kanjiOfLevel(level).filter((kanji) => {
     if (activeFilter !== null && kanji.ch !== activeFilter) return false;
@@ -244,9 +239,6 @@ function CollectionPage() {
           )}
         </div>
 
-        {/* The rail scrolls; a finger can swipe it but a mouse cannot, so pointer devices
-            get arrows. They are redundant for the keyboard — tabbing a chip scrolls it into
-            view — so they stay out of the tab order. */}
         <div className="relative mt-3">
           <div aria-hidden="true" className={`pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-paper to-transparent transition-opacity sm:-left-1 ${rail.start ? "opacity-100" : "opacity-0"}`} />
           <div aria-hidden="true" className={`pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-paper to-transparent transition-opacity sm:-right-1 ${rail.end ? "opacity-100" : "opacity-0"}`} />

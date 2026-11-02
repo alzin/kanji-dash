@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 
-/** Register once for every entry route, including links straight into a run. */
 export function PwaRegistration() {
   useEffect(() => {
     if (!import.meta.env.PROD || !window.isSecureContext || !("serviceWorker" in navigator)) return;
@@ -19,7 +18,6 @@ export function PwaRegistration() {
         });
         if (!disposed) registration = result;
       } catch (error) {
-        // The online game remains usable if browser settings block offline storage.
         console.warn("Kanji Dash could not enable offline play.", error);
       } finally {
         registering = false;

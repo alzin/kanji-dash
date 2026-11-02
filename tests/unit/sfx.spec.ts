@@ -21,7 +21,6 @@ import {
   type Voice,
 } from "../../src/lib/sfx";
 
-// The planner is pure and runs in Node; the store tests below fake a window.
 test.describe.configure({ mode: "serial" });
 
 const isOsc = (v: Voice) => v.kind === "osc";
@@ -67,7 +66,7 @@ test.describe("planSound", () => {
       expect(plan.haptic).toBe(10);
       expect(plan.minIntervalMs).toBe(40);
     }
-    const idx = 4; // combo 5 -> ladder index 4, second pluck two rungs up
+    const idx = 4;
     const combo5 = planSound("correct", { combo: 5 });
     expect(combo5.voices.find((v) => near(v.at, 0.06) && isOsc(v))?.freq).toBe(PENTATONIC_LADDER[idx + 2]);
     expect(planSound("correct").voices.find(isOsc)?.freq).toBe(293.66);
@@ -159,7 +158,6 @@ test.describe("planSound", () => {
     expect(Math.max(...passed.voices.map((v) => v.at))).toBeLessThan(1.6);
     expect(Array.isArray(passed.haptic)).toBe(true);
 
-    // Coin ticks share 2637 Hz with the E6 bell's second partial; tell them apart by envelope.
     const isCoinTick = (v: Voice) => v.attackMs === 1 && v.decayMs === 69;
     const seal = planSound("sealEarned");
     expect(seal.voices[0]?.at).toBe(STAMP_LAND_SECONDS);
@@ -225,7 +223,7 @@ test.describe("preference and engine in Node", () => {
       expect(getSoundEnabled()).toBe(true);
       expect(store.get(SOUND_PREF_KEY)).toBe("on");
       expect(notified).toBe(1);
-      expect(isAudioRunning()).toBe(false); // no AudioContext on the fake window: nothing created
+      expect(isAudioRunning()).toBe(false);
       setSoundEnabled(false);
       expect(store.get(SOUND_PREF_KEY)).toBe("off");
       expect(notified).toBe(2);
@@ -241,8 +239,6 @@ test.describe("preference and engine in Node", () => {
   });
 
   test("renderer schedules voices on a recorder-style context", () => {
-    // Mirrors the e2e recorder stub: AudioParams log setValueAtTime, oscillator.start
-    // records the first frequency setValueAtTime, buffer sources record as noise.
     type Logged = { type: string; freq: number; at: number };
     const log: Logged[] = [];
     let contexts = 0;
@@ -291,7 +287,7 @@ test.describe("preference and engine in Node", () => {
     g.window = { AudioContext: StubContext, localStorage: { getItem: () => null, setItem: () => {} }, addEventListener: () => {} };
     try {
       expect(getSoundEnabled()).toBe(true);
-      play("correct", { combo: 1 }); // nothing before unlock: no context yet
+      play("correct", { combo: 1 });
       expect(contexts).toBe(0);
       expect(log).toHaveLength(0);
 
@@ -299,13 +295,13 @@ test.describe("preference and engine in Node", () => {
       expect(contexts).toBe(1);
       expect(isAudioRunning()).toBe(true);
       unlock();
-      expect(contexts).toBe(1); // singleton
+      expect(contexts).toBe(1);
 
       play("correct", { combo: 1 });
       const triangles = log.filter((v) => v.type === "triangle").map((v) => v.freq);
       expect(triangles).toEqual([293.66]);
       expect(log.some((v) => v.type === "noise")).toBe(true);
-      play("correct", { combo: 2 }); // same id inside the 40 ms window: coalesced
+      play("correct", { combo: 2 });
       expect(log.filter((v) => v.type === "triangle")).toHaveLength(1);
 
       play("wrong", { hearts: 1 });
@@ -315,7 +311,7 @@ test.describe("preference and engine in Node", () => {
 
       play("comboMilestone", { combo: 3 });
       expect(log.some((v) => v.type === "sine" && v.freq === 1318.5)).toBe(true);
-      play("mastered"); // within 100 ms of the milestone: dropped
+      play("mastered");
       expect(log.some((v) => v.type === "triangle" && v.freq === 1174.66)).toBe(false);
 
       play("checkpointPassed", { earned: 50 });
@@ -328,15 +324,12 @@ test.describe("preference and engine in Node", () => {
       expect(log).toHaveLength(before);
       setSoundEnabled(true);
     } finally {
-      // Release the singleton so the next test can install its own recorder.
       for (const c of created) c.state = "closed";
       delete g.window;
     }
   });
 
   test("a minimal recorder without detune or frequency ramps still starts every voice", async () => {
-    // Plucks shape their pitch through osc.detune and glides through frequency
-    // ramps; a recorder that omits them must not lose the start() the e2e keys on.
     // The 8-voice cap is wall-clock: let the previous test's voices end first.
     await new Promise((resolve) => setTimeout(resolve, 600));
     type Logged = { type: string; freq: number; at: number };
@@ -374,7 +367,7 @@ test.describe("preference and engine in Node", () => {
           start: (t: number) => { log.push({ type: self.type, freq: first, at: t }); },
           stop: () => {},
         };
-        return self; // no detune param, no ramps, no compressor
+        return self;
       }
     }
     const g = globalThis as { window?: unknown };
@@ -385,10 +378,8 @@ test.describe("preference and engine in Node", () => {
       play("keepRunning");
       expect(log.filter((v) => v.type === "noise").map((v) => v.at)).toEqual([0, 0.05]);
       expect(log.filter((v) => v.type === "triangle")).toEqual([{ type: "triangle", freq: 293.66, at: 0.05 }]);
-      play("wrong", { hearts: 2 }); // the taiko glide has no ramp to use either
+      play("wrong", { hearts: 2 });
       expect(log.some((v) => v.type === "sine" && v.freq === 150 && v.at === 0)).toBe(true);
-      // Five keepRunning voices are still live, so the taiko's skin is the 8th and
-      // the fwip (9th non-ceremony voice) is dropped by the cap: 3 noises in total.
       expect(log.filter((v) => v.type === "noise")).toHaveLength(3);
     } finally {
       for (const c of created) c.state = "closed";

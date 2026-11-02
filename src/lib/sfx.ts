@@ -1,13 +1,9 @@
 import { useSyncExternalStore } from "react";
 
 /*
- * Kanji Dash sound engine.
- *
- * Two halves live in this file:
- *  - a pure planner (planSound and friends) that turns a SoundId into a data-only
- *    SoundPlan; it never touches window and is unit-tested in Node;
- *  - an impure renderer around one module-singleton AudioContext (Chrome caps
- *    hardware contexts at 6 and RunnerGame remounts on every "Run again").
+ * planSound and friends never touch window: they are unit-tested in Node.
+ * One module-singleton AudioContext: Chrome caps hardware contexts at 6 and
+ * RunnerGame remounts on every "Run again".
  *
  * Rules the renderer follows:
  *  - the context is created/resumed only from unlock(), which callers invoke
@@ -31,27 +27,27 @@ export type SoundId =
   | "gateHit" | "gateStreak" | "gateMiss" | "gateIntro" | "paceUp";
 
 export type SoundOpts = {
-  combo?: number;      // correct, comboMilestone
-  dir?: -1 | 1;        // laneChange (-1 = up)
-  hearts?: number;     // wrong: 1 schedules lastHeart
-  earned?: number;     // coins / results plans
-  level?: number;      // stamp loudness 0..1 (dojo 0.65)
+  combo?: number;
+  dir?: -1 | 1;
+  hearts?: number;
+  earned?: number;
+  level?: number;
 };
 
 export type Voice = {
-  at: number;                       // seconds after t0, >= 0
+  at: number;
   kind: "osc" | "noise";
-  wave?: OscillatorType;            // osc only
-  freq: number;                     // Hz: oscillator start (setValueAtTime) or filter centre for noise
-  freqEnd?: number;                 // exponential glide target
+  wave?: OscillatorType;
+  freq: number;
+  freqEnd?: number;
   glideMs?: number;
   detuneCents?: number;
-  gain: number;                     // peak pre-master, <= 0.5
-  attackMs: number;                 // linear 0 -> gain
-  decayMs: number;                  // exponential -> 0.001, then stop
+  gain: number;
+  attackMs: number;
+  decayMs: number;
   filter?: { type: BiquadFilterType; freq: number; q: number; freqEnd?: number };
   lfo?: { hz: number; depth: number };
-  ceremony?: boolean;               // bypasses the 8-voice cap
+  ceremony?: boolean;
   // Pluck transient: the oscillator starts dropCents above its pitch and settles
   // linearly over dropMs (via the detune param, so frequency.setValueAtTime still
   // carries the true pitch for the e2e recorder).
@@ -71,9 +67,7 @@ export const SOUND_IDS: readonly SoundId[] = [
   "gateHit", "gateStreak", "gateMiss", "gateIntro", "paceUp",
 ];
 
-// D yo-pentatonic ladder: D4 E4 G4 A4 B4 D5 E5 G5 A5 B5 D6. The top rung is held.
 export const PENTATONIC_LADDER: readonly number[] = [293.66, 329.63, 392, 440, 493.88, 587.33, 659.26, 783.99, 880, 987.77, 1174.66];
-// Orin strikes: E6, A6, D7.
 export const MILESTONE_BELLS: readonly number[] = [1318.5, 1760, 2349];
 // Hanko thump time = CSS .stamp-in delay 200 ms + 55% of its 480 ms (keep in sync with styles.css).
 export const STAMP_LAND_SECONDS = 0.46;
@@ -81,7 +75,7 @@ export const MAX_LIVE_VOICES = 8;
 
 const E6 = 1318.5;
 const D4 = 293.66;
-const PLUCK_DROP_CENTS = 20.7; // 1200 * log2(1.012)
+const PLUCK_DROP_CENTS = 20.7;
 
 function safeCombo(combo: number | undefined): number {
   return typeof combo === "number" && Number.isFinite(combo) ? Math.max(0, Math.floor(combo)) : 0;
@@ -111,8 +105,6 @@ function sine(at: number, freq: number, gain: number, attackMs: number, decayMs:
   return { at, kind: "osc", wave: "sine", freq, gain, attackMs, decayMs, ...extra };
 }
 
-// Koto pluck: triangle + two sine partials with a 25 ms pitch settle, a pick
-// transient, all under a 3.5 kHz lowpass. `peak` is the fundamental's level.
 function pluck(freq: number, at: number, peak: number, decayMs: number, detune = 0, ceremony = false): Voice[] {
   const shared: Partial<Voice> = {
     attackMs: 3,
@@ -130,7 +122,6 @@ function pluck(freq: number, at: number, peak: number, decayMs: number, detune =
   ];
 }
 
-// Orin bell: four sine partials, a 6 Hz tremolo on the fundamental. Always ceremony.
 function bell(freq: number, at: number, peak: number, tailMs = 700): Voice[] {
   const k = tailMs / 700;
   const partial = (ratio: number, rel: number, decay: number, extra: Partial<Voice> = {}): Voice =>
@@ -196,8 +187,6 @@ function arpeggio(at: number): Voice[] {
   ];
 }
 
-// Arcade layer for the word runner: punchy chip tones and kicks, still in the D
-// yo-pentatonic key so they sit on the music. Always ceremony: one answer, one full sound.
 function chip(freq: number, at: number, peak: number, decayMs: number, wave: OscillatorType = "square", extra: Partial<Voice> = {}): Voice {
   return { at, kind: "osc", wave, freq, gain: peak, attackMs: 2, decayMs, filter: { type: "lowpass", freq: 4200, q: 0.8 }, ceremony: true, ...extra };
 }
@@ -308,7 +297,6 @@ export function planSound(id: SoundId, opts: SoundOpts = {}): SoundPlan {
     case "checkpointPassed": {
       const t = STAMP_LAND_SECONDS;
       voices.push(...stamp(t, 1), ...arpeggio(t + 0.16), ...bell(E6, t + 0.70, 0.10), ...coins(t + 0.95, opts.earned));
-      // Leading zero-length buzz + pause lands the 25 ms tap on the stamp, then the tally pattern.
       hapticPattern = [0, Math.round(t * 1000), 25, 60, 15, 40, 15, 40, 40];
       break;
     }
@@ -339,7 +327,6 @@ export function planSound(id: SoundId, opts: SoundOpts = {}): SoundPlan {
       hapticPattern = 15;
       break;
     case "gateHit": {
-      // Three quick rising notes that climb the ladder with the streak, on a kick.
       const base = Math.min(Math.max(safeCombo(opts.combo), 1), 7);
       const notes = [base + 1, base + 2, base + 3].map((i) => (PENTATONIC_LADDER[i] ?? 587.33) * 2);
       voices.push(...kick(0, 0.26), chip(notes[0]!, 0, 0.085, 110), chip(notes[1]!, 0.055, 0.085, 110), chip(notes[2]!, 0.11, 0.1, 220));
@@ -348,7 +335,6 @@ export function planSound(id: SoundId, opts: SoundOpts = {}): SoundPlan {
       break;
     }
     case "gateStreak":
-      // A short fanfare for every third answer in a row, when Burst charges up.
       voices.push(...kick(0, 0.3), ...kick(0.24, 0.22));
       voices.push(chip(587.33, 0, 0.07, 120, "sawtooth", { filter: { type: "lowpass", freq: 3500, q: 0.8 } }));
       voices.push(chip(880, 0.07, 0.07, 120, "sawtooth", { filter: { type: "lowpass", freq: 3500, q: 0.8 } }));
@@ -358,18 +344,15 @@ export function planSound(id: SoundId, opts: SoundOpts = {}): SoundPlan {
       hapticPattern = [14, 30, 14, 30, 30];
       break;
     case "gateMiss":
-      // A friendly "bwoop" down with a soft thud: clearly wrong, never a heart lost.
       voices.push(chip(440, 0, 0.11, 280, "square", { freqEnd: 150, glideMs: 240, filter: { type: "lowpass", freq: 1600, q: 0.8 } }));
       voices.push(chip(415, 0, 0.05, 260, "sawtooth", { freqEnd: 140, glideMs: 240, filter: { type: "lowpass", freq: 1200, q: 0.8 } }));
       voices.push(sine(0, 130, 0.2, 3, 200, { freqEnd: 60, glideMs: 140, ceremony: true }));
       hapticPattern = [18, 40, 18];
       break;
     case "gateIntro":
-      // A new word: a bright rising chime.
       voices.push(...[587.33, 880, 1174.66, 1318.5].map((freq, i) => sine(i * 0.06, freq, 0.08, 3, 380, { ceremony: true })), sparkle(0.18, 0.05, 320));
       break;
     case "paceUp":
-      // The trail quickens: a rising whoosh that lands on a ping.
       voices.push(noise(0, { type: "bandpass", freq: 400, q: 1.4, freqEnd: 3200 }, 0.09, 120, 420, { glideMs: 480, ceremony: true }));
       voices.push(sine(0, 330, 0.05, 60, 480, { freqEnd: 990, glideMs: 450, ceremony: true }), chip(1174.66, 0.42, 0.06, 200));
       break;
@@ -415,9 +398,7 @@ function loadPref(): void {
       soundEnabled = normalizeSoundPreference(event.newValue);
       notifySound();
     });
-  } catch {
-    /* ignore */
-  }
+  } catch {}
 }
 
 export function getSoundEnabled(): boolean {
@@ -446,19 +427,14 @@ export function setSoundEnabled(on: boolean): void {
   soundEnabled = on;
   try {
     if (typeof window !== "undefined") window.localStorage.setItem(SOUND_PREF_KEY, on ? "on" : "off");
-  } catch {
-    /* ignore */
-  }
+  } catch {}
   notifySound();
   if (on) {
-    unlock(); // the caller is inside a gesture
+    unlock();
   } else if (ctx) {
-    // Let the student's own music back in while muted; unlock() resumes on unmute.
     try {
       swallow(ctx.suspend());
-    } catch {
-      /* ignore */
-    }
+    } catch {}
   }
 }
 
@@ -481,18 +457,14 @@ function swallow(promise: unknown): void {
 function wallNow(): number {
   try {
     if (typeof performance !== "undefined" && typeof performance.now === "function") return performance.now();
-  } catch {
-    /* fall through */
-  }
+  } catch {}
   return Date.now();
 }
 
 function setParam(param: AudioParam | undefined, value: number): void {
   try {
     if (param) param.value = value;
-  } catch {
-    /* ignore */
-  }
+  } catch {}
 }
 
 function buildMaster(context: AudioContext): AudioNode {
@@ -506,9 +478,7 @@ function buildMaster(context: AudioContext): AudioNode {
     setParam(compressor.release, 0.12);
     compressor.connect(output);
     output = compressor;
-  } catch {
-    /* no compressor: straight to the destination */
-  }
+  } catch {}
   try {
     const shelf = context.createBiquadFilter();
     shelf.type = "highshelf";
@@ -516,17 +486,13 @@ function buildMaster(context: AudioContext): AudioNode {
     setParam(shelf.gain, -4);
     shelf.connect(output);
     output = shelf;
-  } catch {
-    /* no shelf */
-  }
+  } catch {}
   try {
     const bus = context.createGain();
     setParam(bus.gain, 0.8);
     bus.connect(output);
     output = bus;
-  } catch {
-    /* no bus */
-  }
+  } catch {}
   return output;
 }
 
@@ -567,9 +533,7 @@ function ensureContext(): AudioContext | null {
   buildNoise(created);
   try {
     created.onstatechange = onStateChange;
-  } catch {
-    /* ignore */
-  }
+  } catch {}
   return created;
 }
 
@@ -581,7 +545,6 @@ export function isAudioRunning(): boolean {
   }
 }
 
-/** Shared output for the soundtrack. Reading this never creates or resumes audio. */
 export function getGameAudio(): { context: AudioContext; output: AudioNode } | null {
   return ctx && master && ctx.state === "running" ? { context: ctx, output: master } : null;
 }
@@ -611,12 +574,9 @@ export function unlock(): void {
     const context = ensureContext();
     if (!context) return;
     if (context.state !== "running") resumeContext(context);
-  } catch {
-    /* ignore */
-  }
+  } catch {}
 }
 
-/** Play now if the context is running, otherwise once the pending resume() settles (one sound only). */
 export function playWhenReady(id: SoundId, opts?: SoundOpts): void {
   try {
     if (!getSoundEnabled()) return;
@@ -626,9 +586,7 @@ export function playWhenReady(id: SoundId, opts?: SoundOpts): void {
     }
     pendingAfterResume = opts ? { id, opts } : { id };
     unlock();
-  } catch {
-    /* ignore */
-  }
+  } catch {}
 }
 
 function applyFilter(context: AudioContext, spec: Filter, start: number, glideMs: number | undefined): BiquadFilterNode {
@@ -694,7 +652,6 @@ function renderVoice(context: AudioContext, out: AudioNode, voice: Voice, base: 
       head = filter;
     }
     if (voice.lfo) {
-      // Tremolo before the envelope so the tail still decays to silence.
       try {
         const tremolo = context.createGain();
         tremolo.gain.setValueAtTime(1, start);
@@ -709,9 +666,7 @@ function renderVoice(context: AudioContext, out: AudioNode, voice: Voice, base: 
         head = tremolo;
         lfo.start(start);
         lfo.stop(end + 0.05);
-      } catch {
-        /* no tremolo */
-      }
+      } catch {}
     }
   }
 
@@ -724,13 +679,9 @@ function renderVoice(context: AudioContext, out: AudioNode, voice: Voice, base: 
       try {
         source.disconnect();
         env.disconnect();
-      } catch {
-        /* ignore */
-      }
+      } catch {}
     };
-  } catch {
-    /* ignore */
-  }
+  } catch {}
   return true;
 }
 
@@ -753,9 +704,7 @@ function render(context: AudioContext, plan: SoundPlan, now: number): void {
       if (renderVoice(context, out, voice, base) && !voice.ceremony) {
         liveEnds.push(now + voice.at * 1000 + voice.attackMs + voice.decayMs + 30);
       }
-    } catch {
-      /* skip this voice */
-    }
+    } catch {}
   }
 }
 
@@ -773,9 +722,7 @@ export function play(id: SoundId, opts?: SoundOpts): void {
     lastPlayed[id] = now;
     render(context, plan, now);
     if (plan.haptic !== undefined) haptic(plan.haptic);
-  } catch {
-    /* audio is cosmetic */
-  }
+  } catch {}
 }
 
 export function haptic(pattern: number | number[]): void {
@@ -784,9 +731,7 @@ export function haptic(pattern: number | number[]): void {
     if (!getSoundEnabled()) return;
     if (typeof document !== "undefined" && document.hidden) return;
     navigator.vibrate(pattern);
-  } catch {
-    /* ignore */
-  }
+  } catch {}
 }
 
 
@@ -798,7 +743,6 @@ let dispose: (() => void) | null = null;
 function onGesture(): void {
   disarm();
   unlock();
-  // Muted, or resume still pending: keep listening for the next gesture.
   if (!isAudioRunning()) arm();
 }
 
@@ -822,11 +766,9 @@ function onDelegatedClick(event: Event): void {
     if (!el) return;
     const id = el.dataset["sfx"];
     if (id !== "tap" && id !== "sheet") return;
-    unlock(); // a click is user activation: the Home CTA primes audio
+    unlock();
     play(id);
-  } catch {
-    /* ignore */
-  }
+  } catch {}
 }
 
 function onVisibilityChange(): void {
@@ -840,9 +782,7 @@ function onVisibilityChange(): void {
     }
     if (ctx && ctx.state === "running") swallow(ctx.suspend());
     arm();
-  } catch {
-    /* ignore */
-  }
+  } catch {}
 }
 
 export function boot(): () => void {
@@ -853,17 +793,13 @@ export function boot(): () => void {
     try {
       document.removeEventListener("click", onDelegatedClick, GESTURE_OPTIONS);
       document.removeEventListener("visibilitychange", onVisibilityChange);
-    } catch {
-      /* ignore */
-    }
+    } catch {}
     dispose = null;
   };
   try {
     document.addEventListener("click", onDelegatedClick, GESTURE_OPTIONS);
     document.addEventListener("visibilitychange", onVisibilityChange);
-  } catch {
-    /* ignore */
-  }
+  } catch {}
   arm();
   return dispose;
 }

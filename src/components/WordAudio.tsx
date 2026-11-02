@@ -11,7 +11,6 @@ export function primeSpeech(): void {
   catch { /* Speech remains available through the replay buttons. */ }
 }
 
-/** Queues one pronunciation without a replay control, e.g. the correction after a missed word. */
 export function speakReading(reading: string): void {
   if (!reading || document.hidden || !getVoiceEnabled()) return;
   if (!("speechSynthesis" in window) || !("SpeechSynthesisUtterance" in window)) return;
@@ -26,14 +25,10 @@ export function speakReading(reading: string): void {
   catch { releaseMusicDuck(speech); }
 }
 
-/** Speak kana so words with multiple kanji readings use the lesson's exact reading.
- *  "inline" is the labelled pair used on the study pages; "hud" is the 44 px round pair
- *  that sits in the run's bottom control row beside pause and mute. */
 export function WordAudio({ reading, wordKey, paused = false, autoPlay = true, variant = "inline", className = "" }: {
   reading: string;
   wordKey: unknown;
   paused?: boolean;
-  /** Disable automatic answer audio while retaining an explicit pronunciation button. */
   autoPlay?: boolean;
   variant?: "inline" | "hud";
   className?: string;

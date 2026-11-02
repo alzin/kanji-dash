@@ -25,7 +25,6 @@ export function normalizeRunner(value: unknown): RunnerProgress {
     const records = object(best[level]);
     result.best[level] = { standard: score(records["standard"]), relaxed: score(records["relaxed"]) };
   }
-  // Canonical order also makes cloud comparison independent of rescue order.
   result.rescued = SPIRITS.filter((spirit) => Array.isArray(raw["rescued"]) && raw["rescued"].includes(spirit.id)).map((spirit) => spirit.id);
   result.equippedLantern = LANTERNS.find((lantern) => lantern.id === raw["equippedLantern"] && lantern.required <= result.rescued.length)?.id ?? "amber";
   result.tutorialSeen = raw["tutorialSeen"] === true;

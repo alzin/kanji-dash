@@ -1,4 +1,3 @@
-# Keep environment files and local state out of any uploaded build source.
 .git
 .github
 node_modules

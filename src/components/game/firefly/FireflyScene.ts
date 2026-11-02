@@ -6,7 +6,6 @@ import { multiplierOf, type FireflyEntity, type FireflyState } from "./simulatio
 
 export type FireflyView = {
   state: FireflyState; paused: boolean; reducedMotion: boolean; lantern: LanternId;
-  /** Canvas y where the trail emerges below the lantern call. */
   trackTop: number;
   tick: (seconds: number) => void; ready: () => void;
 };
@@ -16,9 +15,7 @@ const palettes = [
   { sky: 0x183d51, bottom: 0x0c243a, path: 0x345052, edge: 0x627975, accent: 0xa4d9de },
   { sky: 0x312f4f, bottom: 0x152633, path: 0x49464f, edge: 0x736779, accent: 0xe5ba88 },
 ];
-/** Scale of the far end of the trail; objects grow to full size as they reach Aki. */
 const FAR = .68;
-/** Approach curve: things linger in the distance and rush in at the end, like real depth. */
 const PERSPECTIVE = 1.5;
 const CHEERS = [
   { streak: 8, jp: "かんぺき!", en: "PERFECT" },
@@ -152,7 +149,6 @@ class FireflyScene extends Phaser.Scene {
     slot.text.setText(text);
     Object.assign(slot, { at: this.age, x, y });
   }
-  /** A gate has just been answered: celebrate a hit, cushion a miss. */
   private react(e: FireflyEntity, laneAt: (lane: number, k: number) => number, plateY: number, w: number) {
     const s = this.view.state, c = e.content!, still = this.view.reducedMotion;
     const intro = c.mode === "intro", hit = intro || e.chosen === c.answer;
@@ -181,7 +177,6 @@ class FireflyScene extends Phaser.Scene {
       this.say("おしい!", "SO CLOSE · IT COMES BACK", "#ffc9b8");
     }
   }
-  /** Word gates: three lantern plates per row. After a choice, the right word glows and drifts to Aki. */
   private drawGates(f: Phaser.GameObjects.Graphics, w: number, plateH: number, heroX: number, heroY: number, project: (lead: number) => Projection, laneAt: (lane: number, k: number) => number) {
     const v = this.view, s = v.state;
     const plateW = Math.min(150, w * .27);
@@ -215,7 +210,6 @@ class FireflyScene extends Phaser.Scene {
             fill = 0x4a2a31; stroke = 0xc98a86; text = "#e8c2bb"; alpha = Math.max(0, 1 - progress * 1.6) * .75;
             if (!v.reducedMotion) py = y + progress * 26;
           } else if (answer) {
-            // The right word comes to Aki so the miss ends on the correct form.
             fill = 0x2f5b45; stroke = 0xfff0b8; text = "#fff6d2"; alpha = 1 - Math.max(0, progress - .65) / .35;
             if (!v.reducedMotion) { const ease = 1 - Math.pow(1 - progress, 3); px = x + (heroX - x) * ease; py = y - ease * 46; }
           } else alpha = Math.max(0, 1 - progress * 2.5) * .25;
@@ -229,7 +223,6 @@ class FireflyScene extends Phaser.Scene {
         if (intro || (e.resolved && answer && !hit)) f.fillStyle(0xffe6a0, .1 * alpha).fillCircle(px, py, pw * .62);
         f.fillStyle(fill, .95 * alpha).fillRoundedRect(px - pw / 2, py - ph / 2, pw, ph, 10 * scale);
         f.lineStyle(2, stroke, .85 * alpha).strokeRoundedRect(px - pw / 2, py - ph / 2, pw, ph, 10 * scale);
-        // Long readings wrap onto two lines rather than shrinking past legibility on small phones.
         const chars = [...c.labels[lane]!];
         let word = chars.join(""), fit = (plateW - 14) / Math.max(1.6, chars.length) * 1.02;
         if (fit < 13 && chars.length > 4) {
@@ -261,7 +254,6 @@ class FireflyScene extends Phaser.Scene {
         fx.fillStyle(p.color, fade).fillCircle(p.x, p.y, p.size);
       }
     }
-    // The callout pops in, holds, then drifts up and fades.
     const t = this.age - this.cheerAt;
     const visible = t >= 0 && t < 1.05;
     this.cheer.setVisible(visible); this.cheerSub.setVisible(visible);
@@ -295,8 +287,6 @@ class FireflyScene extends Phaser.Scene {
     const p = palettes[s.stage]!, g = this.paint, f = this.actors;
     const unit = Math.max(1.1, Math.min(1.65, w / 280));
     const heroY = h * .72;
-    // Everything travels from just below the lantern call to Aki over one sight window;
-    // the start leaves room for a whole gate plate so no word enters under the call.
     const plateH = Math.max(40, Math.min(58, w * .125));
     const top = Math.min(heroY - 120, Math.max(60, v.trackTop + plateH * 1.15 + 12));
     const span = heroY - top, slope = span * PERSPECTIVE / s.sight;
@@ -305,7 +295,6 @@ class FireflyScene extends Phaser.Scene {
       return { y: heroY - lead * slope, k: Math.min(1.25, 1 - lead / s.sight * (1 - FAR)) };
     };
     const laneAt = (lane: number, k: number) => w / 2 + (lane - 1) * w * .3 * (.8 + .2 * (k - FAR) / (1 - FAR));
-    // Side scenery keeps pace with the ground beside Aki, where speed is felt most.
     const heroX = laneAt(s.playerLane, 1), travel = s.elapsed * slope;
     const lantern = Phaser.Display.Color.HexStringToColor(LANTERNS.find(l => l.id === v.lantern)!.color).color;
     if (s.stage !== this.lastStage) {
@@ -315,11 +304,9 @@ class FireflyScene extends Phaser.Scene {
     }
     g.clear(); f.clear(); this.spirits.forEach(sprite => sprite.setVisible(false));
     g.fillGradientStyle(p.sky, p.sky, p.bottom, p.bottom).fillRect(0, 0, w, h);
-    // The path breathes through vegetation; the river uses the same readable crossing.
     g.fillStyle(p.edge, .35).fillRoundedRect(w * .055, 0, w * .89, h, 45);
     g.fillStyle(p.path, .85).fillRoundedRect(w * .09, -50, w * .82, h + 100, 70);
     g.fillStyle(0xd2d8ad, .035).fillRect(w * .12, 0, w * .76, h);
-    // Ground detail is pinned to the trail, so it shares the depth of everything on it.
     const near = -(h - heroY) / slope - .2;
     for (let n = Math.ceil((s.elapsed + near) / .17); n * .17 < s.elapsed + s.sight; n++) {
       const { y, k } = project(n * .17 - s.elapsed), x = w / 2 + (hash(n) - .5) * w * .74 * (.8 + .2 * (k - FAR) / (1 - FAR));
@@ -348,7 +335,6 @@ class FireflyScene extends Phaser.Scene {
       g.fillStyle(0x65826a, .42).fillRect(x, y, 4, 160);
       for (let n = 0; n < 5; n++) g.fillStyle(0xa6ba88, .25).fillRect(x - 1, y + n * 30, 6, 2);
     }
-    // Lanterns mark the last ascent and frame the delivery.
     if (s.stage === 2) for (let i = 0; i < 10; i++) {
       const x = i % 2 ? w * .94 : w * .06, y = (Math.floor(i / 2) * 165 + travel) % (h + 165) - 50;
       g.lineStyle(2, 0x8d685e).lineBetween(x, y - 30, x, y + 30);
@@ -356,7 +342,6 @@ class FireflyScene extends Phaser.Scene {
       g.fillStyle(0xdea773).fillRoundedRect(x - 7, y - 9, 14, 18, 4);
       g.lineStyle(1, 0x7a5647).strokeRoundedRect(x - 7, y - 9, 14, 18, 4);
     }
-    // Speed lines rise with the pace and surge when a new stage begins.
     const surge = Math.max(0, 1 - (this.age - this.surgeAt) / 1.6);
     const rush = v.reducedMotion || !moving ? 0 : Math.min(1, Math.max(0, (s.pace - .95) / .45) + surge * .8 + (s.burstRemaining > 0 ? .4 : 0));
     if (rush > 0) for (let i = 0; i < 16; i++) {
@@ -406,8 +391,6 @@ class FireflyScene extends Phaser.Scene {
     }
     this.drawGates(f, w, plateH, heroX, heroY, project, laneAt);
 
-    // Aki runs: the stride quickens with the pace, each footfall lifts dust,
-    // lane changes lean into the turn, a hit hops through the gate and a miss stumbles.
     if (moving && s.phase === "running") this.run += step * 9 * s.pace;
     const stride = Math.floor(this.run);
     if (stride !== this.lastStep) {
@@ -471,7 +454,6 @@ class FireflyScene extends Phaser.Scene {
       }
       this.spirit(`follower-${id}`, id, x, y, (.85 + (1 - progress) * .35) * unit, frame);
     });
-    // Quiet motes remain outside the route so collectibles are unmistakable.
     for (let i = 0; i < 20; i++) {
       const x = i % 2 ? w - 12 - i % 4 * 7 : 12 + i % 4 * 7;
       const y = ((i * 71 + a * 8) % h);

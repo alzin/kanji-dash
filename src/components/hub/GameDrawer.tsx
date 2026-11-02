@@ -1,9 +1,5 @@
 import { useEffect, useRef, type ReactNode } from "react";
 
-/**
- * A modal sheet over the overworld: a side drawer on wide screens, a bottom sheet on phones.
- * Escape and the close button both hand control back to the map.
- */
 export function GameDrawer({ label, eyebrow, title, onClose, className = "", children }: {
   label: string;
   eyebrow: string;

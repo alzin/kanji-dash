@@ -12,13 +12,11 @@ export type FireflyInspection = Pick<FireflyState, "phase" | "stage" | "elapsed"
 export const inspectFirefly = (page: Page): Promise<FireflyInspection> => page.evaluate(() => (window as typeof window & { __fireflyInspect: () => FireflyInspection }).__fireflyInspect());
 export const savedFirefly = (page: Page) => page.evaluate(() => JSON.parse(sessionStorage.getItem("kanji-dash-guest-v1")!));
 
-/** `checkpoint` opens region one's checkpoint after its learn and stack steps, at Firefly Rescue. */
 export async function beginFirefly(page: Page, options: { known?: boolean; savePrompt?: boolean; gentle?: boolean; checkpoint?: boolean } = {}) {
   await page.clock.install();
   if (!options.savePrompt) await silenceSavePrompt(page);
   await page.route("**/api/auth/session", route => route.fulfill({ json: { user: null } }));
   if (options.known || options.checkpoint) {
-    // Chapter one is known but not yet due, and chapter two stays locked: every gate is practice.
     const progress = Object.fromEntries(kanjiOfChapter(1).map(k => [k.c, { mastery: 1, ivl: 1, ease: 2.5, due: Date.now() + 7 * 86400000, correct: 1, wrong: 0, rt: 0, prod: 0, fl: 0 }]));
     const steps = options.checkpoint ? { learned: [1], stacked: [1], rescued: [] } : undefined;
     await page.addInitScript(({ progress, steps }) => {
@@ -43,8 +41,6 @@ export async function readyFirefly(page: Page) {
 
 let startSerial = 0;
 export async function clickToFireflyReady(page: Page, button: Locator): Promise<number> {
-  // Use a real wall clock at the actual click. Scrolling long results into view
-  // and WebKit actionability checks are not part of the game's launch latency.
   let started = 0;
   const callback = `__fireflyStartTime${++startSerial}`;
   await page.exposeFunction(callback, () => { started = Date.now(); });
@@ -57,10 +53,6 @@ export async function clickToFireflyReady(page: Page, button: Locator): Promise<
   return Date.now() - started;
 }
 
-/**
- * Clock jumps are observed by the real Phaser frame, never a simulation mutation.
- * The game discards frames longer than a second as stalls, so long waits arrive in shorter frames.
- */
 export async function travel(page: Page, milliseconds: number) {
   for (let left = milliseconds; left > 0; left -= 800) {
     await page.clock.fastForward(Math.min(800, left));
@@ -71,15 +63,12 @@ export async function travel(page: Page, milliseconds: number) {
 const names: Record<TrailId, string> = { grove: "Firefly Grove", bramble: "Bramble Run", bridge: "Quiet Bridge", moonpath: "Moonpath" };
 type Steering = {
   trails?: [TrailId, TrailId];
-  /** Stop once this returns true, before steering. */
   until?: (s: FireflyInspection) => boolean;
-  /** Gate indices to answer with a wrong lane. */
   miss?: number[];
   lose?: boolean;
   pointer?: boolean;
 };
 
-/** Plays with the real controls: word gates by their answer, thorns by their open lanes, cages with Burst. */
 export async function steerFirefly(page: Page, options: Steering = {}) {
   const trails = options.trails ?? ["grove", "bridge"];
   let firstCageRescued = false;
@@ -118,9 +107,6 @@ export async function steerFirefly(page: Page, options: Steering = {}) {
     }
     const upcoming = s.next.filter(e => e.kind !== "firefly");
     const arrival = upcoming.length ? Math.min(...upcoming.map(e => e.time - s.elapsed)) : Infinity;
-    // Read the visible terrain, then wait until its decision point. This keeps
-    // WebKit IPC out of player reaction timing without bypassing any game input.
-    // Arrivals are in trail time, which runs faster than the clock as the pace climbs.
     const seconds = arrival > .75 ? Math.min(1.5, arrival - .7) : Math.max(.08, Math.min(.75, arrival + .05));
     await travel(page, Math.ceil(seconds / Math.max(1, s.pace) * 1000));
   }

@@ -4,7 +4,6 @@ import { parseEndpoint, parseReminderRegistration } from "./reminder-validation.
 
 export type DispatchSummary = { checked: number; sent: number; removed: number; rejected: number; failed: number };
 
-/** Parallel deliveries per dispatch; push services answer quickly, Cloud Run requests are bounded. */
 const CONCURRENCY = 16;
 
 export class ReminderService {
@@ -22,7 +21,6 @@ export class ReminderService {
     return this.repository.remove(parseEndpoint(endpoint));
   }
 
-  /** Run hourly. Each player hears from us at most once per local day, only if they haven't played. */
   async dispatch(): Promise<DispatchSummary> {
     const now = this.now();
     const due = (await this.repository.candidates()).flatMap((sub) => {

@@ -21,14 +21,12 @@ export function shuffleStack<T>(items: readonly T[], rng: () => number): T[] {
   return result;
 }
 
-/** The forbidden union includes every defensible reading of every partner on the sheet. */
 export function stackDecoy(q: Question, forbidden: ReadonlySet<string>, rng: () => number): string {
   const card = { kanji: q.kanji, vocab: q.vocab, kana: vocabKana(q.vocab) };
   const candidates = [...readingChoices(card, rng, 1), ...readingCandidates(card).flat(), ...phoneticVariants(card.kana)];
   const acceptable = (v: string) => !forbidden.has(v) && !correctReadings(q.vocab.w).has(v) && isPlausibleReading(v);
   const first = candidates.find(acceptable);
   if (first) return first;
-  // A bounded second mutation still resembles the word; never invent random kana.
   for (const candidate of candidates) {
     const second = phoneticVariants(candidate).find(acceptable);
     if (second) return second;
@@ -55,7 +53,6 @@ export function seedStackTiles(words: readonly StackWord[], rng: () => number): 
   return { tiles, tasks };
 }
 
-/** Homographs and homophones go on separate sheets so a defensible answer is never wrong. */
 export function composeSheets(words: readonly StackWord[], maxSheets = 4): StackWord[][] {
   const sheets: StackWord[][] = [];
   for (const word of words) {
@@ -65,7 +62,6 @@ export function composeSheets(words: readonly StackWord[], maxSheets = 4): Stack
     if (sheet) sheet.push(word);
     else if (sheets.length < maxSheets) sheets.push([word]);
   }
-  // Avoid a one-word tail when it can join a smaller, still-disjoint sheet.
   if (sheets.length > 1) {
     const last = sheets[sheets.length - 1]!;
     const first = sheets[0]!;

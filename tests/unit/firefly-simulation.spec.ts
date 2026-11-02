@@ -13,14 +13,12 @@ const words = (answer: number, mode: GateContent["mode"] = "reading", slow = fal
   ({ labels: ["いち", "に", "さん"], answer: answer as 0 | 1 | 2, card: "一", word: "一つ", mode, slow });
 
 function nextStage(s: FireflyState, trail: TrailId): void {
-  // Catalog-only tests can inspect each stage without spending time in traversal.
   s.phase = "fork";
   s.elapsed = (s.stage + 1) * 30;
   s.stageTime = 30;
   expect(chooseTrail(s, trail)).toBe(true);
 }
 
-/** Dodges thorns, then steers into each gate's answer unless told to miss it. */
 function autoplay(s: FireflyState, trails: [TrailId, TrailId], fps = 60, miss: (gate: number) => boolean = () => false): GateResult[] {
   const results: GateResult[] = [];
   for (let frame = 0; frame < fps * 160 && s.phase !== "delivery" && s.phase !== "lost"; frame++) {
@@ -37,7 +35,6 @@ function autoplay(s: FireflyState, trails: [TrailId, TrailId], fps = 60, miss: (
   return results;
 }
 
-/** Real seconds from a gate's words appearing to its arrival. */
 function callSeconds(s: FireflyState, content: GateContent): number {
   let shown = -1, frame = 0;
   for (; frame < 2000 && s.gatesResolved === 0; frame++) {

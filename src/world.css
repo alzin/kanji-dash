@@ -1,11 +1,4 @@
-/* ==========================================================================
- * The Kanji Journey world map (/world): the forest HUD language over a
- * Phaser overworld. Position card top-left, roads on the right, the chosen
- * checkpoint in a panel (bottom sheet on phones, side card on desktop).
- * ========================================================================== */
-
 .forest-game a.forest-icon-button { color: var(--f-cream); text-decoration: none; font-size: 18px; }
-/* In the forest: where this trail sits on the whole journey. */
 .forest-position {
   display: inline-block;
   margin-top: 10px;
@@ -98,7 +91,6 @@
   .world-position { top: 84px; max-width: calc(100vw - 96px); }
   .world-position h1 { font-size: 19px; margin: 4px 0 4px; }
   .world-position-line { font-size: 12px; }
-  /* The road strip already shows each road's seals. */
   .world-position-line + .world-position-line { display: none; }
   .world-actions .forest-track { min-height: 32px; margin-top: 4px; }
   .world-roads { top: auto; bottom: auto; top: 200px; translate: none; right: 10px; gap: 4px; }

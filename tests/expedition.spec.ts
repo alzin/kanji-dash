@@ -136,7 +136,6 @@ async function completeTrail(
   for (let site = 0; site < 3; site++) {
     await reachSite(page, site);
     if (site === 1) {
-      // Screenshots and WebKit IPC must not spend the player's falling time.
       await page.clock.pauseAt(new Date(await page.evaluate(() => Date.now() + 1_000)));
       await page.getByRole("button", { name: "Place the word stones" }).click();
       await expect.poll(async () => {
@@ -159,7 +158,6 @@ async function completeTrail(
         path: test.info().outputPath("river-crossing.png"),
       });
       if (options.crossingMistake) {
-        // Spawn deliberately chooses a neutral lane. Drop through the real control.
         await page.getByRole("button", { name: "Drop" }).click();
         await expect.poll(async () => (await riverState(page))?.wrong).toBe(1);
         await expect
@@ -286,7 +284,6 @@ test("a full walk restores all landmarks and saves exactly one reward and four g
   ).toBeVisible();
   await expect(page.locator("canvas[data-ready]")).toBeVisible();
   await page.screenshot({ path: info.outputPath("title.png") });
-  // The title card sits over the world map; starting sets the traveller down at the trailhead.
   await page.getByRole("button", { name: "Start playing" }).click();
   const trailhead = page.getByRole("region", { name: "The First Five checkpoint" });
   await expect(trailhead.getByText("YOU ARE HERE · N5 · REGION 1 OF 19")).toBeVisible();
@@ -319,7 +316,6 @@ test("a full walk restores all landmarks and saves exactly one reward and four g
   await expect(page.getByTestId("world-map")).toBeVisible();
   await expect(page.getByLabel("42 mon coins", { exact: true })).toBeVisible();
   await page.reload();
-  // A traveller with a walk behind them goes straight to the map, never the title.
   await expect(page.locator("canvas[data-ready]")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Learn kanji by playing." })).toHaveCount(0);
   await expect(page.getByLabel("42 mon coins", { exact: true })).toBeVisible();
@@ -345,7 +341,6 @@ test("a missed word returns without extra reward; pause freezes travel and answe
   await page.keyboard.press("1");
   await expect(page.locator(".forest-feedback")).toHaveCount(0);
   await page.getByRole("button", { name: "Back to the trail" }).click();
-  // Restart an unfinished run to exercise the full recovery route from a clean state.
   await page.goto("run?mode=expedition");
   await page.reload();
   await expect(
@@ -415,7 +410,6 @@ test("320px layout, keyboard travel, tap travel, reduced motion and focus bounda
   expect(Number(await canvas.getAttribute("data-player-x"))).toBeGreaterThan(
     before + 10,
   );
-  // A real canvas click starts navigation; subsequent keyboard input takes over.
   const y = Number(await canvas.getAttribute("data-player-y"));
   await canvas.click({ position: { x: 160, y: 410 } });
   await expect

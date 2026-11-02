@@ -7,8 +7,6 @@ export type TraceResult = {
   stray: number;
 };
 
-// Count every pixel. A summed-area table gives the same square tolerance for
-// covering guide ink and detecting stray ink without subsampling either mask.
 function nearbyInk(mask: Uint8Array, width: number, height: number, radius: number) {
   const stride = width + 1;
   const sums = new Uint32Array(stride * (height + 1));

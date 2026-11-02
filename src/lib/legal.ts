@@ -1,6 +1,4 @@
 /**
- * Details that appear in the privacy policy and terms of service.
- *
  * The contact address must stay a monitored mailbox, because it is the only route
  * users have to request account deletion. Governing law follows where the service
  * is operated from.

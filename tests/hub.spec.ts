@@ -20,7 +20,6 @@ test("a new traveller meets the title over the map, starts at the trailhead, and
   await expect(title(page)).toHaveCount(0);
   const trailhead = page.getByRole("region", { name: "The First Five checkpoint" });
   await expect(trailhead.getByText("YOU ARE HERE · N5 · REGION 1 OF 19")).toBeVisible();
-  // A first step is a short walk in the woods; the checkpoint waits just below it.
   await expect(trailhead.getByRole("link", { name: "Walk today’s trail" })).toHaveAttribute("href", /mode=expedition/);
   await expect(trailhead.getByRole("link", { name: "Prepare checkpoint" })).toHaveAttribute("href", /gate=1/);
   await page.screenshot({ path: info.outputPath("map-start.png") });
@@ -28,7 +27,6 @@ test("a new traveller meets the title over the map, starts at the trailhead, and
   await page.reload({ waitUntil: "domcontentloaded" });
   await expect(canvas(page)).toBeVisible();
   await expect(title(page)).toHaveCount(0);
-  // The wordmark brings the title back on request.
   await page.getByRole("button", { name: "Kanji Dash title screen" }).click();
   await expect(title(page)).toBeVisible();
   await expect(page).toHaveURL(/title=true/);
@@ -56,7 +54,6 @@ test("camp opens from the HUD and from the tent; Escape and Back both return to 
   await page.goBack();
   await expect(campPanel(page)).toHaveCount(0);
 
-  // The tent at the trailhead is the camp itself.
   await page.getByRole("button", { name: "Close checkpoint" }).click();
   const at = await canvas(page).evaluate((c: HTMLCanvasElement) => ({ x: Number(c.dataset["campX"]), y: Number(c.dataset["campY"]) }));
   const box = (await canvas(page).boundingBox())!;

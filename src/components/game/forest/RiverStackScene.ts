@@ -14,14 +14,12 @@ export type RiverView = {
 const CONDENSED = 0.82,
   MIN_FONT = 9;
 
-/** Disposable presentation only. The shared stack simulation owns every placement and reward. */
 class RiverStackScene extends Phaser.Scene {
   private paint!: Phaser.GameObjects.Graphics;
   private labels: Phaser.GameObjects.Text[] = [];
   private labelKeys: string[] = [];
   private riverTime = 0;
   private lastTick = 0;
-  /** The playfield in CSS pixels; the renderer itself is `pixelRatio` times larger. */
   size = { width: 0, height: 0, pixelRatio: 1 };
   constructor(private view: RiverView) {
     super("river-stones");
@@ -138,9 +136,6 @@ class RiverStackScene extends Phaser.Scene {
           })
           .setText(text)
           .setScale(1);
-        // Long words are re-rendered at a smaller font size rather than scaled
-        // down, which would throw away glyph pixels. They may also narrow to a
-        // condensed face (長体) so five-kana words stay legible on a phone.
         for (let fontSize = size, i = 0; i < 4; i++) {
           const fit = Math.min(
             maxW / (Math.max(1, label.width) * CONDENSED),
@@ -248,8 +243,6 @@ export function mountRiverStack(host: HTMLElement, view: RiverView) {
     input: { keyboard: false, mouse: false, touch: false },
     scene: [scene],
   });
-  // Draw at the screen's real pixel density: a 1x canvas stretched over a
-  // retina phone blurs every glyph. The camera zoom keeps layout in CSS pixels.
   const resize = () => {
     if (!game.isBooted) return;
     const width = host.clientWidth,

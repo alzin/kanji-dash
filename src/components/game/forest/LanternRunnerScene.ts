@@ -145,7 +145,6 @@ class LanternRunnerScene extends Phaser.Scene {
       if (gate !== current && gate.resolved === -1) continue;
       const alpha = getGateOpacity(gate, layout);
       if (gate.x < -50 || gate.x > width + 120 || !alpha) continue;
-      // Three torii portals share one decision line. Light marks the chosen lane, not the answer.
       for (let lane = 0; lane < 3; lane++) {
         const y = laneY(lane),
           x = gate.x - (getDecisionX(layout) - layout.playerX),

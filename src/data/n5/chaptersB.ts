@@ -1,8 +1,6 @@
 import type { Kanji } from "./types";
 
-// Chapters 4–6: adjectives & colors, actions, the world
 export const chaptersB: Kanji[] = [
-  // ---- Chapter 4: Adjectives & colors ----
   { c: "大", m: "big", on: "ダイ, タイ", kun: "おお(きい)", rad: "大 (big)", mn: "A person stretching arms wide — big!", strokes: 3, ch: 4, vocab: [
     { w: "大きい", r: "ookii", m: "big", f: [{ t: "大", r: "おお" }, { t: "きい" }] },
     { w: "大学", r: "daigaku", m: "university", f: [{ t: "大", r: "だい" }, { t: "学", r: "がく" }] },
@@ -68,7 +66,6 @@ export const chaptersB: Kanji[] = [
     { w: "何曜日", r: "nan'youbi", m: "what day of the week", f: [{ t: "何", r: "なん" }, { t: "曜", r: "よう" }, { t: "日", r: "び" }] },
   ] },
 
-  // ---- Chapter 5: Actions ----
   { c: "見", m: "to see", on: "ケン", kun: "み(る)", rad: "見 (see)", mn: "An eye (目) on legs — seeing walks around.", strokes: 7, ch: 5, vocab: [
     { w: "見る", r: "miru", m: "to see", f: [{ t: "見", r: "み" }, { t: "る" }] },
     { w: "意見", r: "iken", m: "opinion", f: [{ t: "意", r: "い" }, { t: "見", r: "けん" }] },
@@ -134,7 +131,6 @@ export const chaptersB: Kanji[] = [
     { w: "買い物", r: "kaimono", m: "shopping", f: [{ t: "買", r: "か" }, { t: "い" }, { t: "物", r: "もの" }] },
   ] },
 
-  // ---- Chapter 6: The world ----
   { c: "学", m: "to learn", on: "ガク", kun: "まな(ぶ)", rad: "子 (child)", mn: "A child (子) under a roof of knowledge — learning.", strokes: 8, ch: 6, vocab: [
     { w: "学ぶ", r: "manabu", m: "to learn", f: [{ t: "学", r: "まな" }, { t: "ぶ" }] },
     { w: "学校", r: "gakkou", m: "school", f: [{ t: "学", r: "がっ" }, { t: "校", r: "こう" }] },

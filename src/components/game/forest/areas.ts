@@ -1,7 +1,6 @@
 import type { JLPTLevel } from "@/data";
 import type { Point } from "./world";
 
-/** A landmark the trail restores. `approach` is where travel stops, relative to the landmark. */
 export type Site = {
   x: number;
   y: number;
@@ -16,13 +15,8 @@ export type Site = {
 
 export type Rect = { x0: number; y0: number; x1: number; y1: number };
 
-/** HSL shift applied to scenery textures. Characters and lantern light keep their colours. */
 export type Grade = { hue: number; sat: number; light: number };
 
-/**
- * Everything one stretch of the Spirit Trail needs: layout, collision, scenery and copy.
- * Pure data, so movement rules stay testable without Phaser. All areas share WORLD's size.
- */
 export type AreaDefinition = {
   id: "kodama" | "kiso";
   level: JLPTLevel;
@@ -34,9 +28,7 @@ export type AreaDefinition = {
   sites: readonly [Site, Site, Site];
   trail: readonly Point[];
   motes: readonly Point[];
-  /** The water that splits the area: centre x = base + sin(y / period) × amplitude. */
   water: { base: number; amplitude: number; period: number };
-  /** Where the restored crossing spans the water. */
   crossing: { x: number; y: number; halfHeight: number };
   shrine: Point;
   shrineLanterns: readonly Point[];
@@ -92,7 +84,6 @@ const KODAMA_SITES = [
   },
 ] as const satisfies readonly [Site, Site, Site];
 
-/** Chapter 1 · N5 · Tōkaidō. The original woods, transcribed exactly. */
 export const KODAMA: AreaDefinition = {
   id: "kodama",
   level: "N5",
@@ -184,7 +175,6 @@ const KISO_SITES = [
   },
 ] as const satisfies readonly [Site, Site, Site];
 
-/** Chapter 2 · N4 · Nakasendō. A rainy-season post town in the Kiso valley, up a stone pass. */
 export const KISO: AreaDefinition = {
   id: "kiso",
   level: "N4",
@@ -245,12 +235,10 @@ export const KISO: AreaDefinition = {
   results: ["The inn’s andon is lit and the footbridge stands again.", "The post town has its words again."],
 };
 
-/** Areas in walking order along the journey. N3, N2 and N1 areas are not built yet. */
 export const AREAS: readonly AreaDefinition[] = [KODAMA, KISO];
 
 const ORDER: readonly JLPTLevel[] = ["N5", "N4", "N3", "N2"];
 
-/** A level's own area, or until it is built, the furthest area before it on the road. */
 export function areaForLevel(level: JLPTLevel): AreaDefinition {
   const reach = ORDER.indexOf(level);
   return [...AREAS].reverse().find((area) => ORDER.indexOf(area.level) <= reach) ?? KODAMA;

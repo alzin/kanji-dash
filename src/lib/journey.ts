@@ -16,7 +16,6 @@ export function stopState(save: SaveData, ch: number): StopState {
   };
 }
 
-/** A road's next checkpoint: its first open region without a seal. Undefined once the road is sealed. */
 export function nextOnRoad(save: SaveData, road: Road): number | undefined {
   return road.regions.find((ch) => isChapterUnlocked(save, ch) && !isGateCleared(save, ch));
 }
@@ -29,7 +28,6 @@ export function isRoadSealed(save: SaveData, road: Road): boolean {
   return road.regions.length > 0 && roadSeals(save, road) === road.regions.length;
 }
 
-/** Where the learner stands: the road they travel and its next checkpoint. */
 export function journeyHere(save: SaveData): { road: Road; ch: number | undefined } {
   const road = roadOfLevel(save.selectedLevel);
   return { road, ch: nextOnRoad(save, road) };

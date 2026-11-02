@@ -13,7 +13,6 @@ export function StrokePractice({ kanji }: { kanji: Kanji }) {
   const instructionsId = useId();
   const [strokes, setStrokes] = useState(0);
   const [result, setResult] = useState<null | { pct: number; pass: boolean }>(null);
-  // Counts Check presses; it keys the guide canvas so the failed-check pulse replays.
   const [resultCount, setResultCount] = useState(0);
 
   useEffect(() => {
@@ -73,7 +72,6 @@ export function StrokePractice({ kanji }: { kanji: Kanji }) {
     if (verdict.pass) recordProduction(kanji.c, true);
     setResult(verdict);
     setResultCount((n) => n + 1);
-    // Inside the Check click (boot()'s gesture listener has already unlocked audio).
     play(verdict.pass ? "dojoPass" : "dojoFail");
   };
 
@@ -126,7 +124,6 @@ export function StrokePractice({ kanji }: { kanji: Kanji }) {
             ctx.lineWidth = 14;
             ctx.lineCap = "round";
             ctx.lineJoin = "round";
-            // A short finger tap should leave ink as well as count as a stroke.
             ctx.beginPath();
             ctx.arc(p.x, p.y, ctx.lineWidth / 2, 0, Math.PI * 2);
             ctx.fill();

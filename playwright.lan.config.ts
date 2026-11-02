@@ -8,8 +8,6 @@ const address = process.env.LAN_HOST ?? Object.entries(networkInterfaces())
   .flatMap(([, entries]) => entries ?? [])
   .find((entry) => entry?.family === "IPv4" && !entry.internal)?.address;
 if (!address) throw new Error("The LAN dev regression test needs a non-loopback IPv4 interface.");
-// LAN_PORT can target an already running developer server without starting a
-// second Nitro worker against the same workspace.
 const port = process.env.LAN_PORT ?? "4175";
 const baseURL = `http://${address}:${port}`;
 

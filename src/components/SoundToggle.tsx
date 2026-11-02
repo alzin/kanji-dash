@@ -1,9 +1,6 @@
 import type { JSX } from "react";
 import { playWhenReady, setSoundEnabled, useSoundEnabled } from "@/lib/sfx";
 
-// The only mute UI. "hud" is the 44 px round button RunnerGame positions with
-// className; "inline" is the ghost button in the Home hero action row.
-// aria-pressed reports the muted state (the button "presses" the mute).
 export function SoundToggle({ variant, className }: { variant: "hud" | "inline"; className?: string }): JSX.Element {
   const enabled = useSoundEnabled();
   const muted = !enabled;
@@ -14,7 +11,7 @@ export function SoundToggle({ variant, className }: { variant: "hud" | "inline";
   const onClick = () => {
     const next = !enabled;
     setSoundEnabled(next);
-    if (next) playWhenReady("unmute"); // we are inside a click; plays once resume() settles
+    if (next) playWhenReady("unmute");
   };
 
   return (

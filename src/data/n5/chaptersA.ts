@@ -1,8 +1,6 @@
 import type { Kanji } from "./types";
 
-// Chapters 1–3: numbers & time, days & people, positions
 export const chaptersA: Kanji[] = [
-  // ---- Chapter 1: Numbers & time basics ----
   { c: "一", m: "one", on: "イチ, イツ", kun: "ひと(つ)", rad: "一 (one)", mn: "A single horizontal stroke — the number one.", strokes: 1, ch: 1, vocab: [
     { w: "一つ", r: "hitotsu", m: "one (thing)", f: [{ t: "一", r: "ひと" }, { t: "つ" }] },
     { w: "一人", r: "hitori", m: "one person", f: [{ t: "一", r: "ひと" }, { t: "人", r: "り" }] },
@@ -68,7 +66,6 @@ export const chaptersA: Kanji[] = [
     { w: "分かる", r: "wakaru", m: "to understand", f: [{ t: "分", r: "わ" }, { t: "かる" }] },
   ] },
 
-  // ---- Chapter 2: Days, weeks, seasons ----
   { c: "半", m: "half", on: "ハン", kun: "なか(ば)", rad: "十 (ten)", mn: "Ten split by two horns — sliced in half.", strokes: 5, ch: 2, vocab: [
     { w: "半分", r: "hanbun", m: "half", f: [{ t: "半", r: "はん" }, { t: "分", r: "ぶん" }] },
     { w: "半年", r: "hantoshi", m: "half a year", f: [{ t: "半", r: "はん" }, { t: "年", r: "とし" }] },
@@ -134,7 +131,6 @@ export const chaptersA: Kanji[] = [
     { w: "昼ご飯", r: "hirugohan", m: "lunch", f: [{ t: "昼", r: "ひる" }, { t: "ご" }, { t: "飯", r: "はん" }] },
   ] },
 
-  // ---- Chapter 3: People & positions ----
   { c: "夜", m: "night", on: "ヤ", kun: "よる", rad: "夕 (evening)", mn: "A person under a roof as evening falls — night.", strokes: 8, ch: 3, vocab: [
     { w: "夜", r: "yoru", m: "night", f: [{ t: "夜", r: "よる" }] },
     { w: "今夜", r: "kon'ya", m: "tonight", f: [{ t: "今", r: "こん" }, { t: "夜", r: "や" }] },

@@ -11,7 +11,6 @@ test("one journey walks every road in level order, N5 to N1, with every region e
   expect(ROADS.map((road) => road.id)).toEqual(["N5", "N4", "N3", "N2", "N1"]);
   expect(ROADS.map((road) => road.level)).toEqual([...LEVELS, undefined]);
   for (const level of LEVELS) expect(roadOfLevel(level).regions).toEqual(LEVEL_CHAPTERS[level]);
-  // N1 is drawn on the journey before its regions exist.
   expect(ROADS.at(-1)!.regions).toEqual([]);
   expect(JOURNEY_STOPS).toEqual(LEVELS.flatMap((level) => LEVEL_CHAPTERS[level]));
   expect(new Set(JOURNEY_STOPS).size).toBe(REGIONS.length);
@@ -44,7 +43,6 @@ test("the learner's place follows the road they travel and its first open, unsea
   expect(stopState(save, N4[2]!).status).toBe("locked");
   expect(roadSeals(save, roadOfLevel("N4"))).toBe(1);
   expect(journeySeals(save)).toBe(1);
-  // Other roads keep their own place.
   expect(nextOnRoad(save, roadOfLevel("N5"))).toBe(N5[0]);
 });
 
@@ -52,7 +50,6 @@ test("mastery progress opens the next checkpoint on the trail before its seal", 
   const progress = Object.fromEntries(kanjiOfChapter(N5[0]!).map((k) => [k.c, reviewing]));
   const save = normalizeSave({ curriculumVersion: CURRICULUM_VERSION, progress });
   expect(stopState(save, N5[1]!).status).toBe("open");
-  // The unsealed first checkpoint is still the one the map points to.
   expect(journeyHere(save).ch).toBe(N5[0]);
 });
 
@@ -72,6 +69,5 @@ test("only a traveller who has not taken a single step is greeted by the title c
   expect(isNewTraveller({ ...fresh, progress: { 一: reviewing } })).toBe(false);
   expect(isNewTraveller({ ...fresh, clearedChapters: [N5[0]!] })).toBe(false);
   expect(isNewTraveller({ ...fresh, checkpointSteps: { learned: [N5[0]!], stacked: [], rescued: [] } })).toBe(false);
-  // Choosing a road alone is not a step on it.
   expect(isNewTraveller({ ...fresh, selectedLevel: "N4" })).toBe(true);
 });

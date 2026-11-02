@@ -5,16 +5,11 @@ import { journeyHere } from "@/lib/journey";
 import { getSnapshot, selectLevel, useSave, type SaveData } from "@/lib/srs";
 import { GameDrawer } from "./GameDrawer";
 
-/** The learner's next checkpoint, else the seal at their sealed road's end. */
 function hereTarget(save: SaveData): string {
   const here = journeyHere(save);
   return here.ch !== undefined ? stopId(here.ch) : roadEndId(here.road.id);
 }
 
-/**
- * Every checkpoint of the journey as a readable list: the accessible companion to the canvas.
- * "Show on the map" closes the log and walks the traveller to that stop.
- */
 export function JourneyLogPanel({ newSeals, onClose, onShowOnMap }: {
   newSeals: readonly number[];
   onClose: () => void;
@@ -22,13 +17,11 @@ export function JourneyLogPanel({ newSeals, onClose, onShowOnMap }: {
 }) {
   const save = useSave();
   const here = journeyHere(save);
-  // undefined follows the learner's next checkpoint; null closes them all.
   const [open, setOpen] = useState<number | null | undefined>(undefined);
   const active = open === undefined ? here.ch : open ?? undefined;
   const [target, setTarget] = useState<{ id: string; smooth: boolean } | null>(null);
   const body = useRef<HTMLDivElement>(null);
 
-  // Open on the learner's place (or the newest seal), then glide for in-log travel.
   useEffect(() => {
     const seal = newSeals[newSeals.length - 1];
     setTarget({ id: seal !== undefined ? stopId(seal) : hereTarget(getSnapshot()), smooth: false });
@@ -40,7 +33,6 @@ export function JourneyLogPanel({ newSeals, onClose, onShowOnMap }: {
         const smooth = target.smooth && !matchMedia("(prefers-reduced-motion: reduce)").matches;
         body.current?.querySelector(`#${CSS.escape(target.id)}`)?.scrollIntoView({ block: "center", behavior: smooth ? "smooth" : "auto" });
       } catch {
-        /* scrolling is cosmetic */
       }
     });
     return () => clearTimeout(timer);

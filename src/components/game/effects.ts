@@ -1,21 +1,10 @@
 import type { GameLayout, RunnerGate } from "./runner-math";
 
 /**
- * Cosmetic effects for the runner: pooled, pure, deterministic.
- *
- * - No DOM, window, timers or Math.random: cosmetic randomness comes from a
- *   32-bit LCG seeded in createEffects, so the fake-clock e2e suite (which
- *   stubs Math.random) and SSR are untouched.
- * - The sim (runner-math) never learns this module exists. RunnerGame calls
- *   spawn* from its onAnswer wrapper and reads getters / draw passes while it
- *   renders. Anything that must freeze with the sim (brush ×, gold outline,
- *   compact stamp opacity) is derived from gate.sinceResolved by the runner,
- *   not timed here.
- * - advanceEffects clamps dt to MAX_STEP_SECONDS so a long fast-forward frame
- *   is one ordinary step. Wall-clock effects (shake, kick, stumble, hop, pause
- *   fade, breathing) keep advancing while paused so they self-terminate under
- *   the lesson blur; sim-linked visuals (stamps, lane flash, echo, brackets,
- *   dust, speed lines) freeze with the sim.
+ * No DOM, window, timers or Math.random: the fake-clock e2e suite stubs Math.random, so
+ * cosmetic randomness comes from a seeded LCG. Anything that must freeze with the sim is
+ * derived from gate.sinceResolved by the runner, not timed here. Wall-clock effects keep
+ * advancing while paused so they self-terminate under the lesson blur.
  */
 
 export const MAX_PARTICLES = 64;
@@ -30,9 +19,7 @@ const MILESTONE_KANJI: Readonly<Record<number, string>> = {
   3: "三", 5: "五", 8: "八", 10: "十", 15: "十五", 20: "二十", 30: "三十",
 };
 
-/** Longest single step; a 20 s fast-forward frame advances effects by one step. */
 export const MAX_STEP_SECONDS = 0.1;
-/** A timeline this close to its end counts as finished (absorbs frame-sum rounding such as 10 × 0.02 < 0.2). */
 const END_EPSILON = 1e-6;
 export const STAMP_SECONDS = 0.7;
 export const LANE_FLASH_SECONDS = 0.2;
@@ -48,7 +35,6 @@ export const DUST_SECONDS = 0.28;
 export const MILESTONE_SECONDS = 1.08;
 export const RING_SECONDS = 0.3;
 export const DECISION_TIMER_SECONDS = 1.5;
-/** Horizontal padding inside the echo pill and the gap between word and score. */
 export const ECHO_PADDING = 10;
 export const ECHO_GAP = 10;
 
@@ -56,13 +42,12 @@ const LANES = 3;
 const TAU = Math.PI * 2;
 const GRAVITY = 520;
 const SPEED_LINE_PX_PER_SECOND = 900;
-/** Fixed y table (fraction of H) for the tier-3 speed lines inside the hills band. */
 const SPEED_LINE_Y: readonly number[] = [0.38, 0.42, 0.46, 0.5, 0.53, 0.44, 0.4, 0.48];
 const DEG = Math.PI / 180;
 
 const INK = "#1c1a17";
 const GOLD = "#d8b24a";
-const GOLD_TEXT = "#b8912a"; // gold that stays legible on paper
+const GOLD_TEXT = "#b8912a";
 const VERMILLION = "#c0392b";
 const MOSS = "#4a7c59";
 const PAPER = "#f7f2e7";
@@ -91,19 +76,15 @@ export type EffectsState = {
   pause: { t: number; paused: boolean }; resumeDash: Timer;
   dust: { x: number; y: number; t: number }[]; speedLines: Float32Array;
   milestone: { combo: number; t: number } | null;
-  /** Last combo reported through spawnCorrect/spawnWrong; drives tier blooms and speed lines. */
   combo: number;
   bracketOn: boolean;
-  /** Reduced-motion reward ring (replaces particles). */
   ring: Timer;
   wrongMarkHead: number;
   particleCursor: number;
   anchorX: number; anchorY: number; anchorSet: boolean;
-  /** spawnMilestone was called before this answer's spawnCorrect; the burst waits for a position. */
   pendingBurst: boolean;
   viewW: number;
   lineTimer: number;
-  /** Font strings rebuilt only when a size changes, so the echo and seal draw without per-frame string building. */
   fontCache: { echoPx: number; echoSerif: string; echoSans: string; sealPx: number; sealSerif: string };
 };
 
@@ -137,7 +118,6 @@ function smooth(u: number): number {
   return v * v * (3 - 2 * v);
 }
 
-/** cubic-bezier(x1,y1,x2,y2) sampled through a small table built once at module load (pure math). */
 function bezierEase(x1: number, y1: number, x2: number, y2: number): (u: number) => number {
   const N = 48;
   const xs: number[] = [];
@@ -167,7 +147,6 @@ function bezierEase(x1: number, y1: number, x2: number, y2: number): (u: number)
 
 const slamEase = bezierEase(0.34, 1.56, 0.64, 1);
 
-/** Keyframe rows: [time, ...values]. Smoothstep between rows; clamped outside. */
 function keyed(rows: readonly (readonly number[])[], t: number, column: number): number {
   const first = rows[0];
   const last = rows[rows.length - 1];
@@ -189,7 +168,6 @@ function keyed(rows: readonly (readonly number[])[], t: number, column: number):
   return last[column] ?? 0;
 }
 
-// [t, sx, sy, dy]
 const HOP_KEYS: readonly (readonly number[])[] = [
   [0, 1, 1, 0],
   [0.06, 1.12, 0.88, 0],
@@ -198,7 +176,6 @@ const HOP_KEYS: readonly (readonly number[])[] = [
   [0.26, 1.1, 0.9, 0],
   [HOP_SECONDS, 1, 1, 0],
 ];
-// [t, rot, sx, sy]
 const STUMBLE_KEYS: readonly (readonly number[])[] = [
   [0, 0, 1, 1],
   [0.08, -18 * DEG, 1.15, 0.85],
@@ -286,7 +263,6 @@ export function setReducedMotion(fx: EffectsState, on: boolean): void {
   for (const d of fx.dust) d.t = DUST_SECONDS;
 }
 
-/** 32-bit LCG (Numerical Recipes constants), deterministic per seed, in [0, 1). */
 export function nextRandom(fx: EffectsState): number {
   fx.rng = (Math.imul(fx.rng, 1664525) + 1013904223) >>> 0;
   return fx.rng / 4294967296;
@@ -299,7 +275,6 @@ function emit(fx: EffectsState, x: number, y: number, vx: number, vy: number, li
     index = fx.particleCount;
     fx.particleCount += 1;
   } else {
-    // Full pool: recycle slots round-robin instead of allocating.
     index = fx.particleCursor;
     fx.particleCursor = (fx.particleCursor + 1) % MAX_PARTICLES;
   }
@@ -314,7 +289,6 @@ function emit(fx: EffectsState, x: number, y: number, vx: number, vy: number, li
   p[o + 6] = kind;
 }
 
-/** Upward 120° fan from (x, y). */
 function fan(fx: EffectsState, x: number, y: number, count: number, kind: number, minSpeed: number, maxSpeed: number, life: number): void {
   for (let i = 0; i < count; i++) {
     const angle = -Math.PI / 2 + (nextRandom(fx) - 0.5) * (TAU / 3);
@@ -330,16 +304,10 @@ function milestoneBurst(fx: EffectsState, x: number, y: number): void {
 }
 
 function particleRadius(index: number): number {
-  // 2.5..4 px, fixed per slot so nothing is stored per particle.
   return 2.5 + 0.5 * ((index * 5) & 3);
 }
 
 
-/**
- * Advance every effect. dt is clamped to MAX_STEP_SECONDS. Wall-clock effects
- * advance even while paused; sim-linked ones freeze. Returns whether any timed
- * effect is still mid-life (steady-state visuals such as the aura do not count).
- */
 export function advanceEffects(fx: EffectsState, dtSeconds: number, paused: boolean): boolean {
   const dt = Number.isFinite(dtSeconds) ? clamp(dtSeconds, 0, MAX_STEP_SECONDS) : 0;
   if (dt <= 0) return isAnythingAlive(fx, paused);
@@ -357,7 +325,6 @@ export function advanceEffects(fx: EffectsState, dtSeconds: number, paused: bool
     fx.pause.t = 0;
   }
 
-  // A milestone reported before this answer's position arrived: burst at the last known runner anchor.
   if (fx.pendingBurst && fx.anchorSet) {
     fx.pendingBurst = false;
     if (!fx.reducedMotion) milestoneBurst(fx, fx.anchorX, fx.anchorY);
@@ -375,7 +342,6 @@ export function advanceEffects(fx: EffectsState, dtSeconds: number, paused: bool
     if (ended(fx.milestone.t, MILESTONE_SECONDS)) fx.milestone = null;
   }
 
-  // Particles (wall-clock so stumble drops finish under the lesson blur).
   {
     const p = fx.particles;
     let i = 0;
@@ -399,7 +365,6 @@ export function advanceEffects(fx: EffectsState, dtSeconds: number, paused: bool
     if (fx.particleCount < MAX_PARTICLES) fx.particleCursor = 0;
   }
 
-  // Sim-linked timelines freeze with the sim.
   if (!paused) {
     for (const s of fx.stamps) {
       if (!s.gate) continue;
@@ -476,7 +441,7 @@ export function spawnCorrect(fx: EffectsState, a: { x: number; y: number; gate: 
   if (tier !== previousTier) fx.bloom.t = 0;
 
   const bx = a.x;
-  const by = a.y - 8; // body centre
+  const by = a.y - 8;
   fx.anchorX = bx;
   fx.anchorY = by;
   fx.anchorSet = true;
@@ -526,11 +491,8 @@ export function spawnLaneChange(fx: EffectsState, a: { dir: -1 | 1; lane: number
 }
 
 /**
- * Milestone ceremony: seal + rays (scenery), aura bloom, 2 px canvas kick and a
- * 24-particle burst. The burst needs the runner's position, which arrives with
- * spawnCorrect: call spawnMilestone right before or after spawnCorrect in the
- * same handler (before: the burst rides that spawnCorrect; after: it fires at
- * that answer's position on the next advance).
+ * The burst needs the runner's position, which arrives with spawnCorrect: call
+ * spawnMilestone right before or after spawnCorrect in the same handler.
  */
 export function spawnMilestone(fx: EffectsState, combo: number): void {
   fx.milestone = { combo, t: 0 };
@@ -552,7 +514,6 @@ export function spawnEcho(fx: EffectsState, a: {
   };
 }
 
-/** Paper puff at a foot plant; call on each zero crossing of run = sin(dist * 0.05). */
 export function spawnFootfall(fx: EffectsState, x: number, y: number): void {
   if (fx.reducedMotion) return;
   let slot = fx.dust[0];
@@ -597,7 +558,6 @@ export function measureEcho(
     width = textWidth + (score ? ECHO_GAP + scoreWidth : 0) + ECHO_PADDING * 2;
     if (width <= maxWidth) break;
     if (fontPx <= 11) {
-      // Still too wide at the floor: drop the " · meaning" suffix, then the score, so the pill always fits.
       const cut = text.lastIndexOf(" · ");
       if (cut > 0) return measureEcho(ctx, fonts, text.slice(0, cut), score, maxWidth);
       if (score) return measureEcho(ctx, fonts, text, "", maxWidth);
@@ -609,7 +569,6 @@ export function measureEcho(
 }
 
 
-/** Canvas offset for this frame: apply with ctx.setTransform(pr,0,0,pr,x*pr,y*pr). {0,0} when idle or reduced motion. */
 export function getShake(fx: EffectsState): { x: number; y: number } {
   if (fx.reducedMotion) return { x: 0, y: 0 };
   let x = 0;
@@ -623,18 +582,11 @@ export function getShake(fx: EffectsState): { x: number; y: number } {
   return { x, y };
 }
 
-/**
- * Pose for the runner drawing: ctx.translate(px, py + dy); ctx.rotate(rot); ctx.scale(sx, sy); ctx.translate(-px, -py).
- * Composes locomotion (from run = sin(dist*0.05)), lane lean (laneDelta = targetLane - lane), hop, stumble and resume lean.
- * Identity when idle with run = 0 and laneDelta = 0.
- */
 export function getRunnerPose(fx: EffectsState, run: number, laneDelta: number): { sx: number; sy: number; dy: number; rot: number } {
   const a = Math.abs(run);
   // run = 0 with no lane delta is the standing pose: an exact identity (never -0, which toEqual distinguishes).
   if (fx.reducedMotion) return { sx: 1, sy: 1, dy: a > 0 ? -a * 2 : 0, rot: 0 };
 
-  // Locomotion: foot-plant squash 1.06×0.94 for |run| < 0.15 recovering by 0.5, stretch 0.97×1.04 at the apex.
-  // The squash engages over |run| < 0.03 (a fraction of one frame at stride speed) so the standing pose stays identity.
   const engaged = Math.min(1, a / 0.03);
   const plant = engaged * (a < 0.15 ? 1 : clamp((0.5 - a) / 0.35, 0, 1));
   const apex = clamp((a - 0.5) / 0.5, 0, 1);
@@ -662,7 +614,6 @@ export function getRunnerPose(fx: EffectsState, run: number, laneDelta: number):
   return { sx, sy, dy, rot };
 }
 
-/** Stamp over the correct sign of a gate answered correctly; null once the 0.7 s ceremony is over. */
 export function getStampFor(fx: EffectsState, gate: object): { scale: number; alpha: number; signSquash: { sx: number; sy: number } } | null {
   for (const s of fx.stamps) {
     if (s.gate !== gate || ended(s.t, STAMP_SECONDS)) continue;
@@ -688,7 +639,6 @@ export function getStampFor(fx: EffectsState, gate: object): { scale: number; al
   return null;
 }
 
-/** The lane the student chose on a missed gate (keyed by gate identity; the runner times the strokes with gate.sinceResolved). */
 export function getWrongMark(fx: EffectsState, gate: RunnerGate): { chosenLane: number } | null {
   for (const m of fx.wrongMarks) if (m.gate === gate) return { chosenLane: m.chosenLane };
   return null;
@@ -701,7 +651,6 @@ export function getLaneFlash(fx: EffectsState): { lane: number; alpha: number } 
   return { lane: f.lane, alpha: 0.12 * (LANE_FLASH_SECONDS - f.t) / LANE_FLASH_SECONDS };
 }
 
-/** inset = px outside the sign edge (8 -> 3), signScale 1 -> 1.05; null while no gate is locking in. */
 export function getBracket(fx: EffectsState): { inset: number; signScale: number } | null {
   if (!fx.bracketOn) return null;
   if (fx.reducedMotion) return { inset: 3, signScale: 1 };
@@ -709,14 +658,12 @@ export function getBracket(fx: EffectsState): { inset: number; signScale: number
   return { inset: 8 - 5 * e, signScale: 1 + 0.05 * e };
 }
 
-/** 0..1 multiplier for the pause wash; instant under reduced motion; 0 as soon as the game resumes. */
 export function getPauseFade(fx: EffectsState): number {
   if (!fx.pause.paused) return 0;
   if (fx.reducedMotion || ended(fx.pause.t, PAUSE_FADE_SECONDS)) return 1;
   return Math.min(1, fx.pause.t / PAUSE_FADE_SECONDS);
 }
 
-/** 一時停止 title: scale 1.3 -> 1 over the fade, rotated -4°. */
 export function getPauseTitle(fx: EffectsState): { scale: number; rot: number } {
   const rot = -4 * DEG;
   if (!fx.pause.paused || fx.reducedMotion) return { scale: 1, rot };
@@ -731,23 +678,17 @@ export function getAura(fx: EffectsState, combo: number): { radius: number; alph
   return { radius: 26 + bloom, alpha: 0.22 + 0.08 * Math.sin(fx.clock * 6), tier };
 }
 
-/** Sun radius multiplier: breathes +6% over 300 ms after a milestone (1 otherwise / under reduced motion). */
 export function getSunScale(fx: EffectsState): number {
   const m = fx.milestone;
   if (!m || fx.reducedMotion || m.t >= 0.3) return 1;
   return 1 + 0.06 * Math.sin(Math.PI * m.t / 0.3);
 }
 
-/** Width fraction of the compact decision timer bar for tLeft seconds to the decision line (quantised to 4 steps under reduced motion). */
 export function getDecisionTimerBar(fx: EffectsState, tLeft: number): number {
   const f = clamp(tLeft / DECISION_TIMER_SECONDS, 0, 1);
   return fx.reducedMotion ? Math.ceil(f * 4) / 4 : f;
 }
 
-// ---------------------------------------------------------------------------
-// Draw passes (fixed fillStyle strings + globalAlpha, batched arcs, no gradients, no shadowBlur)
-
-/** After the hills, before the ground: tier-3 speed lines, milestone sun rays, desktop milestone seal. */
 export function drawEffectsScenery(
   ctx: CanvasRenderingContext2D, fx: EffectsState,
   a: { W: number; H: number; compact: boolean; sunX: number; sunY: number; sunR: number; fonts: DrawFonts },
@@ -838,7 +779,6 @@ export function drawEffectsScenery(
   ctx.restore();
 }
 
-/** After the dashed lanes, before the question panel and signs: lane tap flash band, word echo pill. */
 export function drawEffectsUnderGates(ctx: CanvasRenderingContext2D, fx: EffectsState, layout: GameLayout, W: number, fonts: DrawFonts): void {
   const flash = getLaneFlash(fx);
   if (flash) {
@@ -893,7 +833,6 @@ export function drawEffectsUnderGates(ctx: CanvasRenderingContext2D, fx: Effects
   ctx.globalAlpha = 1;
 }
 
-/** Right before the runner body: combo aura ring + orbiters, reduced-motion reward ring, resume dash lines. */
 export function drawEffectsBehindRunner(ctx: CanvasRenderingContext2D, fx: EffectsState, a: { px: number; py: number; combo: number }): void {
   const cx = a.px;
   const cy = a.py - 8;
@@ -956,7 +895,6 @@ export function drawEffectsBehindRunner(ctx: CanvasRenderingContext2D, fx: Effec
   }
 }
 
-/** Above everything but the pause overlay: footfall dust, then particles in one batched fill per colour. */
 export function drawEffectsFront(ctx: CanvasRenderingContext2D, fx: EffectsState, W: number, H: number): void {
   void W;
   void H;
@@ -995,7 +933,6 @@ export function drawEffectsFront(ctx: CanvasRenderingContext2D, fx: EffectsState
   ctx.globalAlpha = 1;
 }
 
-/** Damage flash for s.flash (0.6 -> 0): full wash only for the first 150 ms, then an edge vignette; edge only under reduced motion. */
 export function drawDamageVignette(ctx: CanvasRenderingContext2D, fx: EffectsState, W: number, H: number, flash: number): void {
   if (flash <= 0) return;
   ctx.strokeStyle = VERMILLION;
@@ -1016,7 +953,6 @@ export function drawDamageVignette(ctx: CanvasRenderingContext2D, fx: EffectsSta
   ctx.globalAlpha = 1;
 }
 
-/** Breathing edge while s.hearts <= 1 (static under reduced motion). */
 export function drawLastHeartVignette(ctx: CanvasRenderingContext2D, fx: EffectsState, W: number, H: number): void {
   const a = fx.reducedMotion ? 0.35 : 0.25 + 0.12 * Math.sin(fx.clock * TAU * 0.8);
   ctx.strokeStyle = VERMILLION;

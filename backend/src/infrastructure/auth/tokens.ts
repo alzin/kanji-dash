@@ -14,7 +14,6 @@ export function equalToken(a: string, b: string): boolean {
 
 export type OAuthFlow = { state: string; nonce: string; verifier: string; expires: number };
 
-// Authenticated encryption keeps PKCE verifier and nonce out of readable cookies.
 export class OAuthCookie {
   private readonly key: Buffer;
   constructor(secret: string) { this.key = createHash('sha256').update(secret).digest(); }

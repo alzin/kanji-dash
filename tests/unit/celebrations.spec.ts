@@ -46,7 +46,6 @@ test("diffFx reports only what changed since the last visit", () => {
   expect(diffFx({ ...record, lastCoins: 120 }, save(), TODAY).coinsChanged).toBe(false);
   expect(diffFx(empty, save({ coins: 0 }), TODAY).coinsChanged).toBe(false);
 
-  // The streak day only "changes" when the save was touched today and the record predates it.
   expect(diffFx({ ...record, lastStreakDay: "2026-09-07" }, save(), TODAY).streakDayChanged).toBe(true);
   expect(diffFx({ ...record, lastStreakDay: "" }, save(), TODAY).streakDayChanged).toBe(true);
   expect(diffFx({ ...record, lastStreakDay: TODAY }, save(), TODAY).streakDayChanged).toBe(false);
