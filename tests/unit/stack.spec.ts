@@ -87,7 +87,6 @@ test("reading and meaning never match without the written form", () => {
 test("every curriculum word has a decoy safe against all possible partners", () => {
   test.setTimeout(120_000);
   const cards = allKanji.flatMap((k) => k.vocab.map((v) => buildQuestion(k, "reading", v)));
-  // A board-level forbidden union is supplied to the same composer for every partner.
   const sets = cards.map((q) => new Set([...correctReadings(q.vocab.w), vocabKana(q.vocab)]));
   for (let i = 0; i < cards.length; i++) {
     const q = cards[i]!;

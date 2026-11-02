@@ -30,7 +30,6 @@ type Props = {
   forest?: boolean;
   paused?: boolean;
   onPause?: () => void;
-  /** The map stop to return to when the learner leaves the dash. */
   exitStop?: number | undefined;
 };
 type HUD = {
@@ -195,7 +194,6 @@ export function LanternRunnerGame({
       )
         return;
       if (e.key === "Escape") {
-        // Corrections must be acknowledged; Esc cannot silently skip learning.
         if (controls.current.lesson) {
           e.preventDefault();
           return;

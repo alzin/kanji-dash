@@ -1,10 +1,5 @@
 import { CHECKPOINT_STEPS } from "@/lib/checkpoint-steps";
 
-/**
- * A region checkpoint's three planned steps, then its seal. Segments rather than boxes, so the
- * rail never wraps on a phone; a narrow rail shows short names and keeps the full ones for
- * screen readers. `done` counts completed steps; `current` is the step on screen.
- */
 export function CheckpointRail({ done, current, className = "" }: { done: number; current: number | "seal" | null; className?: string }) {
   return (
     <ol aria-label="Checkpoint steps" className={`checkpoint-rail ${className}`}>

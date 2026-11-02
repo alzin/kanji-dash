@@ -17,7 +17,6 @@ function HourSelect({ id, hour, onChange, disabled }: { id: string; hour: number
   );
 }
 
-/** Shown on result screens: the moment a player has just played is when a daily nudge makes sense. */
 export function ReminderOffer() {
   const reminders = useReminders();
   const [chosen, setChosen] = useState<number | null>(null);
@@ -25,7 +24,6 @@ export function ReminderOffer() {
   const hourId = useId();
   const hour = chosen ?? reminders.hour;
 
-  // Keep the outcome visible after the tap, even once the offer no longer applies.
   if (asked && reminders.message) {
     return <p role="status" className="reminder-offer reminder-offer-done" data-testid="reminder-offer">{reminders.message}</p>;
   }
@@ -60,7 +58,6 @@ export function ReminderOffer() {
   );
 }
 
-/** The switch in camp settings. Renders nothing where push reminders cannot work. */
 export function ReminderSetting() {
   const reminders = useReminders();
   const hourId = useId();

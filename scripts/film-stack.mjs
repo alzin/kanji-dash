@@ -1,4 +1,3 @@
-// Reproducible 60 fps phone film using the same controls as a player.
 // Start the production preview, then: node scripts/film-stack.mjs [url] [output-directory]
 import { chromium } from "@playwright/test";
 import { mkdir, writeFile } from "node:fs/promises";

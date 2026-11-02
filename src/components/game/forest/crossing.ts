@@ -4,7 +4,6 @@ import type { StackPlacement } from "../stack-math";
 export type CrossingRecall = { correct: boolean; assisted: boolean };
 export type CrossingRecalls = Record<string, CrossingRecall>;
 
-/** A retry can repair the bridge, but cannot rewrite the first independent recall. */
 export function recordCrossingRecall(
   previous: CrossingRecalls,
   event: StackPlacement,
@@ -20,7 +19,6 @@ export function recordCrossingRecall(
   };
 }
 
-/** Replace the four reading cards with the crossing's evidence, keeping all other encounters. */
 export function completeCrossing(
   state: TrailState,
   recalls: CrossingRecalls,
@@ -34,7 +32,6 @@ export function completeCrossing(
   };
   for (const encounter of readings) {
     const result = recalls[encounter.question.kanji.c];
-    // Recovery already happened on the board, so do not add a second reading retry.
     next = answerTrail(
       next,
       result?.correct ?? false,

@@ -10,7 +10,6 @@ export const dashQuestions = (words: Question[]) =>
     buildQuestion(q.kanji, i % 2 ? "meaning" : "reading", q.vocab),
   );
 
-/** Finishing a retry lights the route; it never erases an earlier missed word. */
 export function recordDashAnswer(
   evidence: DashEvidence,
   q: Question,
@@ -49,7 +48,6 @@ export function completeLanternDash(
       result?.correct ?? false,
       result?.assisted ?? true,
     );
-    // Corrections and retries take place inside the dash, not as extra shrine cards.
     next = {
       ...next,
       queue: next.queue.filter((e) => !e.id.startsWith("dash-") || !e.retry),

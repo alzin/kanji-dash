@@ -62,7 +62,6 @@ def main(level=3, first_region=56):
         readings[c] = {hira(r['value']).split('.')[0].strip('-') for g in k['readingMeaning']['groups'] for r in g['readings'] if r['type'] in ('ja_on', 'ja_kun')} if k.get('readingMeaning') else set()
 
     def furigana(surface, kana):
-        # Exact kana anchors and known kanji readings, including sound changes.
         def split(i, j):
             if i == len(surface): return [] if j == len(kana) else None
             c = surface[i]
@@ -81,7 +80,6 @@ def main(level=3, first_region=56):
                     if tail is not None: return [{'t':c,'r':r}]+tail
             return None
         result = split(0, 0)
-        # Preserve dictionary-confirmed irregular readings as a whole span.
         return result if result is not None else [{'t':surface, 'r':kana}]
 
     candidates = {c: {} for c in chars}

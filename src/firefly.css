@@ -1,4 +1,3 @@
-/* Firefly Rescue — a luminous woodland, with the interface kept at its edges. */
 .ff-shell{--ff-cream:#f5e9c8;--ff-gold:#efcb7e;--ff-soft:#a9c2b8;--ff-ink:#0b242a;--ff-border:#d5d9ae2c;color:var(--ff-cream);background:var(--ff-ink);font-family:var(--font-sans);min-height:100svh;isolation:isolate}
 .ff-shell button,.ff-shell a{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .ff-shell button{cursor:pointer}.ff-shell button:disabled{cursor:default;opacity:.45}

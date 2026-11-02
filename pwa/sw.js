@@ -44,17 +44,15 @@ self.addEventListener("fetch", (event) => {
     const cache = await caches.open(CACHE_NAME);
     // Serve a route-independent shell from this build even while online: its
     // scripts and lazy imports must stay in sync until the next worker activates.
-    // The browser URL is untouched, so search params such as /run?gate=3 survive.
     const cached = await cache.match(isAppNavigation ? `${BASE_PATH}offline.html` : url.pathname);
     return cached || fetch(request);
   })());
 });
 
-// Daily reminders from the API. Browsers require every push to show a notification.
+// Browsers require every push to show a notification.
 self.addEventListener("push", (event) => {
   let message = {};
   try { message = event.data ? event.data.json() : {}; } catch { /* Fall back to the default text. */ }
-  // Valid JSON that is not an object (such as null) must still show a notification.
   if (!message || typeof message !== "object") message = {};
   for (const key of ["title", "body", "tag"]) if (typeof message[key] !== "string") delete message[key];
   event.waitUntil(self.registration.showNotification(message.title || "Your kanji are waiting 🏮", {
@@ -68,7 +66,6 @@ self.addEventListener("push", (event) => {
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   event.waitUntil((async () => {
-    // Bring back an open game rather than starting a second one.
     const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
     const open = windows.find((client) => new URL(client.url).pathname.startsWith(BASE_PATH));
     if (open) return open.focus();

@@ -1,17 +1,10 @@
 import { ROADS, type Road } from "@/data";
 
-/**
- * The Kanji Journey overworld, laid out bottom to top: N5 on the southern coast, N1 in the
- * snowbound north. Pure geometry, so positions are testable without Phaser.
- */
 export type WorldNode = {
-  /** Position along the whole journey, 0 at the N5 trailhead. */
   index: number;
-  /** Region ID, absent for the uncharted N1 stretch. */
   ch?: number;
   road: Road;
   roadIndex: number;
-  /** Position within its road, 0-based. */
   regionIndex: number;
   x: number;
   y: number;
@@ -20,7 +13,6 @@ export type WorldNode = {
 export type Band = {
   road: Road;
   roadIndex: number;
-  /** World y of the band's top and bottom edges; bands tile the world without gaps. */
   top: number;
   bottom: number;
   gate: { x: number; y: number };
@@ -29,11 +21,9 @@ export type Band = {
 export const WORLD_WIDTH = 1440;
 const SPACING = 78;
 const GATE_GAP = 150;
-// Room below the trailhead for the coast, so phones can raise it above the checkpoint panel.
 const BOTTOM = 680;
 const TOP = 460;
 const AMPLITUDE = 250;
-/** Stops drawn for N1 before its regions exist. */
 export const UNCHARTED_STOPS = 10;
 
 const pathX = (i: number) =>
@@ -44,7 +34,6 @@ export type WorldLayout = {
   bands: Band[];
   height: number;
   summit: { x: number; y: number };
-  /** The camp tent at the trailhead (its base): tapping it opens the Camp panel. */
   camp: { x: number; y: number };
 };
 
@@ -76,7 +65,6 @@ export function worldLayout(): WorldLayout {
       gate: { x: Math.round(before ? (before.x + nodes[first]!.x) / 2 : nodes[first]!.x), y: gateY },
     });
   });
-  // Each band reaches up to where the next one begins; the last runs to the top edge.
   bands.forEach((band, i) => { band.top = bands[i + 1]?.bottom ?? 0; });
   const last = nodes[nodes.length - 1]!;
   const first = nodes[0]!;
@@ -84,7 +72,6 @@ export function worldLayout(): WorldLayout {
   return cached;
 }
 
-/** The node standing for a region, or undefined for an unknown region. */
 export function nodeOfRegion(ch: number): WorldNode | undefined {
   return worldLayout().nodes.find((node) => node.ch === ch);
 }

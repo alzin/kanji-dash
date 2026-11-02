@@ -12,7 +12,6 @@ function dueSave(count = 5): SaveData {
   return normalizeSave({ progress: Object.fromEntries(kanjiOfLevel("N5").slice(0, count).map((kanji) => [kanji.c, dueCard()])) });
 }
 const ledgerFor = (save: SaveData, seed = 11) => { replaceSave(save); return createAdventureLedger(createAdventureDeck(getSnapshot(), "standard", seed)); };
-/** Gates arrive one at a time: each is planned after the previous answer is recorded. */
 function play(ledger: AdventureLedger, count = GATES_PER_ADVENTURE, correct: (gate: PlannedGate) => boolean = () => true): PlannedGate[] {
   const gates: PlannedGate[] = [];
   for (let i = 0; i < count; i++) {

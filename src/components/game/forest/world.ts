@@ -1,9 +1,7 @@
 import { KODAMA, type AreaDefinition, type Site } from "./areas";
 
-/** Save-free, renderer-independent exploration rules. World units are twice the art pixels. */
 export type Point = { x: number; y: number };
 export const WORLD = { width: 1536, height: 960, speed: 185, radius: 12 };
-// Kodama Woods, kept as named exports for the original single-area callers.
 export const START: Point = KODAMA.start;
 export const SITES = KODAMA.sites;
 export const TRAIL: readonly Point[] = KODAMA.trail;
@@ -26,7 +24,6 @@ export const onTrail = (p: Point, width = 70, area: AreaDefinition = KODAMA) =>
   area.trail.some((a, i) => i > 0 && segmentDistance(p, area.trail[i - 1]!, a) < width);
 export const riverX = (y: number, area: AreaDefinition = KODAMA) =>
   area.water.base + Math.sin(y / area.water.period) * area.water.amplitude;
-/** Where travel to a landmark stops: just off it, on the approach side. */
 export const approachOf = (site: Site): Point => ({
   x: site.x + (site.approach?.x ?? -32),
   y: site.y + (site.approach?.y ?? 27),
@@ -39,7 +36,6 @@ export function seeded(seed = 82) {
 }
 export type Tree = { x: number; y: number; size: number; variant: number };
 const forests = new Map<AreaDefinition["id"], Tree[]>();
-/** Deterministic scenery: the same area always grows the same trees, clear of paths and water. */
 export function treesOf(area: AreaDefinition): Tree[] {
   const cached = forests.get(area.id);
   if (cached) return cached;
@@ -96,7 +92,6 @@ export function movePlayer(
     next.y += dy * step;
   return next;
 }
-/** Bounded grid search makes tap-to-walk work around trees and the river. */
 export function findPath(
   start: Point,
   target: Point,

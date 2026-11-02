@@ -2,45 +2,32 @@ import { SPIRITS, TRAILS, gateTimesOf, type GateMode, type RunnerDifficulty, typ
 import { HAZARD_PATTERNS } from "./patterns";
 export { HAZARD_PATTERNS } from "./patterns";
 
-/** Arrival times and all gameplay timers use active traversal time. */
 export const FIXED_STEP = 1 / 120;
 export const EVENT_WARNING_SECONDS = 2.6;
 export const STAGE_SECONDS = 30;
 export const LANE_CHANGE_SECONDS = 0.15;
-/** Traversal seconds between a gate's lantern call appearing and the gate reaching the player. */
 export const GATE_SIGHT: Record<RunnerDifficulty, number> = { standard: 3.4, relaxed: 3.6 };
-/** Thorns never share the moments around a word decision. */
 export const GATE_CLEARANCE = 0.8;
-/** Travel speed while a new word's introduction is in sight. */
 export const INTRO_SLOW = 0.6;
-/**
- * Travel speed climbs steadily from the first gate to the shrine, and a run of
- * correct answers lifts it further. A miss lets the lift ease away again.
- */
 export const PACE: Record<RunnerDifficulty, { start: number; end: number; streak: number }> = {
   standard: { start: 1.1, end: 1.35, streak: 0.1 },
   relaxed: { start: 0.8, end: 0.95, streak: 0.04 },
 };
-/** Per-second rate at which the pace eases toward its target (about two thirds of the way in 0.7 s). */
 const PACE_EASE_RATE = 1.5;
 const EPSILON = 1e-8;
 
 export type { GateMode };
-/** The words on one gate row. An introduction carries the same word in every lane. */
 export type GateContent = { labels: [string, string, string]; answer: 0 | 1 | 2; card: string; word: string; mode: GateMode; slow: boolean };
-export type GateResult = { id: number; gate: number; lane: number; correct: boolean; card: string; word: string; mode: GateMode; /** A Burst charge was earned. */ charged: boolean };
+export type GateResult = { id: number; gate: number; lane: number; correct: boolean; card: string; word: string; mode: GateMode; charged: boolean };
 export type FireflyEntity = {
   id: number;
   kind: "hazard" | "firefly" | "cage" | "gate";
   lane: number;
-  /** Total active traversal seconds at which this entity reaches the player. */
   time: number;
   resolved: boolean;
   spirit?: SpiritId;
-  /** Adventure-wide order of a word gate. */
   gate?: number;
   content?: GateContent;
-  /** The lane the player held when a gate arrived. */
   chosen?: number;
 };
 export type FireflyCue = {
@@ -74,19 +61,13 @@ export type FireflyState = {
   lastEvent?: FireflyCue;
   difficulty: RunnerDifficulty;
   collected: SpiritId[];
-  /** Traversal seconds of warning before each gate. */
   sight: number;
-  /** A sighted gate waiting for its words. Traversal stops until it is assigned. */
   awaitingGate: number | null;
-  /** Resolved gates not yet taken by the learning interface. */
   gateResults: GateResult[];
   gatesResolved: number;
   gatesCorrect: number;
-  /** Consecutive correct word answers; every third grants a Burst charge. */
   gateStreak: number;
-  /** Current travel speed multiplier; it eases toward {@link targetPace}. */
   pace: number;
-  /** Serializable simulation bookkeeping; the renderer must not change it. */
   seed: number;
   accumulator: number;
   nextGate: number;
@@ -134,8 +115,6 @@ function buildStage(s: FireflyState): void {
   const risky = trail === "bramble" || trail === "moonpath";
   const gates = gateTimesOf(s.stage);
   for (const time of gates) addEvent(s, "gate", 1, start + time, undefined, s.nextGate++);
-  // Each gap between word decisions holds a cage or thorns, never both. The first
-  // stage has one thorn row per gap; later stages ask for a dodge, a dodge, then a choice.
   const gaps = gates.slice(0, -1).map((time, i) => [time, gates[i + 1]!] as const);
   const cageGaps = s.stage === 2 ? [0, 3, ...(risky ? [4] : [])] : [0, 4, ...(risky ? [6] : [])];
   let arrivals: number[] = [];
@@ -156,10 +135,8 @@ function buildStage(s: FireflyState): void {
   });
 
   const spirits = shuffled(s, SPIRITS.filter((spirit) => spirit.stage === s.stage).map((spirit) => spirit.id));
-  // Stable partition after shuffling retains variety while prioritizing uncollected identities.
   spirits.sort((a, b) => Number(s.collected.includes(a)) - Number(s.collected.includes(b)));
   cageGaps.forEach((gap, i) => {
-    // A cage does not share a hazard arrival. Its lead-in is a visible firefly trail.
     const [from, to] = gaps[gap]!, time = (from + to) / 2;
     const lane = s.stage === 0 && i === 0 ? 1 : Math.floor(random(s) * 3);
     addEvent(s, "cage", lane, start + time, spirits[i]!);
@@ -171,7 +148,6 @@ function buildStage(s: FireflyState): void {
   const spacing = trail === "grove" ? 0.48 : 0.8;
   for (let time = 2.8; time < lastPickup; time += spacing) {
     if (Math.floor(time * 10) % 4 === 0) lane = Math.floor(random(s) * 3);
-    // Word gates keep their row to themselves so the choice reads clearly.
     if (gates.some((gate) => Math.abs(gate - time) < 0.5)) continue;
     const nearbyHazards = s.events.filter((e) => e.kind === "hazard" && Math.abs(e.time - start - time) < 0.55);
     if (nearbyHazards.some((e) => e.lane === lane)) {
@@ -218,7 +194,6 @@ export function grantCharge(s: FireflyState): void {
   if (s.charges === s.maxCharges) s.recharge = 0;
 }
 
-/** Supplies the words for a sighted gate. Content is fixed once assigned. */
 export function assignGate(s: FireflyState, id: number, content: GateContent): boolean {
   const gate = s.events.find((e) => e.id === id && e.kind === "gate");
   if (!gate || gate.resolved || gate.content) return false;
@@ -229,7 +204,6 @@ export function assignGate(s: FireflyState, id: number, content: GateContent): b
   return true;
 }
 
-/** Hands resolved gates to the learning interface exactly once. */
 export function takeGateResults(s: FireflyState): GateResult[] {
   const results = s.gateResults;
   s.gateResults = [];
@@ -252,14 +226,12 @@ export function chooseTrail(s: FireflyState, trail: TrailId): boolean {
 }
 
 function resolveGate(s: FireflyState, event: FireflyEntity, content: GateContent): void {
-  // The lane the player committed to counts, even while Aki is still stepping across.
   const lane = s.lane, intro = content.mode === "intro";
   const correct = intro || lane === content.answer;
   let charged = false;
   event.chosen = lane;
   s.gatesResolved++;
   if (intro) {
-    // Meeting a word is a gentle moment, not a streak or a free charge.
     s.score += 25;
     cue(s, "gate");
   } else if (correct) {
@@ -269,7 +241,6 @@ function resolveGate(s: FireflyState, event: FireflyEntity, content: GateContent
     if (++s.gateStreak % 3 === 0) { grantCharge(s); charged = true; }
     cue(s, "gate");
   } else {
-    // A missed word returns soon; it never costs a heart.
     s.chain = 0;
     s.gateStreak = 0;
     cue(s, "miss");
@@ -320,7 +291,6 @@ function inSight(s: FireflyState, e: FireflyEntity): boolean {
   return e.kind === "gate" && !e.resolved && e.time - s.elapsed <= s.sight + EPSILON;
 }
 
-/** Only the nearest unresolved gate can ask for words, so one lantern call is live at a time. */
 function pendingGate(s: FireflyState): FireflyEntity | undefined {
   const next = s.events.find((e) => e.kind === "gate" && !e.resolved);
   return next && !next.content && inSight(s, next) ? next : undefined;
@@ -373,15 +343,10 @@ export function advanceFirefly(s: FireflyState, seconds: number): void {
     s.accumulator = Math.max(0, s.accumulator - FIXED_STEP);
     tick(s);
   }
-  // Never carry a long frame across a route choice.
   if (s.phase !== "running") { s.accumulator = 0; return; }
   s.awaitingGate = pendingGate(s)?.id ?? null;
 }
 
-/**
- * Advances and supplies words to every gate sighted during the frame. A provider
- * returning null leaves that gate quiet rather than stalling the trail.
- */
 export function advanceWithGates(s: FireflyState, seconds: number, provide: (gate: Readonly<FireflyEntity>) => GateContent | null): void {
   advanceFirefly(s, seconds);
   for (let guard = 0; s.awaitingGate !== null && guard < 8; guard++) {
@@ -396,12 +361,10 @@ export function getFireflyResult(s: FireflyState): FireflyResult {
   return { score: s.score, rescued: [...s.rescued], delivered: s.phase === "delivery" };
 }
 
-/** Check a stage's gate spacing, warnings, clearances and reachable safe lanes without using Burst. */
 export function validateRoute(events: readonly FireflyEntity[], stageStart = 0): boolean {
   const inStage = (e: FireflyEntity) => e.time >= stageStart && e.time < stageStart + STAGE_SECONDS;
   const gates = events.filter((e) => e.kind === "gate" && inStage(e)).map((e) => e.time).sort((a, b) => a - b);
   const longestSight = Math.max(...Object.values(GATE_SIGHT));
-  // A call never opens before its stage does, and never overlaps the previous call.
   if (gates.length && gates[0]! - stageStart < longestSight + FIXED_STEP) return false;
   if (gates.some((time, i) => i > 0 && time - gates[i - 1]! < longestSight - EPSILON)) return false;
   const near = (time: number, clearance: number) => gates.some((gate) => Math.abs(gate - time) < clearance - EPSILON);

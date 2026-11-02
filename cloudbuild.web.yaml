@@ -1,8 +1,5 @@
-# Bootstrap build for the production web image.
-# Routine deploys go through .github/workflows/deploy-production.yml; this file
-# exists so the very first image can be built from Cloud Shell, before Workload
-# Identity Federation is wired up.
-#
+# Bootstrap only: builds the very first image from Cloud Shell, before Workload Identity
+# Federation is wired up. Routine deploys go through .github/workflows/deploy-production.yml.
 #   gcloud builds submit --config cloudbuild.web.yaml \
 #     --substitutions=_API_URL=https://kanji-api.nipporia.com/api,_TAG=bootstrap
 substitutions:

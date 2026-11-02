@@ -37,7 +37,6 @@ function Panel({ children, label, onClose }: { children: ReactNode; label: strin
   </dialog>;
 }
 
-/** A region checkpoint's rescue step: the same adventure, carrying only that region's words. */
 export type FireflyCheckpoint = { chapter: number; rail: ReactNode; onSeal: (receipt: Receipt) => void };
 
 export function FireflyAdventure({ checkpoint }: { checkpoint?: FireflyCheckpoint }) {
@@ -45,7 +44,6 @@ export function FireflyAdventure({ checkpoint }: { checkpoint?: FireflyCheckpoin
   const [difficulty, setDifficulty] = useState<RunnerDifficulty>("standard");
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [drawer, setDrawer] = useState<"collection" | "study" | null>(null);
-  // One seed serves both the optional preview and the adventure it leads into.
   const [seed, setSeed] = useState(nextSeed);
   useEffect(() => deferAutomaticSavePrompts(), []);
   useEffect(() => { void import("./FireflyScene").catch(() => { /* Play retains the loading/retry boundary. */ }); }, []);
@@ -134,10 +132,8 @@ function Segments({ gate }: { gate: PlannedGate }) {
   return <>{gate.segments.map((segment, i) => segment.furigana ? <ruby key={i}>{segment.t}<rt>{segment.furigana}</rt></ruby> : <span key={i}>{segment.t}</span>)}</>;
 }
 
-/** The last answered word, repeated under the next prompt. */
 type Echo = { gate: PlannedGate; correct: boolean; firstMiss: boolean };
 
-/** The prompt for the nearest gate. Its height is fixed so the trail beneath never jumps. */
 function LanternCall({ gate, echo, idle, subtitle, badges, progress, paused }: { gate: PlannedGate | undefined; echo: Echo | null; idle: string; subtitle: string; badges: ReactNode; progress: string; paused: boolean }) {
   const mode = gate?.mode;
   const hint = mode === "reading" ? "Steer into the right reading" : mode === "listen" ? "Steer into the word you heard" : "Word gates light up here";
@@ -190,10 +186,8 @@ function FireflyRun({ ticket, onAgain, onExit, onSeal }: { ticket: Ticket; onAga
     if (moved && bursted && ticket.tutorial) markRunnerTutorial();
   }, [moved, bursted, ticket.tutorial]);
 
-  // Pausing or finishing silences any word still being spoken.
   useEffect(() => { if (paused || receipt) window.speechSynthesis?.cancel(); }, [paused, receipt]);
 
-  // The trail emerges just below the lantern call, whatever its rendered height.
   useEffect(() => {
     const banner = call.current, field = host.current;
     if (!banner || !field) return;
@@ -236,8 +230,6 @@ function FireflyRun({ ticket, onAgain, onExit, onSeal }: { ticket: Ticket; onAga
       tick: (seconds) => {
         if (disposed) return;
         view.paused = control.current.blocked;
-        // A sighted gate receives its words within the same frame, then the frame finishes.
-        // A stalled frame is discarded like a pause: nobody could see or answer its gates.
         if (!control.current.blocked && seconds <= STALL_SECONDS) advanceWithGates(state, seconds, provide);
         flush();
         const resolved = feedback;
@@ -290,7 +282,6 @@ function FireflyRun({ ticket, onAgain, onExit, onSeal }: { ticket: Ticket; onAga
     const blur = () => { if (state.phase === "running") { control.current.blocked = true; setPaused(true); } };
     const hide = () => { if (document.hidden) blur(); };
     window.addEventListener("keydown", key); window.addEventListener("blur", blur); document.addEventListener("visibilitychange", hide);
-    // A read-only development probe supports deterministic browser QA without exposing controls in production.
     const bridge = window as typeof window & { __fireflyInspect?: () => unknown };
     const inspect = () => {
       const gate = nearestGate(state);

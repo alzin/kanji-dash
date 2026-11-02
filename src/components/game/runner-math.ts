@@ -3,8 +3,7 @@ import type { Question } from "@/lib/srs";
 export const RUNNER_LANES = 3;
 export const RUNNER_HEARTS = 3;
 const GATE_SPACING = 560;
-export const RUNNER_SPEED = 150; // scenery and stride, world px per second
-/** Phones show one gate at a time, so a finished gate fades out instead of drifting under the runner. */
+export const RUNNER_SPEED = 150;
 export const COMPACT_CLEAR_SECONDS = 0.4;
 
 export type RunnerStats = {
@@ -28,7 +27,7 @@ export type RunnerGate = {
   correctLane: number;
   laneChoices: (string | null)[];
   resolved: -1 | 0 | 1;
-  sinceResolved: number; // seconds the gate has been resolved
+  sinceResolved: number;
 };
 
 export type RunnerState = RunnerStats & {
@@ -86,8 +85,6 @@ export function getGameLayout(width: number, height: number): GameLayout {
       laneTop,
       laneBottom,
       laneSpan: laneBottom - laneTop,
-      // Below the HUD band: a gate that slides in on the right used to pass under the
-      // combo and score chips, which made both unreadable for a second.
       questionTop: height * 0.1,
       questionHeight: height * 0.13,
       signWidth: 190,
@@ -188,7 +185,6 @@ export function getRunnerRemaining(s: RunnerState, total: number): number {
   return Math.max(0, total - s.correct - s.wrong);
 }
 
-/** Rotation changes the drawing, never the time left to choose a path. */
 export function resizeRunner(s: RunnerState, beforeWidth: number, beforeHeight: number, width: number, height: number) {
   const before = getGameLayout(beforeWidth, beforeHeight), after = getGameLayout(width, height);
   const scale = getGateSpeed(width, after) / getGateSpeed(beforeWidth, before);
@@ -200,9 +196,6 @@ export function getGateOpacity(gate: RunnerGate, layout: GameLayout): number {
   return Math.max(0, Math.min(1, 1 - gate.sinceResolved / COMPACT_CLEAR_SECONDS));
 }
 
-/** Advance to each decision at its actual time, including when frames are slow.
- * Returning false from onAnswer pauses immediately and discards paused time.
- */
 export function advanceRunner(
   s: RunnerState,
   questions: Question[],
@@ -227,9 +220,7 @@ export function advanceRunner(
     const reachesDecision = secondsToDecision <= remaining;
     const dt = reachesDecision ? secondsToDecision : remaining;
 
-    // Scenery and stride keep full pace even where gates approach more slowly.
     s.dist += RUNNER_SPEED * dt;
-    // Exponential smoothing is independent of frame rate.
     s.lane = s.targetLane + (s.lane - s.targetLane) * Math.exp(-14 * dt);
     s.flash = Math.max(0, s.flash - dt);
     s.bump = Math.max(0, s.bump - dt);

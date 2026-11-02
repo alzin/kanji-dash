@@ -1,7 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
 
-// API routing must remain observable in WebKit after reloads; PWA behavior has
-// its own real-network tests in pwa.spec.ts.
 test.use({ serviceWorkers: "block" });
 
 const guestKey = "kanji-dash-guest-v1";
@@ -193,8 +191,6 @@ test("signed-in Firefly resumes after unchanged focus refresh but invalidates a 
   await page.evaluate(() => window.dispatchEvent(new Event("blur")));
   const pause = page.getByRole("dialog", { name: "Adventure paused" });
   await expect(pause).toBeVisible();
-  // A semantically identical newer response may reorder JSONB keys. It must
-  // update cloud version bookkeeping without replacing the active save.
   const reorderedSave = { ...cloudSave, runner: { ...cloudSave.runner, best: { N3: cloudSave.runner.best.N3, N4: cloudSave.runner.best.N4, N5: cloudSave.runner.best.N5 } } };
   api.cloud = { save: reorderedSave, version: 8 };
   await page.evaluate(() => window.dispatchEvent(new Event("focus")));

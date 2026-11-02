@@ -18,7 +18,6 @@ const secondary = "min-h-12 rounded-xl border border-border px-5 py-3 text-cente
 const EMPTY: StackStats = { correct: 0, wrong: 0, bestCombo: 0, score: 0, redeemed: 0, chains: 0, elapsed: 0, cleared: true, wordsCleared: 0, totalWords: 0 };
 function sum(a: StackStats, b: StackStats): StackStats { return { correct: a.correct + b.correct, wrong: a.wrong + b.wrong, bestCombo: Math.max(a.bestCombo, b.bestCombo), score: a.score + b.score, redeemed: a.redeemed + b.redeemed, chains: a.chains + b.chains, elapsed: a.elapsed + b.elapsed, cleared: a.cleared && b.cleared, wordsCleared: a.wordsCleared + b.wordsCleared, totalWords: a.totalWords + b.totalWords }; }
 
-/** Daily, fluency and marathon sheets. A region's checkpoint sheets are a step of CheckpointSession. */
 export function StackSession({ kind }: { kind: StackMode }) {
   return <div className="river-session"><StackSessionContent kind={kind} /></div>;
 }
@@ -43,7 +42,6 @@ function StackSessionContent({ kind }: { kind: StackMode }) {
   const beforeSheet = useRef({ totals: EMPTY, earned: 0 });
   const words = frozen.sheets[sheet % Math.max(1, frozen.sheets.length)] ?? [];
   const stopSuggested = stackOf(getSnapshot()).playDay === localDay() && stackOf(getSnapshot()).playMs >= 20 * 60_000;
-  // A top-out retries this exact sheet without replacing its still-due words from the store.
   const retry = () => {
     finished.current = false; missed.current.clear();
     setTotals(beforeSheet.current.totals); setEarned(beforeSheet.current.earned);

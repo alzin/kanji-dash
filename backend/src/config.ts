@@ -13,7 +13,6 @@ const envSchema = z.object({
   COOKIE_SAME_SITE: z.enum(['lax', 'none']).default('lax'),
   SESSION_DAYS: z.coerce.number().int().min(1).max(30).default(30),
   TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(5).default(0),
-  // Daily reminders are optional: without all four, the API reports them unavailable.
   VAPID_PUBLIC_KEY: z.string().regex(/^[A-Za-z0-9_-]{80,100}$/).optional(),
   VAPID_PRIVATE_KEY: z.string().regex(/^[A-Za-z0-9_-]{40,50}$/).optional(),
   VAPID_SUBJECT: z.string().regex(/^(mailto:|https:\/\/)\S+$/).optional(),

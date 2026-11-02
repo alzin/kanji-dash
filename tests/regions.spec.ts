@@ -47,14 +47,12 @@ test("the whole journey and its region filters fit a narrow phone", async ({ pag
     await page.getByRole("button", { name: new RegExp(`^${level} `) }).click();
     const stops = page.getByRole("list", { name: `${level} checkpoints` }).locator(":scope > li");
     await expect(stops).toHaveCount(count);
-    // Choosing a road brings its next checkpoint into view, opened.
     await expect(page.getByText("Region 1 · Next checkpoint", { exact: true })).toBeInViewport();
     await expect(stops.first().getByRole("button", { expanded: true })).toHaveCount(1);
     await expect(stops.last()).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.screenshot({ path: info.outputPath(`${level.toLowerCase()}-regions.png`) });
   }
-  // Any checkpoint opens to show its words; a locked one says how it opens.
   const locked = page.getByRole("list", { name: "N2 checkpoints" }).locator(":scope > li").nth(1);
   await locked.getByRole("button").click();
   await expect(locked.getByText("Region 2 · Locked", { exact: true })).toBeVisible();

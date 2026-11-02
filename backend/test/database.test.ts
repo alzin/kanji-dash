@@ -60,7 +60,6 @@ test("backend curriculum manifest matches the actual frontend curriculum", async
   assert.equal(KANJI_CHARACTERS, regions.map((match) => match[2]).join(""));
 });
 
-/** PGlite executes the same PostgreSQL SQL; the adapter only translates driver results. */
 function pglitePool(db: PGlite): Pool {
   const query = async (sql: string, parameters?: unknown[]) => {
     const result = parameters ? await db.query(sql, parameters) : (await db.exec(sql)).at(-1)!;
@@ -216,7 +215,6 @@ async function exerciseReminders(pool: Pool, reminders: PgReminderRepository) {
   const endpoint = "https://fcm.googleapis.com/fcm/send/database-test";
   const keys = { p256dh: "B".repeat(87), auth: "A".repeat(22) };
   const base = { endpoint, keys, timeZone: "Asia/Tokyo", hour: 19, freezes: 0 };
-  // Relative to the database clock, which filters lapsed players.
   const day = (offset: number) => new Date(Date.now() + offset * 86_400_000).toISOString().slice(0, 10);
   await reminders.save({ ...base, lastPlayedOn: day(-1), streak: 4, freezes: 2 });
   await reminders.save({ ...base, hour: 8, lastPlayedOn: day(-2), streak: 3, freezes: 3 });

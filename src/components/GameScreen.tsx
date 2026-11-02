@@ -6,10 +6,8 @@ import { BrandMark } from "@/components/BrandMark";
 import { SoundToggle } from "@/components/SoundToggle";
 import { streakCount, useSave } from "@/lib/srs";
 
-/** Where "← Map" lands: the hub, optionally focused on a stop or with a panel open. */
 export type MapTarget = { stop?: number; panel?: "camp" | "journey" };
 
-/** Streak and mon, the two numbers every game screen keeps in the corner. */
 export function ResourceChips() {
   const save = useSave();
   const streak = streakCount(save);
@@ -27,11 +25,6 @@ export function ResourceChips() {
   );
 }
 
-/**
- * The one header every screen outside the overworld wears: a labelled way back to
- * the map on the left, the traveller's resources on the right. It replaces the
- * old website tab bar, so leaving any screen always means "back to the map".
- */
 export function GameHud({ back = {}, title, minimal = false }: { back?: MapTarget | false | undefined; title?: string | undefined; minimal?: boolean }) {
   return (
     <header className="game-hud">
@@ -58,7 +51,6 @@ export function GameHud({ back = {}, title, minimal = false }: { back?: MapTarge
   );
 }
 
-/** A full game screen: forest night backdrop, the shared HUD, then the content. */
 export function GameScreen({ back, title, hud = "full", className, children }: {
   back?: MapTarget | false;
   title?: string;

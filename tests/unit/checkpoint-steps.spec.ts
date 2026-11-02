@@ -41,13 +41,11 @@ test("steps complete in order and only in open regions; a failed seal reopens th
   expect(clearGate(FIRST)).toBe(50);
   expect(getSnapshot().checkpointSteps).toEqual(emptyCheckpointSteps());
 
-  // A repeat visit records its steps again; its seal starts them afresh.
   completeCheckpointStep(FIRST, "learn");
   expect(completedSteps(getSnapshot(), FIRST)).toBe(1);
   resetCheckpointSteps(FIRST);
   expect(completedSteps(getSnapshot(), FIRST)).toBe(0);
 
-  // The seal opened the next region, and steps survive a stored round trip.
   expect(completeCheckpointStep(SECOND, "learn")).toBe(true);
   replaceSave(JSON.parse(JSON.stringify(getSnapshot())));
   expect(getSnapshot().checkpointSteps).toEqual({ learned: [SECOND], stacked: [], rescued: [] });
@@ -78,7 +76,6 @@ test("on every road, a freshly stacked region's rescue asks only its own words a
     expect(gates.every((gate) => gate.kanji.ch === chapter && gate.mode !== "intro"), `region ${chapter}`).toBe(true);
     for (let i = 1; i < gates.length; i++) expect(gates[i]!.kanji.c, `region ${chapter} gate ${i}`).not.toBe(gates[i - 1]!.kanji.c);
     expect(new Set(gates.map((gate) => gate.vocab.w)), `region ${chapter}`).toEqual(new Set(region.flatMap((k) => k.vocab.map((v) => v.w))));
-    // Just-stacked words are practice: the trail cannot fast-forward their schedules.
     expect(ledger.scheduledGraded, `region ${chapter}`).toBe(0);
   }
 });
@@ -97,7 +94,6 @@ test("only a checkpoint adventure that reaches the shrine completes the rescue, 
   expect(writes[0]!.checkpointSteps).toEqual({ learned: [FIRST], stacked: [FIRST], rescued: [FIRST] });
   expect(getSnapshot().runsCompleted).toBe(2);
 
-  // A region that was never stacked, or a free adventure, completes nothing.
   replaceSave({ checkpointSteps: { learned: [FIRST], stacked: [], rescued: [] } });
   expect(finishAdventure(createAdventureLedger(createCheckpointDeck(getSnapshot(), FIRST, "standard", 5)), { score: 0, rescued: [], delivered: true })).toMatchObject({ stepCompleted: false });
   expect(finishAdventure(createAdventureLedger(createAdventureDeck(getSnapshot(), "standard", 6)), { score: 0, rescued: [], delivered: true })).toMatchObject({ stepCompleted: false });

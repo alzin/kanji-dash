@@ -1,4 +1,4 @@
-/** Original connected reading drafts. Every item awaits native review before publication. */
+/** Every item awaits native review before publication. */
 export type PassageDraft = { id: string; throughRegion: number; title: string; ruby: string[]; reviewed: false; source: "original" };
 type Row = [id: string, throughRegion: number, title: string, ruby: string[]];
 const rows: Row[] = [

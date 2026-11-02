@@ -24,7 +24,6 @@ for (const area of AREAS) {
         while (distance(p, step) >= 6 && budget-- > 0)
           p = movePlayer(p, step.x - p.x, step.y - p.y, 1 / 60, restored, area);
       expect(budget, `${site.name} budget`).toBeGreaterThan(0);
-      // Close enough that the interaction button appears.
       expect(distance(p, site)).toBeLessThan(90);
     });
   });
@@ -68,7 +67,6 @@ test("Kodama's original layout is transcribed exactly", () => {
   expect(KODAMA.start).toEqual({ x: 300, y: 690 });
   expect(KODAMA.sites.map((s) => [s.x, s.y])).toEqual([[470, 598], [674, 466], [1110, 326]]);
   expect(KODAMA.crossing).toEqual({ x: 796, y: 466, halfHeight: 34 });
-  // The same 135 trees the single-area world grew, first and last unchanged.
   const trees = treesOf(KODAMA);
   expect(trees).toHaveLength(135);
   expect(trees[0]).toEqual({ x: 89.95609938725829, y: 880.6887294724584, size: 1.1443812885088847, variant: 2 });

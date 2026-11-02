@@ -6,7 +6,6 @@ async function startDeterministicRun(page: Page, url = "run?gate=1", pauseClock 
   await page.setViewportSize({ width: 320, height: 568 });
   await page.clock.install();
   if (!offerToSave) await silenceSavePrompt(page);
-  // Identity shuffles put each answer in the top lane for these integration tests.
   await page.addInitScript(() => { Math.random = () => 0.999; });
   await page.goto(`${url}${url.includes("?") ? "&" : "?"}mode=runner`, { waitUntil: "domcontentloaded" });
   await completePreparation(page, { advanceClock: true, pauseClock });
@@ -127,7 +126,6 @@ test("a repeated checkpoint earns one exact seal and bonus without advancing rev
 });
 
 test("a finished run offers to save it, and declining leaves the game untouched", async ({ page }) => {
-  // A reachable backend with no session is the state a real guest plays in.
   await page.route("**/api/auth/session", (route) => route.fulfill({ json: { user: null } }));
   await startDeterministicRun(page, "run?gate=1", false, true);
   await page.keyboard.press("ArrowUp");

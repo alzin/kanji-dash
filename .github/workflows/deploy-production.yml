@@ -45,7 +45,6 @@ jobs:
   deploy:
     needs: verify
     runs-on: ubuntu-latest
-    # Approval gate and production-only variables live on this environment.
     environment:
       name: production
       url: https://kanji.nipporia.com
@@ -63,8 +62,6 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      # Keyless auth via Workload Identity Federation: no service account JSON
-      # key is ever stored in GitHub.
       - id: auth
         uses: google-github-actions/auth@v2
         with:
@@ -72,11 +69,8 @@ jobs:
           service_account: ${{ vars.GCP_DEPLOY_SA }}
       - uses: google-github-actions/setup-gcloud@v2
 
-      # Images are built by Cloud Build, not `docker build` on the runner. The
-      # web image runs Nitro's prerenderer during `npm run build`, which fails on
-      # a GitHub-hosted runner with an immediate ECONNREFUSED 127.0.0.1:3000
-      # while succeeding in Cloud Build and locally. Building where it is known
-      # to work also keeps image pushes inside GCP.
+      # Built by Cloud Build, not `docker build` on the runner: Nitro's prerenderer fails
+      # on GitHub-hosted runners with ECONNREFUSED 127.0.0.1:3000 but works in Cloud Build.
       # --suppress-logs: streaming build logs requires project Viewer, which the
       # deploy account does not have. The build result is still awaited.
       - name: Build API image
@@ -99,9 +93,6 @@ jobs:
           gcloud run deploy "${{ vars.API_SERVICE }}" --image "$IMAGE_BASE/api:$SHA" \
             --project "$PROJECT" --region "$REGION" --quiet
 
-      # Pages also ships the new curriculum from main. Keep its separate test
-      # backend compatible with those saves, retaining its own database,
-      # OAuth settings and secret references.
       - name: Deploy Pages test API
         run: |
           gcloud run deploy kanji-quest-api --image "$IMAGE_BASE/api:$SHA" \
@@ -112,8 +103,6 @@ jobs:
           gcloud run deploy "${{ vars.WEB_SERVICE }}" --image "$IMAGE_BASE/web:$SHA" \
             --project "$PROJECT" --region "$REGION" --quiet
 
-      # Checks the Cloud Run service URLs, so this passes even before a custom
-      # domain's certificate has been issued.
       - name: Smoke check
         run: |
           api=$(gcloud run services describe "${{ vars.API_SERVICE }}" \

@@ -19,7 +19,6 @@ async function unlockN4(page: Page, reviews = false) {
 
 test("N4 starts immediately while later checkpoints still require region progress", async ({ page }) => {
   await page.goto("map", { waitUntil: "domcontentloaded" });
-  // Wait for hydration before clicking an SSR-rendered level button.
   await expect(page.getByRole("button", { name: "Save your progress" })).toBeEnabled();
   await page.getByRole("button", { name: /^N4 / }).click();
   await expect(page.getByRole("heading", { name: "The N4 Road", exact: true })).toBeVisible();
@@ -83,7 +82,6 @@ test("an N4 checkpoint prepares, grades, stamps its own seal and only rewards th
     if (run === 0) await page.reload({ waitUntil: "domcontentloaded" });
   }
   await page.getByRole("button", { name: "Back to the map", exact: true }).click();
-  // Home is the world map, standing on the region just sealed.
   await expect(page.getByRole("button", { name: "Show the N4 road, 1 of 36 seals" })).toBeVisible();
   await page.goto("map", { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("heading", { name: "The N4 Road", exact: true })).toBeVisible();
@@ -100,7 +98,6 @@ test("the N5 seal opens the N4 road without resetting either level", async ({ pa
   await page.getByRole("button", { name: "Start the N4 road →", exact: true }).click();
   await expect(page.getByRole("heading", { name: "The N4 Road", exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Prepare checkpoint" })).toHaveCount(1);
-  // Access to the old first N4 theme is preserved.
   await expect(page.getByRole("list", { name: "N4 checkpoints" }).locator(':scope > li[data-state="open"]')).toHaveCount(6);
   await expect(page.getByText("0 / 36 earned", { exact: true })).toBeVisible();
 });

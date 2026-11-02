@@ -1,7 +1,3 @@
-# Production container for the Kanji Quest web frontend (TanStack Start + Nitro).
-# The GitHub Pages test build uses `npm run build:pages` instead; this image is
-# the server-rendered build that Cloud Run serves at kanji.nipporia.com.
-
 FROM node:24-bookworm-slim AS build
 WORKDIR /app
 COPY package*.json ./
@@ -18,7 +14,6 @@ FROM node:24-bookworm-slim
 ENV NODE_ENV=production
 ENV PORT=8080
 WORKDIR /app
-# Nitro bundles its dependencies, so no node_modules are needed at runtime.
 COPY --from=build /app/.output ./.output
 USER node
 EXPOSE 8080

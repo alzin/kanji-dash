@@ -8,7 +8,6 @@ export type Encounter = { id: string; question: Question; kind: "meaning" | "rea
 export type TrailAnswer = { encounter: Encounter; correct: boolean; assisted: boolean };
 export type TrailState = { queue: Encounter[]; index: number; answers: TrailAnswer[]; combo: number; bestCombo: number; light: number; charm?: TrailCharm };
 
-/** Four words per expedition. Due reviews take priority; free practice never opens locked content. */
 export function expeditionWords(save: SaveData, now = Date.now()): Question[] {
   const available = allKanji.filter((k) => isChapterUnlocked(save, k.ch));
   const reviews = available.filter((k) => getCard(save, k.c).mastery > 0 && getCard(save, k.c).due <= now)
@@ -22,7 +21,6 @@ export function expeditionWords(save: SaveData, now = Date.now()): Question[] {
   });
 }
 
-/** Interleave two retrieval styles before production. Never test the same word back to back. */
 export function createTrail(words: Question[], path: TrailPath): TrailState {
   const styles = path === "river" ? ["meaning", "reading"] as const : ["reading", "meaning"] as const;
   const queue: Encounter[] = styles.flatMap((kind, round) => words.map((q, i) => ({
@@ -32,7 +30,6 @@ export function createTrail(words: Question[], path: TrailPath): TrailState {
   return { queue, index: 0, answers: [], combo: 0, bestCombo: 0, light: 0 };
 }
 
-/** One recovery attempt after other words. Recovery earns light, never extra coins or SRS grades. */
 export function answerTrail(state: TrailState, correct: boolean, assisted = false): TrailState {
   const encounter = state.queue[state.index];
   if (!encounter) return state;

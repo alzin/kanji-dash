@@ -1,4 +1,4 @@
-/** Shared, serializable identities for Firefly Rescue. Keep backend validation in sync. */
+/** Keep backend validation in sync. */
 export type RunnerDifficulty = "standard" | "relaxed";
 export type LanternId = "amber" | "jade" | "azure" | "rose";
 export const SPIRITS = [
@@ -24,15 +24,9 @@ export const STAGES = [
   { name: "Moonlit river", subtitle: "Carry them across the water", kanji: "川" },
   { name: "Lantern ridge", subtitle: "Bring every little light home", kanji: "灯" },
 ] as const;
-/**
- * Stage times of the word gates. They sit further apart than the longest sight window, so each
- * gate's words are chosen after the previous answer and only one lantern call is ever live.
- * The last stage stops early to keep its six-second shrine approach. Client-only; the backend never sees these.
- */
 export const GATE_TIMES = [3.8, 7.4, 11, 14.6, 18.2, 21.8, 25.4, 29] as const;
 export const gateTimesOf = (stage: number): readonly number[] => stage === 2 ? GATE_TIMES.filter((time) => time <= 23.2) : GATE_TIMES;
 export const GATES_PER_ADVENTURE = gateTimesOf(0).length + gateTimesOf(1).length + gateTimesOf(2).length;
-/** intro: meet a new word. reading: word → its kana. listen: heard kana → its written word. */
 export type GateMode = "intro" | "reading" | "listen";
 export type TrailId = "grove" | "bramble" | "bridge" | "moonpath";
 export const TRAILS = {

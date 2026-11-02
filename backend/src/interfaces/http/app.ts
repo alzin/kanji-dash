@@ -16,7 +16,6 @@ export type AppDependencies = {
   auth: AuthService;
   google: GoogleProvider;
   progress: ProgressService;
-  /** Absent when VAPID keys are not configured; the app then hides the reminder offer. */
   reminders?: { service: ReminderService; publicKey: string; dispatchSecret: string } | null;
   ready: () => Promise<void>;
   reportError?: (error: unknown) => void;
@@ -116,7 +115,7 @@ export function createApp({ config, auth, google, progress, reminders = null, re
     }
   });
 
-  // Daily reminders. A browser's push endpoint identifies its subscription, so guests
+  // A browser's push endpoint identifies its subscription, so guests
   // can opt in without an account; no cookie is read, so CSRF does not apply.
   const reminderLimit = rateLimit({ windowMs: 15 * 60_000, limit: 60, standardHeaders: 'draft-8', legacyHeaders: false,
     message: { error: { code: 'RATE_LIMITED', message: 'Too many reminder changes. Please try again later.' } } });
@@ -139,7 +138,6 @@ export function createApp({ config, auth, google, progress, reminders = null, re
     await reminderService().remove(body['endpoint']);
     res.sendStatus(204);
   });
-  // Called hourly by Cloud Scheduler with the shared secret as a bearer token.
   app.post('/api/reminders/dispatch', async (req, res) => {
     const header = req.get('Authorization') ?? '';
     if (!reminders || !header.startsWith('Bearer ') || !equalToken(header.slice(7), reminders.dispatchSecret)) throw new AppError('NOT_FOUND', 'Endpoint not found.', 404);

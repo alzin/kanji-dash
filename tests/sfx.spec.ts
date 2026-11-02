@@ -6,8 +6,6 @@ test.beforeEach(({ page }) => silenceSavePrompt(page));
 
 type VoiceLog = { type: string; freq: number; at: number };
 
-// A recorder in place of Web Audio: every source node logs its start so the
-// tests can read the planned voices without a real audio thread.
 function installAudioRecorder() {
   const w = window as any;
   w.__sfxLog = [] as VoiceLog[];
@@ -74,7 +72,6 @@ async function prepare(page: Page) {
   await page.setViewportSize({ width: 320, height: 568 });
   await page.clock.install();
   await page.addInitScript(installAudioRecorder);
-  // Identity shuffles put each answer in the top lane, as in runner.spec.ts.
   await page.addInitScript(() => { Math.random = () => 0.999; });
 }
 
@@ -91,15 +88,13 @@ const ctxCount = (page: Page) => page.evaluate(() => (window as any).__ctxCount 
 test("correct answers climb the pentatonic ladder", async ({ page }) => {
   await prepare(page);
   await startRun(page);
-  await page.keyboard.press("ArrowUp"); // keydown is the activation that unlocks audio
+  await page.keyboard.press("ArrowUp");
   for (let gate = 0; gate < 5; gate++) await page.clock.fastForward(3_500);
   await expect(page.getByRole("heading", { name: "Checkpoint cleared!", exact: true })).toBeVisible();
   await expect(page.getByText("Score", { exact: true }).locator("..").getByText("1,500", { exact: true })).toBeVisible();
 
   const log = await readLog(page);
   expect(await ctxCount(page)).toBe(1);
-  // Only the pluck fundamentals at the answer moment (combo >= 5 adds a second pluck at +0.06 s);
-  // The checkpoint arpeggio starts after the stamp, separate from the answer ladder.
   const triangles = log.filter((voice) => voice.type === "triangle" && voice.at < 0.001).map((voice) => voice.freq);
   expect(triangles.length).toBeGreaterThanOrEqual(5);
   const ladder = triangles.slice(0, 5);
@@ -114,8 +109,6 @@ test("a miss schedules the taiko and the paper fwip, the third miss adds the tem
   page.on("pageerror", (error) => errors.push(String(error)));
   await prepare(page);
   await startRun(page, "run?gate=1", true);
-  // No steering: a lane-neutral key is still a user activation that unlocks audio,
-  // and the runner then misses every gate on its own.
   await page.keyboard.press("Shift");
   expect(await ctxCount(page)).toBe(1);
 
@@ -135,19 +128,16 @@ test("a miss schedules the taiko and the paper fwip, the third miss adds the tem
     expect(taiko).toHaveLength(miss);
     const fwip = log.filter((voice) => voice.type === "noise" && Math.abs(voice.at - 0.2) < 0.001);
     expect(fwip.length).toBeGreaterThanOrEqual(miss);
-    // The temple bell sounds once per run, at +0.35 s of the miss that leaves the last heart.
     const bell = log.filter((voice) => voice.type === "sine" && voice.freq === 196);
     expect(bell).toHaveLength(miss >= 2 ? 1 : 0);
     if (miss >= 2) expect(Math.abs(bell[0]!.at - 0.35)).toBeLessThan(0.001);
     if (miss === 3) break;
 
-    // Advance frames through the lesson entrance before testing its button.
     await page.clock.runFor(1_000);
     const plucksBefore = log.filter((voice) => voice.type === "triangle" && Math.abs(voice.freq - 293.66) < 0.01).length;
     await page.getByRole("button", { name: "Keep running", exact: true }).click();
     await expect(page.getByRole("button", { name: "Keep running", exact: true })).toHaveCount(0);
     const after = await readLog(page);
-    // "Keep running": the exhale noise plus a D4 root-note pluck 50 ms later.
     const plucks = after.filter((voice) => voice.type === "triangle" && Math.abs(voice.freq - 293.66) < 0.01);
     expect(plucks).toHaveLength(plucksBefore + 1);
     expect(Math.abs(plucks[plucks.length - 1]!.at - 0.05)).toBeLessThan(0.001);
@@ -172,7 +162,6 @@ test("mute persists under its own key and creates no context", async ({ page }) 
   await expect(page.getByRole("button", { name: "Unmute sounds", exact: true })).toHaveAttribute("aria-pressed", "true");
   expect(await ctxCount(page)).toBe(0);
 
-  // Check the HUD before this short checkpoint finishes.
   await startRun(page, "run?gate=1");
   await page.keyboard.press("ArrowUp");
   await page.clock.fastForward(1_000);
@@ -187,5 +176,5 @@ test("mute persists under its own key and creates no context", async ({ page }) 
   expect(await page.evaluate(() => localStorage.getItem("kanji-dash-sound"))).toBe("on");
   const log = await readLog(page);
   expect(log.length).toBeGreaterThan(0);
-  expect(log.some((voice) => voice.type === "sine" && voice.freq === 1050)).toBe(true); // the clapper "kon"
+  expect(log.some((voice) => voice.type === "sine" && voice.freq === 1050)).toBe(true);
 });

@@ -26,7 +26,6 @@ import { ReminderOffer } from "./DailyReminder";
 
 const primary = "min-h-12 rounded-xl bg-primary px-5 py-3 text-center font-bold text-primary-foreground shadow-e1";
 const secondary = "min-h-12 rounded-xl border border-border px-5 py-3 text-center font-bold hover:bg-secondary";
-/** Typed readings, of three, that stamp a checkpoint seal. */
 const SEAL_PASS = 2;
 const quiet = "min-h-11 p-3 font-bold text-muted-foreground";
 const EMPTY: StackStats = { correct: 0, wrong: 0, bestCombo: 0, score: 0, redeemed: 0, chains: 0, elapsed: 0, cleared: true, wordsCleared: 0, totalWords: 0 };
@@ -35,11 +34,6 @@ function sum(a: StackStats, b: StackStats): StackStats { return { correct: a.cor
 type View = CheckpointStep | "seal" | "sealed";
 type Outcome = { passed: boolean; typed: number; earned: number };
 
-/**
- * A region checkpoint: learn and write every word, stack them from memory, carry them through
- * Firefly Rescue, then type their readings for the seal. Each completed step is saved, so a
- * learner who leaves comes back to the step they reached. A failed seal reopens the rescue.
- */
 export function CheckpointSession({ gate }: { gate: number }) {
   // A newly loaded account or save restarts the checkpoint from the steps saved there, so no step
   // of an earlier save is shown or written. Both stores notify as the progress generation moves on.
@@ -60,7 +54,6 @@ function CheckpointJourney({ gate }: { gate: number }) {
   }, [gate]);
   const [view, setView] = useState<View>(() => nextCheckpointStep(getSnapshot(), gate));
   const [outcome, setOutcome] = useState<Outcome | null>(null);
-  // A repeat seal is perfect only when this visit's stack and rescue had no misses at all.
   const flawless = useRef({ stack: false, rescue: false });
   const level = levelOfChapter(gate)!, region = CHAPTER_NAMES[gate]!, done = completedSteps(save, gate);
   const resume = () => setView(nextCheckpointStep(getSnapshot(), gate));
@@ -91,7 +84,6 @@ function CheckpointJourney({ gate }: { gate: number }) {
     if (typed >= SEAL_PASS) {
       const reward = clearGate(gate);
       const perfect = frozen.wasCleared && typed === 3 && flawless.current.stack && flawless.current.rescue ? perfectGate(gate) : 0;
-      // A first seal clears its steps as it is stamped; a repeat visit starts them afresh.
       resetCheckpointSteps(gate);
       setOutcome({ passed: true, typed, earned: reward + perfect });
       play("checkpointPassed", { earned: reward + perfect });
@@ -121,7 +113,6 @@ function CheckpointJourney({ gate }: { gate: number }) {
   </div></div>;
 }
 
-/** Step two: every word of the region on Tsumiji sheets. Clearing 70% of them completes the step. */
 function StackStep({ gate, words, done, onPassed, onContinue, onReview }: {
   gate: number; words: StackWord[]; done: number;
   onPassed: (flawless: boolean) => void; onContinue: () => void; onReview: () => void;
@@ -143,7 +134,6 @@ function StackStep({ gate, words, done, onPassed, onContinue, onReview }: {
     return () => window.clearInterval(id);
   }, [stage]);
   const begin = () => { finished.current = false; missed.current.clear(); setStage("play"); };
-  // A filled sheet or a short total retries that sheet, never a whole new queue.
   const retry = () => { setTotals(beforeSheet.current); setLatest(null); setAttempt((v) => v + 1); begin(); };
   const toMap = <Link to="/" search={{ stop: gate }} onClick={() => selectLevel(levelOfChapter(gate)!)} className={quiet}>Back to the map</Link>;
   const hud = <GameHud back={{ stop: gate }} minimal />;

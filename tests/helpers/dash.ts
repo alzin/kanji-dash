@@ -16,8 +16,6 @@ export async function dashReady(page: Page) {
     .toBe(1);
 }
 async function crossGate(page: Page) {
-  // Drive time through the real engine after the real input, without making
-  // slow screenshot capture or WebKit IPC part of a player's answer time.
   await page.clock.runFor(100);
   const s = (await dashState(page))!;
   const box = (await page.locator(".dash-canvas canvas").boundingBox())!;
