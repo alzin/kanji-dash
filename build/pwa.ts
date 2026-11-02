@@ -34,8 +34,6 @@ export function offlinePwa({ staticExport = false }: { staticExport?: boolean } 
 
         const publicDirectory = resolve(client.config.root, client.config.build.outDir);
         if (staticExport) {
-          // GitHub Pages only serves files. Reuse the route-independent shell for
-          // initial visits and refreshes; the router retains the URL and query.
           const shell = await readFile(resolve(publicDirectory, "offline.html"));
           const pages = ["index.html", "404.html", ...["camp", "map", "practice", "collection", "run", "world"]
             .map((route) => `${route}/index.html`)];

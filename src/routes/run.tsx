@@ -41,7 +41,6 @@ function RunPage() {
   const { gate, mode, practice } = useSearch({ from: "/run" });
   const [ready, setReady] = useState(false);
   useEffect(() => setReady(true), []);
-  // The saved review queue is only available in this browser, after hydration.
   if (!ready) return (
     <div className="forest-game" role="status">
       <div className="forest-loading">
@@ -52,7 +51,6 @@ function RunPage() {
   );
   if (mode === "expedition" && gate === undefined) return <ForestAdventure />;
   if (mode === "runner") return gate === undefined ? <FireflyAdventure /> : <RunSession key={gate} gate={gate} />;
-  // A region's checkpoint: learn & write, stack & recall, Firefly Rescue, then the typed seal.
   if (gate !== undefined) return <CheckpointSession key={gate} gate={gate} />;
   return <StackSession key={practice ?? "daily"} kind={practice ?? "daily"} />;
 }
@@ -89,8 +87,6 @@ function RunSessionContent({ gate }: { gate: number | undefined }) {
   const title = gate ? `${CHAPTER_NAMES[gate]!.name} · Checkpoint` : level === "N5" ? "Daily run" : `Daily run · ${level}`;
   const pendingCheckpoint = !gate ? LEVEL_CHAPTERS[level].find((ch) => isChapterUnlocked(getSnapshot(), ch) && !isGateCleared(getSnapshot(), ch)) : undefined;
 
-  // One ceremony per results object: the hanko thump for 合格, an open question for 再挑戦,
-  // the rising koto phrase for 完了 and a quiet page turn when the hearts ran out.
   useEffect(() => {
     if (!results) return;
     const total = questions.length;
@@ -124,7 +120,6 @@ function RunSessionContent({ gate }: { gate: number | undefined }) {
         <p className="mx-auto mt-3 max-w-sm text-base leading-relaxed text-muted-foreground">
           {pendingCheckpoint !== undefined ? `You’ve met this region’s words. Prepare its ${kanjiOfChapter(pendingCheckpoint).length}-word checkpoint to earn a seal and open the next region.` : "There are no new kanji or reviews due in your unlocked regions. Come back later, or visit the dojo to practice strokes."}
         </p>
-        {/* One filled button — the single best next step — then quiet alternatives. */}
         <div className="mt-8 flex w-full max-w-xs flex-col gap-2.5">
           {pendingCheckpoint !== undefined
             ? <Link to="/run" search={{ gate: pendingCheckpoint }} className="inline-flex min-h-12 items-center justify-center rounded-xl bg-primary px-5 py-3 font-bold text-primary-foreground shadow-e1 transition-colors hover:bg-primary-hover">Prepare checkpoint</Link>
@@ -150,7 +145,6 @@ function RunSessionContent({ gate }: { gate: number | undefined }) {
           onAnswer={(q, correct) => {
             const masteryBefore = getCard(getSnapshot(), q.kanji.c).mastery;
             grade(q.kanji.c, correct);
-            // The long-term goal reached inside the loop (the engine drops it when a milestone bell just rang).
             if (correct && masteryBefore < 3 && getCard(getSnapshot(), q.kanji.c).mastery === 3) play("mastered");
             if (!correct) {
               setLesson(q);
@@ -170,7 +164,6 @@ function RunSessionContent({ gate }: { gate: number | undefined }) {
         />
       )}
 
-      {/* Lesson flash on wrong answer */}
       {lesson && !results && (
         <LessonFlash lesson={lesson} onDismiss={() => setLesson(null)} />
       )}

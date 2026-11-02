@@ -17,7 +17,6 @@ const group = (legacyChapter: number, level: JLPTLevel, stops: Stop[]): Region[]
   stops.map(([id, name, jp, chars]) => ({ id, legacyChapter, level, name, jp, chars }));
 
 // Explicit IDs are save/link identifiers. Array order, not ID arithmetic, defines the road.
-// Each original theme is divided into small vocabulary families, keeping all card content.
 export const REGIONS: readonly Region[] = [
   ...group(1, "N5", [
     [1, "The First Five", "一から五", "一二三四五"],
@@ -251,10 +250,6 @@ export const LEVEL_CHAPTERS: Record<JLPTLevel, readonly number[]> = {
   N3: REGIONS.filter((r) => r.level === "N3").map((r) => r.id),
   N2: REGIONS.filter((r) => r.level === "N2").map((r) => r.id),
 };
-/**
- * Rough weeks to finish a level at one region a day: a daily run introduces up to five new
- * kanji (about one region), and clearing that region's checkpoint opens the next.
- */
 export function levelWeeks(level: JLPTLevel): number {
   return Math.max(1, Math.round(LEVEL_CHAPTERS[level].length / 7));
 }
@@ -275,7 +270,6 @@ export function nextChapter(ch: number): number | undefined {
   return road[road.indexOf(ch) + 1];
 }
 
-/** Reuse character keys and vocabulary; only the study order and region change. */
 export function arrangeRegions(cards: Kanji[], level: JLPTLevel): Kanji[] {
   const byChar = new Map(cards.map((k) => [k.c, k]));
   const arranged = REGIONS.filter((r) => r.level === level).flatMap((r) => [...r.chars].map((c) => {

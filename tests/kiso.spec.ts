@@ -5,7 +5,6 @@ import { silenceSavePrompt } from "./helpers/savePrompt";
 import { clearRiver } from "./helpers/river";
 import { completeDash, dashReady } from "./helpers/dash";
 
-// A complete multi-stage walk, budgeted like the Kodama walks in expedition.spec.ts.
 test.setTimeout(240_000);
 
 test.beforeEach(async ({ page }) => {
@@ -64,13 +63,11 @@ test("an N4 learner walks Kiso Post Town end to end and saves exactly one reward
   await expect(page.getByRole("button", { name: "Follow the trail" })).toBeEnabled();
   await page.screenshot({ path: info.outputPath("kiso-start.png") });
 
-  // The andon: four meanings.
   await reachSite(page, 0);
   let checks = await answerOpenEncounter(page);
   await expect(page.locator("canvas")).toHaveAttribute("data-restored", "1");
   await expect(page.getByRole("heading", { name: "Cross the swollen stream" })).toBeVisible();
 
-  // The footbridge: River of Words over the swollen stream.
   await reachSite(page, 1);
   await page.clock.pauseAt(new Date(await page.evaluate(() => Date.now() + 1_000)));
   await page.getByRole("button", { name: "Place the word stones" }).click();
@@ -85,7 +82,6 @@ test("an N4 learner walks Kiso Post Town end to end and saves exactly one reward
   await expect(page.locator("canvas")).toHaveAttribute("data-restored", "2");
   await expect(page.getByRole("heading", { name: "Carry light up the misty pass" })).toBeVisible();
 
-  // The misty pass: Lantern Dash, then the shrine's typed recall.
   await reachSite(page, 2);
   await page.clock.pauseAt(new Date(await page.evaluate(() => Date.now() + 1_000)));
   await page.getByRole("button", { name: "Begin the lantern dash" }).click();
@@ -129,7 +125,6 @@ test("Kiso keeps the 320px layout, keyboard travel and reduced-motion rules", as
   await expect(canvas).toHaveAttribute("data-area", "kiso");
   await expect(page.getByRole("button", { name: "Follow the trail" })).toBeEnabled();
   const before = Number(await canvas.getAttribute("data-player-x"));
-  // Kiso starts at the inn on the east side; the road runs west.
   await page.keyboard.down("a");
   await page.waitForTimeout(250);
   await page.keyboard.up("a");

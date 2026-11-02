@@ -35,7 +35,6 @@ function questions(count: number): Question[] {
   });
 }
 
-/** Distinct gate objects. createRunnerState only fills RUNNER_LANES (3) pending gates, so larger counts concatenate runs. */
 function gates(count = 3): RunnerGate[] {
   const out: RunnerGate[] = [];
   while (out.length < count) out.push(...createRunnerState(questions(count - out.length), width, height, () => 0.999).gates);
@@ -46,7 +45,6 @@ function fx(reducedMotion = false, seed = 7) {
   return createEffects({ reducedMotion, seed });
 }
 
-/** Steps the wall clock in frames no longer than the clamp (a 20 s fast-forward is delivered frame by frame). */
 function run(state: EffectsState, seconds: number, paused = false, frame = 1 / 60) {
   let alive = true;
   for (let t = 0; t < seconds - 1e-9; t += frame) alive = advanceEffects(state, frame, paused);
@@ -61,7 +59,6 @@ function snapshot(state: EffectsState) {
   });
 }
 
-/** A recording 2D context: every method call and property write is logged, save/restore stack the state; nothing is drawn. */
 function stubContext() {
   const calls: string[] = [];
   const state: Record<string, unknown> = {
@@ -211,7 +208,6 @@ test("twenty seconds expire every particle, stamp, echo, flash and timeline", ()
   expect(getLaneFlash(state)).toBeNull();
   expect(getShake(state)).toEqual({ x: 0, y: 0 });
   expect(getRunnerPose(state, 0, 0)).toEqual({ sx: 1, sy: 1, dy: 0, rot: 0 });
-  // The chosen-lane record is keyed by gate identity and is not time-based; the runner times it with sinceResolved.
   expect(getWrongMark(state, g1!)).toEqual({ chosenLane: 1 });
   expect(advanceEffects(state, 1 / 60, false)).toBe(false);
 });
@@ -392,7 +388,6 @@ test("the pause fade rises to one while paused, drops to zero on resume, and the
     expect(elapsed).toBeLessThanOrEqual(PAUSE_FADE_SECONDS + 0.011);
   }
   expect(getPauseTitle(state).scale).toBeCloseTo(1, 6);
-  // Wall-clock: the shake decays under the lesson blur; sim-linked stamps and flashes are frozen.
   expect(Math.abs(getShake(state).x)).toBeLessThan(shake0);
   expect(getStampFor(state, gate!)).toEqual(stampBefore);
   expect(getLaneFlash(state)).toEqual(flashBefore);
@@ -547,11 +542,9 @@ test("a milestone breathes the sun, shows the seal for 1.08 s and bursts once at
   spawnMilestone(state, 5);
   expect(state.milestone).toEqual({ combo: 5, t: 0 });
   expect(getSunScale(state)).toBe(1);
-  // Two frames: a single 0.15 s frame would be clamped to 0.1 s.
   advanceEffects(state, 0.1, false);
   advanceEffects(state, 0.05, false);
   expect(getSunScale(state)).toBeCloseTo(1.06, 6);
-  // No position yet: the burst waits for spawnCorrect.
   expect(state.particleCount).toBe(0);
   spawnCorrect(state, { x: 60, y: 300, gate: gate!, combo: 5 });
   expect(state.particleCount).toBe(8 + 8 + 24);
@@ -559,7 +552,6 @@ test("a milestone breathes the sun, shows the seal for 1.08 s and bursts once at
   expect(state.milestone).toBeNull();
   expect(getSunScale(state)).toBe(1);
 
-  // The other order (correct first, then milestone) bursts at that answer on the next frame.
   const other = fx();
   spawnCorrect(other, { x: 60, y: 300, gate: gate!, combo: 3 });
   const before = other.particleCount;
@@ -584,13 +576,11 @@ test("draw passes use fixed styles, batched paths, no gradients or shadows, and 
   spawnCorrect(state, { x: 60, y: 300, gate: g0!, combo: 11 });
   let batchedFrames = 0;
   for (const compact of [true, false]) {
-    // A fresh milestone and echo per pass so the desktop seal and the pill text are both drawn.
     spawnMilestone(state, 15);
     spawnEcho(state, { text: "山 やま", score: "+1500 ×15", width: 150, fontPx: 14, x: 160, y: 200, color: "moss", lifeSeconds: 0.9 });
     for (let frame = 0; frame < 80; frame++) {
       advanceEffects(state, 1 / 60, false);
       const { calls, props } = drawEverything(state, compact);
-      // Desktop first frame: echo word + score + seal kanji are all text draws.
       if (!compact && frame === 0) expect(calls.filter((c) => c === "fillText").length).toBeGreaterThanOrEqual(3);
       if (compact && frame === 0) expect(calls.filter((c) => c === "fillText").length).toBe(2);
       expect(calls).not.toContain("createLinearGradient");
@@ -602,7 +592,6 @@ test("draw passes use fixed styles, batched paths, no gradients or shadows, and 
       expect(props["globalAlpha"]).toBe(1);
       expect(props["textAlign"]).toBe("center");
       expect(props["textBaseline"]).toBe("alphabetic");
-      // Particles are drawn with at most one fill per colour, not one per particle.
       const front = stubContext();
       drawEffectsFront(front.ctx, state, width, height);
       const arcs = front.calls.filter((c) => c === "arc").length;

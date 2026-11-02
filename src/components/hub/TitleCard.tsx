@@ -4,10 +4,6 @@ import { openAccountPrompt, useAccount } from "@/lib/account";
 import { BrandMark } from "@/components/BrandMark";
 import { LEVELS, levelWeeks } from "@/data";
 
-/**
- * The title card over the overworld: the first thing a new traveller sees, with the whole
- * journey already drawn behind it. Starting simply sets them down at the trailhead.
- */
 export function TitleCard({ onStart }: { onStart: () => void }) {
   const ref = useRef<HTMLDialogElement>(null);
   const start = useRef<HTMLButtonElement>(null);

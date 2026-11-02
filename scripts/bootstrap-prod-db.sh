@@ -1,17 +1,8 @@
 #!/usr/bin/env bash
-# Bootstraps the production database from Cloud Shell.
-#
-# Prompts once for the Neon OWNER connection string, then does everything that
-# depends on it without printing a secret or leaving one in shell history:
-#
-#   1. applies migrations as the owner, so the tables exist
-#   2. creates the least-privilege kq_cloud_run role and grants on those tables
-#   3. builds the pooled runtime URL and stores it in Secret Manager
-#
+# Usage (from Cloud Shell): bash scripts/bootstrap-prod-db.sh
+# Prompts once for the Neon OWNER URL and never prints it or leaves it in shell history.
 # Order matters: GRANT ... ON ALL TABLES only affects tables that already exist,
 # so migrations have to run before the grants, not after.
-#
-# Usage:  bash scripts/bootstrap-prod-db.sh
 
 set -euo pipefail
 
@@ -82,7 +73,6 @@ echo "==> Confirming the role can only read and write, not alter schema"
 PGCONNECT_TIMEOUT=30 psql "$OWNER_URL" -tAc "SELECT rolcreatedb OR rolcreaterole OR rolsuper FROM pg_roles WHERE rolname='$RUNTIME_ROLE';" \
   | grep -qx 'f' || { echo "Role has more privilege than expected." >&2; exit 1; }
 
-# Neon's pooled endpoint is the direct host with -pooler on the endpoint id.
 OWNER_HOST="${OWNER_URL#*@}"; OWNER_HOST="${OWNER_HOST%%/*}"; OWNER_HOST="${OWNER_HOST%%\?*}"
 POOLED_HOST="$(printf '%s' "$OWNER_HOST" | sed -E 's|^(ep-[A-Za-z0-9-]+)\.|\1-pooler.|')"
 [ "$POOLED_HOST" != "$OWNER_HOST" ] || { echo "Could not derive the pooled host from $OWNER_HOST." >&2; exit 1; }

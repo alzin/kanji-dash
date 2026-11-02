@@ -5,8 +5,6 @@ import { silenceSavePrompt } from "./helpers/savePrompt";
 
 const ENDPOINT = "https://fcm.googleapis.com/fcm/send/test-device";
 
-/** Test browsers cannot reach a real push service, so the browser's push API is faked
- * for every tab; the permission and subscription persist across reloads like the real ones. */
 async function fakePush(page: Page) {
   await page.context().addInitScript((endpoint) => {
     const read = () => localStorage.getItem("test-push-subscription") === "1";
@@ -24,7 +22,6 @@ async function fakePush(page: Page) {
 
 async function fakeApi(page: Page, publicKey: string | null) {
   const saved: Record<string, unknown>[] = [], removed: string[] = [];
-  // Context routes also see requests that pass through the installed service worker.
   await page.context().route("**/api/**", async (route) => {
     const { pathname } = new URL(route.request().url());
     if (pathname.endsWith("/api/reminders")) return route.fulfill({ json: { publicKey } });
@@ -73,7 +70,6 @@ test.describe("on browsers with Web Push", () => {
       hour: 20, lastPlayedOn: today, streak: 1, freezes: 0,
     });
 
-    // The run froze the clock, which the map's entrance relies on.
     await page.clock.resume();
     const camp = await page.context().newPage();
     await skipTitle(camp);

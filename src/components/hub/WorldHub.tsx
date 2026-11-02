@@ -25,17 +25,12 @@ import { BrandMark } from "@/components/BrandMark";
 export type HubPanel = "camp" | "journey";
 export type HubSearch = { panel?: HubPanel; stop?: number; title?: true };
 
-/** Where the learner stands: their road's next checkpoint, else the last stop of that sealed road. */
 function viewOf(save: SaveData): WorldView {
   const here = journeyHere(save);
   const ch = here.ch ?? here.road.regions[here.road.regions.length - 1]!;
   return { states: new Map(JOURNEY_STOPS.map((id) => [id, stopState(save, id)])), here: nodeOfRegion(ch)!.index };
 }
 
-/**
- * The hub of the whole game: the overworld map of the Kanji Journey. Camp and the journey log
- * open as panels over it, every screen returns to it, and a new traveller meets the title here.
- */
 export function WorldHub({ search }: { search: HubSearch }) {
   const navigate = useNavigate({ from: "/" });
   const router = useRouter();
@@ -44,11 +39,8 @@ export function WorldHub({ search }: { search: HubSearch }) {
   const view = useMemo(() => viewOf(save), [save]);
   const { nodes } = worldLayout();
 
-  // Seals earned since the map last saw this save: stamped once, here and in the journey log.
   const [arrival] = useState(() => {
     const seals = diffFx(readFx(), getSnapshot(), localDay()).newSeals.sort((a, b) => journeyNumber(a) - journeyNumber(b));
-    // A return address (a checkpoint just left) wins; otherwise the traveller stands on "here",
-    // their next checkpoint, and new seals are announced rather than walked to.
     const focus = search.stop !== undefined ? nodeOfRegion(search.stop)?.index : undefined;
     return { seals, focus };
   });
@@ -57,7 +49,7 @@ export function WorldHub({ search }: { search: HubSearch }) {
     rememberFx(getSnapshot(), localDay());
     const latest = arrival.seals[arrival.seals.length - 1];
     if (latest === undefined) return;
-    if (isAudioRunning()) play("sealEarned"); // never creates an audio context on load
+    if (isAudioRunning()) play("sealEarned");
     setToast(`印 Seal earned · ${CHAPTER_NAMES[latest]!.name}`);
     const timer = setTimeout(() => setToast(""), 4500);
     return () => clearTimeout(timer);
@@ -90,15 +82,12 @@ export function WorldHub({ search }: { search: HubSearch }) {
     media.addEventListener("change", update);
     return () => media.removeEventListener("change", update);
   }, [bridge]);
-  // Open on the stop the traveller came back from, else their own checkpoint; a return
-  // address is spent once used, so a reload lands on "here" again.
   useEffect(() => {
     if (!ready) return;
     setSelected(bridge.focus ?? bridge.view.here);
     if (search.stop !== undefined) void navigate({ search: ({ stop: _stop, ...rest }) => rest, replace: true });
   }, [ready]);
 
-  // Panels live in the URL, so the browser's Back button closes them.
   const panel = search.panel;
   const openedHere = useRef(false);
   const openPanel = (next: HubPanel) => {
@@ -114,10 +103,6 @@ export function WorldHub({ search }: { search: HubSearch }) {
   useEffect(() => { if (!panel) openedHere.current = false; }, [panel]);
   actions.current.camp = () => openPanel("camp");
 
-  // The title card greets a traveller who has not set out yet, once the cloud save (if any)
-  // has had its say, so a returning player never sees it flash.
-  // Arriving through a deep link (a panel, or back from a checkpoint) means the traveller is
-  // already inside the game; the title would only interrupt them, now or after a panel closes.
   const [dismissed, setDismissed] = useState(() => {
     if (search.panel || search.stop !== undefined) rememberTitleSeen();
     return titleSeen();
@@ -136,7 +121,6 @@ export function WorldHub({ search }: { search: HubSearch }) {
   const overlay = showTitle ? "title" : panel ?? (selected !== null ? "stop" : null);
   bridge.blocked = overlay === "title" || overlay === "camp" || overlay === "journey" || account.prompt;
   bridge.selected = overlay === "stop" ? selected : null;
-  // Nothing moves under a panel or the title card, so the map need not draw at all.
   const covered = overlay === "title" || overlay === "camp" || overlay === "journey";
   useEffect(() => {
     if (!ready) return;
@@ -147,7 +131,6 @@ export function WorldHub({ search }: { search: HubSearch }) {
     const node = ch === undefined ? view.here : nodeOfRegion(ch)?.index;
     closePanel();
     if (node === undefined) return;
-    // Walk once the panel has let go of the map.
     setTimeout(() => bridge.walkTo?.(node), 60);
   };
 
@@ -273,8 +256,6 @@ function StopPanel({ index, save, here, newTraveller, onStep, onClose }: {
   const mastered = kanji.filter((k) => getCard(save, k.c).mastery === 3).length;
   const previous = node.road.regions[node.regionIndex - 1];
   const area = areaForLevel(learningLevel(save));
-  // A brand-new traveller starts with a short walk in the woods; after that the checkpoint leads
-  // and the walk stays one tap away in the position card.
   const trailFirst = here && newTraveller;
   const trail = here && (
     <div className="world-trail" data-primary={trailFirst || undefined}>

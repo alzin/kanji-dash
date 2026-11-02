@@ -14,19 +14,16 @@ type AccountState = {
   legacyAvailable: boolean;
   guestAvailable: boolean;
   conflict: { source: Conflict["source"]; cloudRuns: number; deviceRuns: number } | null;
-  /** The save dialog is the only place account actions appear; nothing else nags the player. */
   prompt: boolean;
 };
 
 export const API = (import.meta.env["VITE_API_URL"] || "/api").replace(/\/$/, "");
 const initial: AccountState = { user: null, phase: "checking", message: "Checking cloud saves…", legacyAvailable: false, guestAvailable: false, conflict: null, prompt: false };
 
-/** Guests are asked to save after this many finished runs or checkpoints, then every PROMPT_EVERY more. */
 const PROMPT_AFTER = 1;
 const PROMPT_EVERY = 3;
 const PROMPT_KEY = "kanji-dash-save-prompt-v1";
 const RESTORE_KEY = "kanji-dash-restore-prompt-v1";
-/** The ordinary guest state; any other guest message is news worth showing in the dialog. */
 export const GUEST_MESSAGE = "Progress lasts in this tab. Sign in with Google to save across devices.";
 let snapshot = initial;
 const listeners = new Set<() => void>();
@@ -59,7 +56,6 @@ function hasProgress(save: SaveData) {
   return save.runsCompleted > 0 || save.coins > 0 || Object.keys(save.progress).length > 0 || save.clearedChapters.length > 0 || hasRunnerProgress(save) || hasCheckpointSteps(save);
 }
 
-/** Finished runs and cleared checkpoints: the progress a guest would actually mind losing. */
 function achievements(save: SaveData) {
   return save.runsCompleted + save.gatesCleared;
 }
@@ -72,24 +68,19 @@ function readPromptThreshold() {
 }
 
 function snoozePrompt() {
-  try { window.sessionStorage.setItem(PROMPT_KEY, String(achievements(getSnapshot()) + PROMPT_EVERY)); } catch { /* The tab simply asks again next milestone. */ }
+  try { window.sessionStorage.setItem(PROMPT_KEY, String(achievements(getSnapshot()) + PROMPT_EVERY)); } catch {}
 }
 
-/** Ask the moment a guest earns something new, then only after more milestones. */
 function considerPrompt() {
   const earned = achievements(getSnapshot());
   const previous = seenAchievements;
   seenAchievements = earned;
-  // Only when signing in is actually possible: never while checking, loading or offline.
   if (snapshot.user || snapshot.prompt || snapshot.phase !== "guest") return;
-  // Nothing new happened, so nothing interrupts: the offer follows an achievement, not a visit.
   if (previous < 0 || earned <= previous || earned < readPromptThreshold()) return;
   if (automaticPromptDeferrals > 0) { deferredPromptGeneration = generation; return; }
   update({ prompt: true });
 }
 
-/** Keep optional guest-save nudges out of an adventure and its immediate replays.
- * Explicit account actions, save conflicts and session errors remain visible. */
 export function deferAutomaticSavePrompts(): () => void {
   automaticPromptDeferrals += 1;
   let released = false;
@@ -111,14 +102,13 @@ export function deferAutomaticSavePrompts(): () => void {
   };
 }
 
-/** A signed-in player is offered an earlier save once per tab, never on repeat. */
 function considerRestorePrompt() {
   if (snapshot.prompt || !snapshot.user || snapshot.phase !== "synced") return;
   if (!snapshot.legacyAvailable && !snapshot.guestAvailable) return;
   try {
     if (window.sessionStorage.getItem(RESTORE_KEY)) return;
     window.sessionStorage.setItem(RESTORE_KEY, "asked");
-  } catch { /* Without storage the offer simply reappears on reload. */ }
+  } catch {}
   update({ prompt: true });
 }
 
@@ -147,7 +137,7 @@ function cache() {
 }
 
 function clearGuest() {
-  try { window.sessionStorage.removeItem(GUEST_SAVE_KEY); } catch { /* Storage can be unavailable. */ }
+  try { window.sessionStorage.removeItem(GUEST_SAVE_KEY); } catch {}
 }
 
 class ApiError extends Error {
@@ -263,7 +253,6 @@ async function flush() {
   }
 }
 
-/** Fetch identity before reading any account cache; an old account is never a guest save. */
 export async function refreshAccount() {
   if (refreshing || saving || conflict) return;
   refreshing = true;
@@ -341,7 +330,6 @@ export function initializeAccount() {
   }
   update({ legacyAvailable: !!readLegacySave(), ...(authError ? { message: "Google sign-in did not finish. You can try again and continue playing.", prompt: true } : {}) });
   void refreshAccount();
-  // Milestones are the only unprompted moment the save offer appears.
   considerPrompt();
   subscribe(considerPrompt);
   window.addEventListener("online", () => { void refreshAccount(); });
@@ -358,7 +346,6 @@ export function beginGoogleSignIn() {
   window.location.assign(`${API}/auth/google`);
 }
 
-/** Kept for the cross-tab sign-out contract and the API; no chrome surfaces it. */
 export async function signOut() {
   if (!snapshot.user || refreshing || saving) return;
   const previousPhase = snapshot.phase;

@@ -52,13 +52,13 @@ test("new seals never expand as legacy seals on reload or grant completion", () 
 });
 
 test("supporting readings follow study order even when permanent IDs go backwards", () => {
-  const seven = kanjiByChar.get("七")!; // ID 13 is earlier than 月's ID 2.
+  const seven = kanjiByChar.get("七")!;
   const july = seven.vocab.find((v) => v.w === "七月")!;
   expect(wordSegments(july, seven).find((s) => s.t === "月")?.furigana).toBe("がつ");
-  const paper = kanjiByChar.get("紙")!; // ID 8 comes after 手's ID 30.
+  const paper = kanjiByChar.get("紙")!;
   const letter = paper.vocab.find((v) => v.w === "手紙")!;
   expect(wordSegments(letter, paper).find((s) => s.t === "手")?.furigana).toBeUndefined();
-  const self = kanjiByChar.get("私")!; // N4 ID 7 is later than N5 ID 22.
+  const self = kanjiByChar.get("私")!;
   const privateSchool = self.vocab.find((v) => v.w === "私立")!;
   expect(wordSegments(privateSchool, self).find((s) => s.t === "立")?.furigana).toBeUndefined();
 });
@@ -77,7 +77,6 @@ test("migration preserves old seals, totals, schedules and access without paying
   for (const ch of LEVEL_CHAPTERS.N5) expect(isChapterUnlocked(save, ch)).toBe(true);
   expect(normalizeSave(save)).toEqual(save);
 
-  // Old chapter 1 was at 56.25%, opening all 16 cards of old chapter 2.
   const partial = normalizeSave({ progress: Object.fromEntries([...chaptersA].filter((k) => k.ch === 1).slice(0, 9).map((k) => [k.c, progress(3)])) });
   for (const r of REGIONS.filter((r) => r.legacyChapter <= 2)) expect(isChapterUnlocked(partial, r.id)).toBe(true);
   expect(isChapterUnlocked(partial, 3)).toBe(false);

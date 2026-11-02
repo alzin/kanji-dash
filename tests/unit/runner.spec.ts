@@ -250,7 +250,7 @@ test("a slow frame that resolves several gates leaves only the newest one fading
   const queue = questions(6);
   const s = createRunnerState(queue, width, height, fixedRandom);
   s.lane = s.targetLane = 0;
-  advanceRunner(s, queue, width, height, 9.1, () => {}, fixedRandom); // gates arrive at 3 s, 6 s and 9 s
+  advanceRunner(s, queue, width, height, 9.1, () => {}, fixedRandom);
   expect(getRunnerStats(s).correct).toBe(3);
   const finished = s.gates.filter((g) => g.resolved !== -1);
   expect(finished).toHaveLength(1);

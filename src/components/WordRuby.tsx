@@ -3,7 +3,6 @@ import { hasKanji } from "@/lib/kana";
 
 type Props = {
   vocab: Vocab;
-  /** The kanji being studied — shown in the accent colour, never glossed. */
   focus?: string;
   className?: string;
 };

@@ -1,7 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
 
-// The adventure probe is intentionally development-only and read-only. This suite
-// drives real keyboard/pointer controls while using it to read upcoming terrain.
 const baseURL = process.env["FIREFLY_BASE_URL"] ?? "http://localhost:3000";
 export default defineConfig({
   testDir: "./tests",

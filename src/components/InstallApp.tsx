@@ -22,7 +22,6 @@ type InstallContextValue = {
 
 const InstallContext = createContext<InstallContextValue | null>(null);
 
-/** Keep the browser's one-use prompt alive when visitors move between game screens. */
 export function InstallAppProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [platform, setPlatform] = useState<MobilePlatform>(null);

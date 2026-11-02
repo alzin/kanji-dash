@@ -32,7 +32,6 @@ type Props = {
   forest?: boolean;
   paused?: boolean;
   onPause?: () => void;
-  /** The map stop to return to when the learner leaves the sheet. */
   exitStop?: number | undefined;
 };
 type Snapshot = {
@@ -90,7 +89,6 @@ export function RiverStackGame({
     [error, setError] = useState(false);
   const [paused, setPaused] = useState(false),
     [guided, setGuided] = useState(false);
-  // Both modes start with falling stones; Calm Water is an optional assist.
   const [calm, setCalm] = useState(false);
   const [help, setHelp] = useState(false);
   const pauseDialog = useRef<HTMLDialogElement>(null);
@@ -110,7 +108,6 @@ export function RiverStackGame({
   };
   const callbacks = useRef({ onPlacement, onFinish, onPause });
   callbacks.current = { onPlacement, onFinish, onPause };
-  // The adventure owns its music; avoid stealing and then orphaning its audio session.
   const music = <RiverMusic paused={!ready || controls.current.paused} />;
   const gesture = useRef<{ x: number; y: number } | null>(null);
 
@@ -295,7 +292,6 @@ export function RiverStackGame({
         river.reducedMotion = media.matches;
         river.guided = controls.current.guided;
         if (disposed || ended || controls.current.paused) return;
-        // Calm water is turn-based: keep feedback/gravity moving, freeze only a falling stone.
         if (!(controls.current.calm && state.phase === "fall"))
           advanceStack(state, seconds, [], placement, rng);
         refresh();

@@ -10,7 +10,6 @@ export async function readMigrations(directory: URL): Promise<Migration[]> {
   return Promise.all(files.map(async (name) => ({ name, sql: await readFile(new URL(name, directory), "utf8") })));
 }
 
-/** One transaction and transaction-scoped lock serialize concurrent deploys. */
 export async function runMigrations(pool: Pool, migrations: Migration[]): Promise<string[]> {
   const client = await pool.connect();
   try {

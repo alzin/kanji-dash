@@ -62,7 +62,6 @@ for (const [width, height] of [[375, 667], [375, 812], [1280, 800]] as const) {
       const element = document.querySelector(selector);
       if (!element || getComputedStyle(element).display === "none") return [];
       const r = element.getBoundingClientRect();
-      // The HUD row spans the width; only its controls take space.
       const parts = selector === ".hub-hud" ? [...element.children].map((child) => child.getBoundingClientRect()) : [r];
       return parts.map((b) => ({ selector, left: b.left, top: b.top, right: b.right, bottom: b.bottom }));
     }));

@@ -28,7 +28,6 @@ export class GoogleOAuthProvider implements GoogleProvider {
       if (!payload?.sub || !payload.email || payload.email_verified !== true || typeof claims?.['nonce'] !== 'string' || !equalToken(claims['nonce'], nonce)) throw new Error('Invalid identity');
       return { subject: payload.sub, email: payload.email, name: payload.name || payload.email.split('@')[0]!, picture: payload.picture ?? null };
     } catch {
-      // Tokens, authorization codes, and upstream responses are never logged.
       throw new AppError('GOOGLE_AUTH_FAILED', 'Google sign-in could not be completed. Please try again.', 401);
     }
   }

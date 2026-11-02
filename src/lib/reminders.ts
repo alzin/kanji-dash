@@ -3,14 +3,6 @@ import { API } from "./account";
 import { getSnapshot, streakCount, subscribe as subscribeSave } from "./srs";
 import { stackOf } from "./stack-progress";
 
-/**
- * Daily reminders through Web Push. The browser's push subscription is the identity,
- * so guests can opt in too. The server reminds once a local day, at the chosen hour,
- * only when this device has not reported playing that day.
- *
- * - "install": an iPhone or iPad browser tab. Push works only from the Home Screen app.
- * - "unavailable": the API has no VAPID keys (or could not be reached), so nothing is offered.
- */
 export type ReminderSupport = "checking" | "unsupported" | "install" | "unavailable" | "ready";
 export type ReminderState = {
   support: ReminderSupport;
@@ -24,7 +16,6 @@ export type ReminderState = {
 
 const PREFS_KEY = "kanji-dash-reminders-v1";
 export const DEFAULT_REMINDER_HOUR = 19;
-/** "Not now" quiets the post-run offer for two weeks; settings always keep the switch. */
 const OFFER_SNOOZE_MS = 14 * 24 * 60 * 60 * 1000;
 
 type Prefs = { hour: number; dismissedAt: number; synced: string };
@@ -42,7 +33,7 @@ function readPrefs(): Prefs {
 
 function writePrefs(patch: Partial<Prefs>) {
   try { window.localStorage.setItem(PREFS_KEY, JSON.stringify({ ...readPrefs(), ...patch })); }
-  catch { /* Reminders still work; the offer may simply return sooner. */ }
+  catch {}
 }
 
 const initial: ReminderState = { support: "checking", enabled: false, blocked: false, hour: DEFAULT_REMINDER_HOUR, busy: false, message: "", offerDismissed: false };
@@ -53,7 +44,6 @@ let publicKey = "";
 let registration: ServiceWorkerRegistration | undefined;
 let syncing = false;
 let syncAgain = false;
-/** What this page last confirmed with the server, so ordinary save changes during play cost nothing. */
 let confirmed = "";
 
 function update(patch: Partial<ReminderState>) {
@@ -90,7 +80,6 @@ export function initializeReminders() {
   started = true;
   const prefs = readPrefs();
   update({ hour: prefs.hour, offerDismissed: Date.now() - prefs.dismissedAt < OFFER_SNOOZE_MS });
-  // The service worker that receives pushes is only registered in production builds.
   if (!import.meta.env.PROD || !pushCapable()) {
     update({ support: import.meta.env.PROD && installUnlocksPush() ? "install" : "unsupported" });
     return;
@@ -119,12 +108,10 @@ async function detect() {
   }
   const blocked = Notification.permission === "denied";
   update({ support: "ready", blocked, enabled: !!subscription && Notification.permission === "granted" });
-  // Learn about days played from now on, and refresh the zone or a rotated endpoint.
   subscribeSave(() => { void sync(); });
   void sync();
 }
 
-/** Tell the server this device's current play day, streak, freezes, zone and hour. Skips repeats. */
 async function sync(force = false) {
   if (!snapshot.enabled || !registration) return;
   const save = getSnapshot();
@@ -148,7 +135,6 @@ async function sync(force = false) {
     }
     confirmed = playKey;
   } catch {
-    // Offline or the API is busy: the next save change or visit tries again.
     if (force) throw new Error("sync");
   } finally {
     syncing = false;
@@ -190,8 +176,6 @@ export async function disableReminders() {
   try {
     const subscription = await registration.pushManager.getSubscription();
     if (subscription) {
-      // Ask the server to forget it first. Unsubscribing the browser happens either way: it
-      // stops delivery at once, and the dispatcher deletes a row whose endpoint has gone.
       await fetch(`${API}/reminders/unsubscribe`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ endpoint: subscription.endpoint }) }).catch(() => {});
       await subscription.unsubscribe();
     }
@@ -217,7 +201,6 @@ export function dismissReminderOffer() {
   update({ offerDismissed: true });
 }
 
-/** Any hour of the day; the server sends at the start of the chosen hour on the player's clock. */
 export const REMINDER_HOURS = Array.from({ length: 24 }, (_, hour) => hour);
 
 export function formatHour(hour: number): string {

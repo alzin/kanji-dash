@@ -3,7 +3,6 @@ import { CURRICULUM_VERSION, LEVEL_CHAPTERS } from "../src/data";
 import { nodeOfRegion } from "../src/components/game/world/layout";
 import { silenceSavePrompt } from "./helpers/savePrompt";
 
-// An N4 traveller: N5 sealed, five N4 seals, and region 30 two steps along.
 const SEALS = [...LEVEL_CHAPTERS.N5, 7, 26, 27, 28, 29];
 const HERE = nodeOfRegion(30)!.index;
 
@@ -24,11 +23,9 @@ const canvas = (page: Page) => page.locator("canvas[data-ready]");
 test("the world map is home: every road, opened on the learner's own checkpoint", async ({ page }, info) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
-  // The old /world address still leads home.
   await page.goto("world", { waitUntil: "domcontentloaded" });
   await expect(canvas(page)).toBeVisible();
   await expect(page).toHaveURL(/\/$/);
-  // A traveller with progress is never shown the title card.
   await expect(page.getByRole("heading", { name: "Learn kanji by playing." })).toHaveCount(0);
   await expect(canvas(page)).toHaveAttribute("data-here", String(HERE));
   await expect(canvas(page)).toHaveAttribute("data-stop", String(HERE));
@@ -48,7 +45,6 @@ test("the world map is home: every road, opened on the learner's own checkpoint"
 test("the traveller walks the road by keys and buttons, and the camera visits any road", async ({ page }) => {
   await page.goto("./", { waitUntil: "domcontentloaded" });
   await expect(canvas(page)).toHaveAttribute("data-stop", String(HERE));
-  // North is further along the journey.
   await page.keyboard.press("ArrowUp");
   await expect(canvas(page)).toHaveAttribute("data-stop", String(HERE + 1));
   const next = page.getByRole("region", { name: "Letters & Languages checkpoint" });

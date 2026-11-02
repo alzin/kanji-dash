@@ -4,7 +4,6 @@ import type { PushTarget, ReminderMessage } from "../../domain/reminders.js";
 
 export type VapidDetails = { subject: string; publicKey: string; privateKey: string };
 
-/** Web Push (RFC 8030) with VAPID, encrypted per subscription by the web-push library. */
 export class WebPushSender implements PushSender {
   constructor(private readonly vapid: VapidDetails) {}
 
@@ -12,10 +11,8 @@ export class WebPushSender implements PushSender {
     try {
       await webpush.sendNotification(target, JSON.stringify(message), {
         vapidDetails: this.vapid,
-        // A reminder that arrives the next morning is noise; let the push service drop it.
         TTL: 6 * 60 * 60,
         urgency: "normal",
-        // A newer reminder replaces one still queued for an offline phone.
         topic: "daily-reminder",
         timeout: 10_000,
       });

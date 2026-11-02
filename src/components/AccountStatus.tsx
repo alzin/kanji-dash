@@ -10,7 +10,6 @@ function givenName(name: string, email: string) {
 
 export function AccountStatus() {
   const account = useAccount();
-  // A guest has nothing pending in the cloud, so an unreachable backend is not their alarm.
   const needsAction = account.phase === "conflict" || (account.phase === "offline" && !!account.user);
 
   return (

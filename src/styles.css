@@ -17,20 +17,6 @@
   --font-serif: "Shippori Mincho B1", "Hiragino Mincho ProN", serif;
 }
 
-/*
- * Design system definition.
- *
- * The @theme inline block maps CSS custom properties to Tailwind utility
- * classes (e.g. --color-primary -> bg-primary, text-primary).
- *
- * The :root and .dark blocks define the actual color values using oklch.
- * All colors MUST use oklch format.
- *
- * To add a new semantic color:
- * 1. Add the variable to :root (light value) and .dark (dark value)
- * 2. Register it in @theme inline as --color-<name>: var(--<name>)
- */
-
 @theme inline {
   /* Inline, so a theme switch (.dark) re-resolves bg-paper / text-ink / text-gold too. */
   --color-gold: var(--gold);
@@ -84,8 +70,6 @@
   --color-surface-sunken: var(--surface-sunken);
 }
 
-/* Elevation, light from the sky: every raised surface lifts off the paper by the same
-   three steps, and the opacity follows the background's luminosity (see --elevation-N). */
 @utility shadow-e1 { box-shadow: var(--elevation-1); }
 @utility shadow-e2 { box-shadow: var(--elevation-2); }
 @utility shadow-e3 { box-shadow: var(--elevation-3); }
@@ -103,8 +87,6 @@
   --popover-foreground: oklch(0.245 0.02 70);
   --primary: oklch(0.40 0.065 160);
   --primary-foreground: oklch(0.97 0.01 90);
-  /* Pressed/hover vermillion: less light AND more chroma, hue pulled toward 0deg.
-     Fading the button with opacity instead is what makes a hover look washed out. */
   --primary-hover: oklch(0.33 0.065 160);
   --secondary: oklch(0.921 0.02 90);
   --secondary-foreground: oklch(0.3 0.025 70);
@@ -130,8 +112,6 @@
   --sidebar-accent-foreground: oklch(0.3 0.025 70);
   --sidebar-border: oklch(0.87 0.02 85);
   --sidebar-ring: oklch(0.532 0.184 33);
-  /* Pine green, the one hue outside the vermillion/indigo/gold trio: it only ever
-     means "this was right", so success never has to be read from colour alone. */
   --success: oklch(0.47 0.075 150);
   --success-foreground: oklch(0.97 0.01 90);
   --surface: oklch(0.985 0.01 95);
@@ -143,9 +123,6 @@
 }
 
 .dark {
-  /* Night forest and lantern light: the game's own palette (forest.css, world.css), so
-     every screen reads as part of one world. Surfaces keep the pine hue; text is washi
-     cream; the primary is the lantern gold every in-game button already uses. */
   color-scheme: dark;
   --paper: oklch(0.321 0.041 171);
   --ink: oklch(0.933 0.039 88);
@@ -180,7 +157,6 @@
   --chart-3: oklch(0.856 0.091 84);
   --chart-4: oklch(0.839 0.078 135);
   --chart-5: oklch(0.70 0.115 22);
-  /* A dark ground swallows shadow, so every step carries roughly twice the opacity. */
   --elevation-1: 0 1px 2px oklch(0.12 0.03 175 / 40%);
   --elevation-2: 0 2px 4px oklch(0.12 0.03 175 / 42%), 0 6px 16px oklch(0.12 0.03 175 / 34%);
   --elevation-3: 0 4px 8px oklch(0.12 0.03 175 / 46%), 0 16px 40px oklch(0.12 0.03 175 / 40%);
@@ -236,9 +212,6 @@ html {
 /* Press feedback for every button and link (zero specificity: .pressable:active above still wins). */
 :where(button:not(:disabled), a[href]):active { transform: scale(.97); transition: transform 80ms; }
 
-/* The horizontally scrolling filter rail. A finger swipes it, so on touch it stays clean;
-   a pointer cannot swipe, so it gets three affordances instead: a real scrollbar to drag,
-   a grab cursor for dragging the rail itself, and the end arrows. */
 .chip-rail {
   scrollbar-width: none;
 }
@@ -263,7 +236,6 @@ html {
     background: var(--border);
   }
   .chip-rail::-webkit-scrollbar-thumb:hover { background: var(--muted-foreground); }
-  /* The chips themselves stay pointers: they are still buttons, not drag handles. */
   .chip-rail button { cursor: pointer; }
 }
 
@@ -278,7 +250,6 @@ html {
   }
 }
 
-/* Keep the canvas, HUD, lessons, and results inside phone cutouts in either orientation. */
 .game-viewport {
   position: fixed;
   top: env(safe-area-inset-top, 0px);
@@ -295,11 +266,8 @@ html {
   padding-left: max(1rem, env(safe-area-inset-left, 0px));
 }
 
-/* ==========================================================================
- * Sound & animation catalog (DOM/CSS side; canvas effects live in effects.ts).
- * Every entrance is CSS-only so the fake-clock e2e suite sees final DOM values
- * immediately; the prefers-reduced-motion rule above collapses all of it.
- * ========================================================================== */
+/* Every entrance is CSS-only so the fake-clock e2e suite sees final DOM values
+ * immediately; canvas effects live in effects.ts. */
 
 @keyframes fade-only {
   from { opacity: 0; }
@@ -386,12 +354,10 @@ html {
 }
 .score-tick { animation: score-tick 260ms ease-out; }
 
-/* --- hanko stamps (results 合格, map seals, dojo badge) ---
- * CSS_STAMP_DELAY = 200ms; the ink lands at 55% of 480ms = 0.464 s, which is
+/* CSS_STAMP_DELAY = 200ms; the ink lands at 55% of 480ms = 0.464 s, which is
  * STAMP_LAND_SECONDS (0.46) in src/lib/sfx.ts. Keep the three in sync.
  * The keyframes animate the individual `scale`/`rotate` properties so they
- * compose with Tailwind's rotate-[-8deg] (also the `rotate` property) instead
- * of doubling it; --stamp-angle is the element's resting angle. */
+ * compose with Tailwind's rotate-[-8deg] instead of doubling it. */
 @keyframes stamp-in {
   0% { scale: 1.7; rotate: calc(var(--stamp-angle, -8deg) - 12deg); opacity: 0; }
   55% { scale: .94; rotate: calc(var(--stamp-angle, -8deg) + 2deg); opacity: 1; }
@@ -529,7 +495,6 @@ html {
   animation: ink-reveal 320ms ease-out 700ms both;
 }
 
-/* Opacity only: the button's box never moves, so it is clickable immediately. */
 .lesson-cta { animation: fade-only 200ms ease-out 450ms both; }
 .lesson-cta.breathe-ring {
   animation:
@@ -565,7 +530,7 @@ dialog.sheet-up::backdrop { animation: fade-only 200ms ease-out; }
 }
 .guide-pulse { animation: guide-pulse 900ms ease-in-out 2; }
 
-/* Static 6px vermillion corner mark; needs position: relative on the tile. */
+/* Needs position: relative on the tile. */
 .tile-mastered::after {
   content: "";
   position: absolute;
@@ -642,8 +607,7 @@ dialog.sheet-up::backdrop { animation: fade-only 200ms ease-out; }
 @media (min-width: 640px) { .stack-game { max-width: 620px; } }
 @media (prefers-reduced-motion: reduce) { .stack-game *, .stack-page * { animation: none !important; transition: none !important; } }
 
-/* A region checkpoint's three steps, then its seal. Each theme supplies the four rail colors.
-   No margin or padding here: preflight already zeroes them, and this unlayered rule would beat a caller's mt-* utility. */
+/* No margin or padding here: preflight already zeroes them, and this unlayered rule would beat a caller's mt-* utility. */
 .checkpoint-rail { --rail-on: var(--primary); --rail-off: var(--border); --rail-text: var(--muted-foreground); --rail-now: var(--primary); container-type: inline-size; display: flex; align-items: flex-start; gap: 8px; width: 100%; list-style: none; text-align: left; }
 .checkpoint-rail-short { display: none; }
 @container (max-width: 400px) {
@@ -663,8 +627,6 @@ dialog.sheet-up::backdrop { animation: fade-only 200ms ease-out; }
 .river-session .checkpoint-rail { --rail-on: #ebca84; --rail-off: #97aa7655; --rail-text: #afc2a6; --rail-now: #ebca84; }
 .ff-shell .checkpoint-rail, .ff-dialog .checkpoint-rail { --rail-on: #efcb7e; --rail-off: #f5e9c826; --rail-text: #a9c2b8; --rail-now: #efcb7e; }
 
-/* Daily reminder offer on result screens. Result screens range from paper to night
-   forest, so the card borrows the surrounding text colour instead of a fixed theme. */
 .reminder-offer { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 4px; padding: 14px 16px; border: 1px solid color-mix(in oklab, currentColor 22%, transparent); border-radius: 14px; background: color-mix(in oklab, currentColor 6%, transparent); color: inherit; font-size: 14px; line-height: 1.5; text-align: center; }
 .reminder-offer p { margin: 0; }
 .reminder-offer .reminder-copy { opacity: .8; }

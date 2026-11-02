@@ -1,11 +1,9 @@
 import type { SaveData } from "@/lib/srs";
 
 /*
- * Celebration bookkeeping under its own sessionStorage key, so a reload or
- * backgrounding between the results card and the map never loses a ceremony
- * and revisiting in the same tab never repeats one. Pure helpers (normalizeFx, diffFx,
- * toFxRecord) are unit-tested; readFx/rememberFx are client-only and meant to
- * be called from useEffect after hydration.
+ * Own sessionStorage key, so a reload or backgrounding between the results card and
+ * the map never loses a ceremony and revisiting in the same tab never repeats one.
+ * readFx/rememberFx are client-only: call them from useEffect after hydration.
  */
 
 export const FX_KEY = "kanji-dash-fx-v1";
@@ -42,7 +40,7 @@ export function diffFx(record: FxRecord, save: SaveData, today: string): FxDiff 
   };
 }
 
-// The record rememberFx persists. lastStreakDay is the day the streak was last
+// lastStreakDay is the day the streak was last
 // touched (save.streak.last), not `today`: the app opens on Home, so stamping
 // today's date before the run would hide the ignite after it.
 export function toFxRecord(save: SaveData, today: string): FxRecord {
@@ -67,7 +65,5 @@ export function rememberFx(save: SaveData, today: string): void {
   try {
     if (typeof window === "undefined") return;
     window.sessionStorage.setItem(FX_KEY, JSON.stringify(toFxRecord(save, today)));
-  } catch {
-    /* ignore */
-  }
+  } catch {}
 }

@@ -6,8 +6,8 @@ import { hasKanji, isHiragana, isKanji, isPlausibleReading, phoneticVariants, re
 
 export type PromptSegment = {
   t: string;
-  furigana?: string; // shown above the span when its kanji is not yet due to be known
-  focus?: boolean; // the kanji this card is grading
+  furigana?: string;
+  focus?: boolean;
 };
 
 export type WordCard = { kanji: Kanji; vocab: Vocab; kana: string };
@@ -25,28 +25,18 @@ const allVocab: WordCard[] = allKanji.flatMap((kanji) =>
   kanji.vocab.map((vocab) => ({ kanji, vocab, kana: vocabKana(vocab) })),
 );
 
-/** Every reading a word is written with anywhere in the curriculum, so a
- *  homograph's other reading is never offered as a wrong answer. */
 const kanaByWord = new Map<string, Set<string>>();
 for (const card of allVocab) {
   const set = kanaByWord.get(card.vocab.w) ?? new Set<string>();
   set.add(card.kana);
   kanaByWord.set(card.vocab.w, set);
 }
-// Dictionary-confirmed alternatives must never become wrong-answer lanes.
 for (const [word, readings] of [...Object.entries(n3Readings), ...Object.entries(n2Readings)]) {
   const set = kanaByWord.get(word) ?? new Set<string>();
   readings.forEach((reading) => set.add(reading));
   kanaByWord.set(word, set);
 }
 
-/**
- * Readings that are genuinely correct for a word even though the curriculum
- * teaches a different one, so the game never marks a defensible answer wrong.
- * Audited case by case: standalone on'yomi (十 じゅう, 何 なん), weekday and
- * grading abbreviations (月 げつ, 上 じょう), formal doublets (毎年 まいねん,
- * 半年 はんねん) and dictionary alternatives (富士山 ふじやま, 大雨 たいう).
- */
 const ALSO_CORRECT: Record<string, string[]> = {
   "十": ["じゅう"],
   "一人": ["いちにん"],
@@ -101,8 +91,6 @@ export function correctReadings(word: string): Set<string> {
   return new Set([...(kanaByWord.get(word) ?? []), ...(ALSO_CORRECT[word] ?? []), ...listed]);
 }
 
-/** Readings each kanji is known to take: its listed on/kun plus every reading
- *  it carries inside a curriculum word (which is where rendaku shows up). */
 const readingsByKanji = new Map<string, string[]>();
 function addReading(character: string, reading: string) {
   if (!isKanji(character) || !isHiragana(reading)) return;
@@ -127,8 +115,6 @@ export function readingsOf(character: string): string[] {
 
 const chapterOrder = new Map(REGIONS.map((region, index) => [region.id, index]));
 
-/** A supporting kanji is glossed when the learner cannot be expected to read it
- *  yet: outside the curriculum, or from a later chapter than the card's kanji. */
 function needsFurigana(text: string, focus: Kanji): boolean {
   return [...text].some((character) => {
     if (!isKanji(character)) return false;
@@ -175,8 +161,6 @@ function withReadingAt(vocab: Vocab, index: number, reading: string): string {
     .join("");
 }
 
-/** Wrong spellings in tiers, hardest first: real readings of the same kanji used
- *  in the wrong slot, then near-misses of the right reading. */
 export function readingCandidates(card: WordCard): string[][] {
   const spans = spansWithReadings(card.vocab);
   const swaps: string[] = [];
@@ -188,7 +172,6 @@ export function readingCandidates(card: WordCard): string[][] {
       swaps.push(withReadingAt(card.vocab, span.index, reading));
     }
   }
-  // Two kanji misread at once — the classic "every reading is on'yomi" error.
   for (const a of spans) {
     for (const b of spans) {
       if (b.index <= a.index) continue;
@@ -215,7 +198,6 @@ function lengthOf(text: string): number {
   return [...text].length;
 }
 
-/** Mora-level edit distance, so a fallback distractor is still a near-miss. */
 function editDistance(a: string, b: string): number {
   const left = [...a];
   const right = [...b];
@@ -250,7 +232,6 @@ export function readingChoices(card: WordCard, random: () => number = Math.rando
     }
   };
 
-  // Within a tier, closest in length reads as the most plausible misspelling.
   const byCloseness = (a: string, b: string) =>
     Math.abs(lengthOf(a) - correctLength) - Math.abs(lengthOf(b) - correctLength);
   for (const tier of readingCandidates(card)) {
@@ -258,8 +239,6 @@ export function readingChoices(card: WordCard, random: () => number = Math.rando
     take(shuffle([...new Set(tier)], random).sort(byCloseness));
   }
 
-  // A one-kanji word with a single listed reading can run the pool dry; the
-  // nearest real readings in the curriculum are still tighter than random ones.
   if (chosen.length < count) {
     const others = [...new Set(allVocab.filter((other) => other.vocab.w !== card.vocab.w).map((other) => other.kana))]
       .map((kana) => ({ kana, distance: editDistance(kana, card.kana) }))
@@ -273,12 +252,9 @@ export function readingChoices(card: WordCard, random: () => number = Math.rando
 }
 
 function meaningKeys(meaning: string): string[] {
-  // Every gloss counts. "problem; question" and "question; inquiry" overlap,
-  // as do "study" and "to study", so neither pair makes a fair choice set.
   return meaning.toLowerCase().split(/[.;]/).map((part) => part.trim().replace(/^(?:to|the|an?) /, "")).filter(Boolean);
 }
 
-/** Meaning distractors prefer words that share a kanji: near-misses, not noise. */
 export function meaningChoices(card: WordCard, random: () => number = Math.random, count = 2): string[] {
   const forbidden = new Set(
     allVocab.filter((other) => other.vocab.w === card.vocab.w).flatMap((other) => meaningKeys(other.vocab.m)),
@@ -302,9 +278,6 @@ export function meaningChoices(card: WordCard, random: () => number = Math.rando
   return chosen;
 }
 
-/** Written-word distractors for a heard reading, from the first pool that has enough:
- *  words sharing a kanji, then words of the same length, then the rest. A word that can
- *  be read the same way is never offered. The whole curriculum is the last resort. */
 export function wordChoices(card: WordCard, random: () => number = Math.random, count = 2, pools: readonly (readonly WordCard[])[] = []): string[] {
   const characters = new Set([...card.vocab.w].filter(isKanji));
   const length = lengthOf(card.vocab.w);
@@ -321,7 +294,6 @@ export function wordChoices(card: WordCard, random: () => number = Math.random, 
     for (const tier of tiers) {
       for (const word of shuffle([...new Set(tier)], random).sort(byCloseness)) {
         if (chosen.length >= count) return chosen;
-        // Checked only for words about to be offered; homophones are rare but must never pass.
         if (chosen.includes(word) || correctReadings(word).has(card.kana)) continue;
         chosen.push(word);
       }

@@ -11,29 +11,29 @@ import { SPIRITS, type LanternId, type RunnerDifficulty, type SpiritId } from ".
 import { CHECKPOINT_STEPS, STEP_LIST, completedSteps, copyCheckpointSteps, emptyCheckpointSteps, normalizeCheckpointSteps, stepIndex, type CheckpointStep, type CheckpointSteps } from "./checkpoint-steps";
 
 
-export type Mastery = 0 | 1 | 2 | 3; // unseen, learning, reviewing, mastered
+export type Mastery = 0 | 1 | 2 | 3;
 
 export type CardProgress = {
   mastery: Mastery;
-  ivl: number; // interval in days
+  ivl: number;
   ease: number;
-  due: number; // epoch ms
+  due: number;
   correct: number;
   wrong: number;
-  rt?: number; // response-time EMA in milliseconds; zero means unmeasured
+  rt?: number;
   prod?: number;
   fl?: number;
 };
 
 export type SaveData = {
   curriculumVersion: number;
-  unlockedChapters: number[]; // access retained across migration and later review mistakes
+  unlockedChapters: number[];
   progress: Record<string, CardProgress>;
-  streak: { count: number; last: string }; // last = YYYY-MM-DD
+  streak: { count: number; last: string };
   coins: number;
   runsCompleted: number;
-  gatesCleared: number; // chapter boss gates cleared
-  clearedChapters: number[]; // exact seals earned (not the highest chapter)
+  gatesCleared: number;
+  clearedChapters: number[];
   selectedLevel: JLPTLevel;
   stack?: StackProgress;
   runner?: RunnerProgress;
@@ -85,7 +85,6 @@ function chapterIds(value: unknown, valid = validChapter): number[] {
     : [];
 }
 
-// Validate the persistence boundary so old/partial saves cannot poison arithmetic.
 export function normalizeSave(value: unknown): SaveData {
   const raw = record(value);
   const progress: SaveData["progress"] = {};
@@ -107,7 +106,6 @@ export function normalizeSave(value: unknown): SaveData {
   const currentCurriculum = raw["curriculumVersion"] === CURRICULUM_VERSION;
   const legacySeals = Array.isArray(raw["clearedChapters"])
     ? chapterIds(raw["clearedChapters"], (ch) => LEGACY_CHAPTERS.includes(ch))
-    // A legacy high-water mark can only describe the original six N5 gates.
     : LEGACY_CHAPTERS.slice(0, Math.min(6, count(raw["gatesCleared"])));
   const clearedChapters = currentCurriculum
     ? chapterIds(raw["clearedChapters"])
@@ -198,12 +196,9 @@ function save() {
   }
   try {
     window.sessionStorage.setItem(GUEST_SAVE_KEY, JSON.stringify(state));
-  } catch {
-    /* ignore */
-  }
+  } catch {}
 }
 
-/** Account transport owns persistence only after the server identifies its user. */
 export function setProgressPersistence(writer?: (save: SaveData) => void) {
   persistAccount = writer;
 }
@@ -216,13 +211,12 @@ export function replaceSave(value: unknown) {
   notify();
 }
 
-/** In-flight learning sessions must never write into a newly selected account/save. */
 export function invalidateProgressSession() { progressGeneration += 1; }
 export function getProgressGeneration(): number { load(); return progressGeneration; }
 
 export function resetGuestSave() {
   persistAccount = undefined;
-  try { window.sessionStorage.removeItem(GUEST_SAVE_KEY); } catch { /* Private browsing may deny storage. */ }
+  try { window.sessionStorage.removeItem(GUEST_SAVE_KEY); } catch {}
   replaceSave(emptySave());
 }
 
@@ -333,7 +327,6 @@ export function isLevelUnlocked(_s: SaveData, level: JLPTLevel): boolean {
   return LEVELS.includes(level);
 }
 
-/** Learners can start any road without completing earlier levels. */
 export function learningLevel(s: SaveData): JLPTLevel {
   return s.selectedLevel;
 }
@@ -393,13 +386,13 @@ export function streakCount(s: SaveData, now = Date.now()): number {
 export type QuestionType = "reading" | "meaning";
 
 export type Question = {
-  kanji: Kanji; // the kanji this card grades
-  vocab: Vocab; // the word it is being practised inside
+  kanji: Kanji;
+  vocab: Vocab;
   type: QuestionType;
-  prompt: string; // the word as plain text
-  segments: PromptSegment[]; // the word split for furigana and highlighting
-  sub: string; // small helper text
-  choices: string[]; // 3 choices, one correct
+  prompt: string;
+  segments: PromptSegment[];
+  sub: string;
+  choices: string[];
   answer: string;
 };
 
@@ -418,10 +411,8 @@ function pick<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]!;
 }
 
-// Reading is the core drill; meaning keeps the word tied to something concrete.
 const TYPE_WEIGHTS: QuestionType[] = ["reading", "reading", "meaning"];
 
-/** A card asks about a whole word, so the kanji is learned in the company it keeps. */
 export function buildQuestion(
   k: Kanji,
   type: QuestionType = pick(TYPE_WEIGHTS),
@@ -468,7 +459,6 @@ export function buildGateQuiz(ch: number): Question[] {
 
 const CONFUSABLES = ["末未", "持待", "土士", "日目", "人入", "右石", "牛午", "千干"];
 
-/** Across unlocked regions: twelve reviews, four new cards, then reading partners. */
 export function buildStackQueue(s: SaveData, now = Date.now()): Question[] {
   const available = allKanji.filter((k) => isChapterUnlocked(s, k.ch));
   const due = available.filter((k) => getCard(s, k.c).mastery > 0 && getCard(s, k.c).due <= now)
@@ -481,7 +471,6 @@ export function buildStackQueue(s: SaveData, now = Date.now()): Question[] {
       if (reviews.length < 12 && group.includes(k.c) && !reviews.includes(k) && p.mastery > 0 && p.due <= now + 2 * DAY_MS) reviews.push(k);
     }
   }
-  // Put new words first in preparation, but select them late in the sheet composer.
   return [...reviews, ...newKanji(s).slice(0, 4)].map((k) => {
     const p = getCard(s, k.c);
     return buildQuestion(k, "reading", k.vocab[(p.correct + p.wrong) % k.vocab.length]!);
@@ -558,7 +547,6 @@ export function grade(c: string, correct: boolean, now = Date.now(), placement?:
       const rt = Math.min(600_000, Math.max(0, placement.rt));
       p.rt = Math.round(p.rt ? p.rt * 0.75 + rt * 0.25 : rt);
       p.fl = correct && !placement.hinted && rt < placement.fallTime * 400 ? Math.min(Number.MAX_SAFE_INTEGER, (p.fl ?? 0) + 1) : 0;
-      // Extra play records retrievals, never moves a review that is not due.
       if (p.mastery > 0 && p.due > now) {
         if (correct) p.correct = Math.min(Number.MAX_SAFE_INTEGER, p.correct + 1);
         else p.wrong = Math.min(Number.MAX_SAFE_INTEGER, p.wrong + 1);
@@ -568,14 +556,13 @@ export function grade(c: string, correct: boolean, now = Date.now(), placement?:
     }
     if (correct) {
       p.correct = Math.min(Number.MAX_SAFE_INTEGER, p.correct + 1);
-      // Checkpoint rehearsal records the answer, but cannot fast-forward SRS.
       if (p.mastery > 0 && p.due > now) {
         s.progress[c] = p;
         return;
       }
       if (p.mastery === 0) {
         p.mastery = 1;
-        p.ivl = 0.02; // ~30 min
+        p.ivl = 0.02;
       } else if (p.mastery === 1 && !placement?.hinted) {
         p.mastery = 2;
         p.ivl = 1;
@@ -679,7 +666,6 @@ function dropSteps(s: SaveData, ch: number, from: CheckpointStep = "learn") {
   for (const step of CHECKPOINT_STEPS.slice(stepIndex(from))) steps[STEP_LIST[step.id]] = steps[STEP_LIST[step.id]].filter((id) => id !== ch);
 }
 
-/** Records one completed step of an open region's checkpoint. Steps complete in order. */
 export function completeCheckpointStep(ch: number, step: CheckpointStep): boolean {
   const s = getSnapshot(), done = completedSteps(s, ch);
   if (!isChapterUnlocked(s, ch) || done < stepIndex(step)) return false;
@@ -687,12 +673,10 @@ export function completeCheckpointStep(ch: number, step: CheckpointStep): boolea
   return true;
 }
 
-/** Opens a step again, with every step after it: a failed typed seal sends the learner back to the rescue. */
 export function reopenCheckpointStep(ch: number, step: CheckpointStep) {
   if (completedSteps(getSnapshot(), ch) > stepIndex(step)) mutate((s) => dropSteps(s, ch, step));
 }
 
-/** A seal stamped on a repeat visit starts that region's steps afresh. */
 export function resetCheckpointSteps(ch: number) {
   if (completedSteps(getSnapshot(), ch) > 0) mutate((s) => dropSteps(s, ch));
 }
@@ -706,7 +690,6 @@ export function clearGate(ch: number): number {
     s.clearedChapters = [...s.clearedChapters, ch].sort((a, b) => a - b);
     s.gatesCleared = s.clearedChapters.length;
     s.coins += earned;
-    // The seal replaces the steps that led to it.
     dropSteps(s, ch);
     updateStreak(s, Date.now());
   });

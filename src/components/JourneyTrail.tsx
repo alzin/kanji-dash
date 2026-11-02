@@ -11,14 +11,12 @@ export const stopId = (ch: number) => `checkpoint-${ch}`;
 export const roadId = (road: Road["id"]) => `road-${road}`;
 export const roadEndId = (road: Road["id"]) => `road-${road}-end`;
 
-/** The trail meanders across the node column: x is a percentage of that column's width. */
 export function trailX(i: number): number {
   return Math.round((50 + 20 * Math.sin(i * Math.PI / 4)) * 10) / 10;
 }
 
 type Trail = "walked" | "ahead";
 const roadStyle = (road: Road) => ({ "--road-h": road.hue }) as CSSProperties;
-// The uncharted N1 road is drawn about as long as N2 on the overview bar.
 const UNCHARTED_SHARE = 70;
 const GHOST_STOPS = 5;
 
@@ -27,7 +25,6 @@ export function JourneyOverview({ save, here, onTravel, onFindHere, onShowOnMap 
   here: { road: Road; ch: number | undefined };
   onTravel: (level: JLPTLevel) => void;
   onFindHere: () => void;
-  /** Close the log and walk to the learner's own stop on the world map. */
   onShowOnMap?: () => void;
 }) {
   const total = JOURNEY_STOPS.length;
@@ -125,7 +122,6 @@ export function JourneyRoad({ road, index, save, here, active, newSeals, onToggl
   const seals = roadSeals(save, road);
   const selected = save.selectedLevel === level;
   const states = road.regions.map((ch) => stopState(save, ch));
-  // The locked run ahead is explained once, on the travelled road, under its last open checkpoint.
   const noteAt = selected ? states.findIndex((state, i) => state.status !== "locked" && states[i + 1]?.status === "locked") : -1;
   return (
     <section id={roadId(road.id)} aria-labelledby={`${roadId(road.id)}-title`} className="journey-road road-tint" style={roadStyle(road)}>
@@ -156,7 +152,6 @@ export function JourneyRoad({ road, index, save, here, active, newSeals, onToggl
 }
 
 function StepRing({ steps }: { steps: number }) {
-  // Three steps, then the seal: each checkpoint is itself a row of smaller ones.
   const segments = CHECKPOINT_STEPS.length + 1;
   const circumference = 2 * Math.PI * 18.5, segment = circumference / segments, gap = segment * 0.18;
   const dash = `${(segment - gap).toFixed(2)} ${gap.toFixed(2)}`;
@@ -306,7 +301,6 @@ function RoadMilestone({ road, save, onTravel }: { road: Road; save: SaveData; o
   );
 }
 
-/** N1 sits on the journey before its regions exist: the road is drawn, its checkpoints are not. */
 function UnchartedRoad({ road, index, trailIn }: { road: Road; index: number; trailIn: Trail }) {
   return (
     <section id={roadId(road.id)} aria-labelledby={`${roadId(road.id)}-title`} className="journey-road road-tint" data-uncharted="" style={roadStyle(road)}>

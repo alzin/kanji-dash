@@ -49,7 +49,7 @@ test("N3 seals and mastery progress independently, with retained access and idem
   const save = unlocked();
   const first = kanjiOfChapter(56);
   first.forEach((k, i) => { save.progress[k.c] = progress(i < 2 ? 3 : 1); });
-  expect(isChapterUnlocked(save, 57)).toBe(true); // 9/15 points >= 55%.
+  expect(isChapterUnlocked(save, 57)).toBe(true);
   const retained = normalizeSave(save);
   first.forEach((k) => { retained.progress[k.c] = progress(1); });
   expect(isChapterUnlocked(retained, 57)).toBe(true);
@@ -69,7 +69,7 @@ test("N3 daily lessons retain due N5/N4 reviews and gates cover their own region
   const save = unlocked();
   save.progress["一"] = progress(2, 1);
   save.progress["本"] = progress(2, 2);
-  save.progress["君"] = progress(2, 3); // Region 57 remains locked.
+  save.progress["君"] = progress(2, 3);
   const queue = buildRunQueue(save, 100);
   expect(queue.some((q) => q.kanji.c === "一")).toBe(true);
   expect(queue.some((q) => q.kanji.c === "本")).toBe(true);

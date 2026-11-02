@@ -51,6 +51,5 @@ test("the camp sits at the trailhead on the coast: inside the world, below the f
   expect(camp.x).toBeLessThan(WORLD_WIDTH - 60);
   expect(camp.y).toBeGreaterThan(first.y);
   expect(camp.y).toBeLessThan(height);
-  // The tent's tap area (180×140 around its centre) never covers the first stop's 30 px hit circle.
   expect(Math.abs(camp.x - first.x)).toBeGreaterThan(90 + 30);
 });

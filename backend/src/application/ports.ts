@@ -20,18 +20,12 @@ export interface ProgressRepository {
 }
 
 export interface ReminderRepository {
-  /** Insert or refresh a browser's subscription. A stale device never moves lastPlayedOn back. */
   save(registration: ReminderRegistration): Promise<void>;
   remove(endpoint: string): Promise<void>;
-  /** Subscriptions that might be due; the service decides on each player's own clock. */
   candidates(): Promise<ReminderSubscription[]>;
-  /** Atomically mark today's reminder sent. False if already sent or the player has played. */
   claim(endpoint: string, day: string): Promise<boolean>;
-  /** Undo a claim whose delivery failed, so the next dispatch retries it. */
   release(endpoint: string, day: string, previous: string | null): Promise<void>;
-  /** Note the first day of a run of refusals; the claim stands, so it is tried again tomorrow. */
   markRejected(endpoint: string, day: string): Promise<void>;
-  /** A delivery went through, ending any run of refusals. */
   markDelivered(endpoint: string): Promise<void>;
 }
 

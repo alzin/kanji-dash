@@ -6,41 +6,32 @@ import { makeForestArt, regradeTexture } from "../forest/art";
 import { seeded } from "../forest/world";
 import { worldLayout, WORLD_WIDTH, type WorldNode } from "./layout";
 
-/** What the map shows. React derives it from the save; the scene only draws it. */
 export type WorldView = {
   states: ReadonlyMap<number, StopState>;
-  /** Journey index of the learner's next checkpoint (or their sealed road's last stop). */
   here: number;
 };
 
 export type WorldBridge = {
   view: WorldView;
-  /** Bumped whenever `view` changes, so the scene redraws only then. */
   version: number;
   blocked: boolean;
   reducedMotion: boolean;
   selected: number | null;
   onReady: () => void;
-  /** The avatar arrived at a stop by tap, keys or travel. */
   onArrive: (index: number) => void;
-  /** The camera's centre moved into another road's land. */
   onRoad: (road: RoadId) => void;
-  /** The camp tent at the trailhead was tapped. */
   onCamp: () => void;
-  /** Journey index to stand on at start instead of `view.here` (a return from a checkpoint). */
   focus?: number;
   walkTo?: (index: number) => void;
   step?: (direction: 1 | -1) => void;
   showRoad?: (road: RoadId) => void;
   recenter?: () => void;
-  /** Sleep the whole loop while a panel or the title covers the map (the last frame stays drawn). */
   sleep?: (asleep: boolean) => void;
 };
 
 type Season = {
   ground: [string, string, string, string];
   road: number;
-  /** Tree species, each recoloured by one of the season's grades (picked at random). */
   trees: readonly number[];
   grades: readonly Grade[];
   weather: "petal" | "rain" | "leaf" | "snow";
@@ -48,7 +39,6 @@ type Season = {
 };
 
 const SAME: Grade = { hue: 0, sat: 1, light: 1 };
-// South to north, one year: spring woods, rainy season, autumn, first snow, deep winter.
 const SEASONS: Record<RoadId, Season> = {
   N5: { ground: ["#3b6a49", "#447652", "#30593e", "#e9b9c8"], road: 0xb9a978, trees: [0, 1, 2], grades: [SAME], weather: "petal", sky: 0x2b5a45 },
   N4: { ground: ["#2e5550", "#38625b", "#264840", "#8fa8dc"], road: 0x8b9087, trees: [3, 3, 0], grades: [{ hue: 16, sat: 0.7, light: 0.88 }], weather: "rain", sky: 0x22423e },
@@ -57,10 +47,9 @@ const SEASONS: Record<RoadId, Season> = {
   N1: { ground: ["#c5d0d5", "#d9e2e6", "#b1bfc5", "#ffffff"], road: 0xeaf0f2, trees: [3], grades: [{ hue: 20, sat: 0.18, light: 1.75 }], weather: "snow", sky: 0xb1bfc5 },
 };
 
-// Weather is decoration around the camera: capped, paused with the map, off for reduced motion.
 const MAX_WEATHER = 150;
-const WALK_SPEED = 4.5; // stops per second
-const LONGEST_WALK = 2.4; // seconds; far travel speeds up instead of dragging on
+const WALK_SPEED = 4.5;
+const LONGEST_WALK = 2.4;
 
 export class WorldScene extends Phaser.Scene {
   private bridge: WorldBridge;
@@ -103,14 +92,12 @@ export class WorldScene extends Phaser.Scene {
     for (const band of bands) {
       this.add.tileSprite(0, band.top, WORLD_WIDTH, band.bottom - band.top, `world-ground-${band.road.id}`).setOrigin(0).setDepth(-100);
     }
-    // Soft seams where one season gives way to the next.
     const seams = this.add.graphics().setDepth(-95);
     for (const band of bands.slice(1)) {
       const below = SEASONS[bands[band.roadIndex - 1]!.road.id].sky;
       for (let k = 0; k < 6; k++) seams.fillStyle(below, 0.12).fillRect(0, band.bottom - k * 14, WORLD_WIDTH, 14);
     }
 
-    // The Tōkaidō sets out from the coast: sand, sea, and a camp at the trailhead.
     const shore = this.add.graphics().setDepth(-96);
     const coast = height - 260;
     shore.fillStyle(0xd8c48e, 1).fillRect(0, coast - 70, WORLD_WIDTH, 80);
@@ -127,7 +114,6 @@ export class WorldScene extends Phaser.Scene {
     camp.fillStyle(0xd4a775).fillTriangle(tx, ty - 78, tx - 54, ty - 3, tx + 55, ty - 3);
     camp.fillStyle(0xf0cf92).fillTriangle(tx, ty - 78, tx - 37, ty - 8, tx + 13, ty - 8);
     camp.fillStyle(0x38493b).fillTriangle(tx, ty - 59, tx - 13, ty - 3, tx + 23, ty - 3);
-    // A small fire and a signboard: the camp is a place you can visit.
     camp.fillStyle(0x6b4a2e).fillRect(tx + 62, ty - 6, 18, 4);
     camp.fillStyle(0xf0a64a).fillTriangle(tx + 71, ty - 24, tx + 62, ty - 6, tx + 80, ty - 6);
     camp.fillStyle(0xffe1a1).fillTriangle(tx + 71, ty - 15, tx + 67, ty - 6, tx + 75, ty - 6);
@@ -152,7 +138,6 @@ export class WorldScene extends Phaser.Scene {
       if (road.level) {
         this.add.image(gate.x, gate.y + 40, "forest-torii").setScale(1.6).setOrigin(0.5, 1).setDepth(gate.y + 40);
       } else {
-        // The northern barrier: closed until N1's regions are charted.
         this.add.image(gate.x, gate.y + 30, "forest-shrine-0").setScale(1.4).setOrigin(0.5, 1).setDepth(gate.y + 30).setTint(0xdfe8ec);
       }
       const side = gate.x > WORLD_WIDTH / 2 ? -1 : 1;
@@ -299,7 +284,6 @@ export class WorldScene extends Phaser.Scene {
     return this.path.getPoint(Math.max(0, Math.min(last, at)) / last);
   }
 
-  /** The road itself: a broad path in each season's colour with a dotted footpath on top. */
   private drawRoad() {
     const { nodes } = this.layout;
     const road = this.add.graphics().setDepth(-90);
@@ -312,7 +296,6 @@ export class WorldScene extends Phaser.Scene {
     }
   }
 
-  /** The walked stretch, lit gold from each seal to the next stop; plus step progress arcs. */
   private drawTrail() {
     const { nodes } = this.layout;
     const { states } = this.bridge.view;
@@ -349,7 +332,6 @@ export class WorldScene extends Phaser.Scene {
           size = 0.7 + random() * 0.5,
           variant = season.trees[Math.floor(random() * season.trees.length)]!,
           grade = Math.floor(random() * season.grades.length);
-        // Keep the whole tree, canopy included, off the road, its stops and the gates.
         const scale = size * 1.5,
           halfWidth = 46 * scale + 34,
           canopyTop = y - 112 * scale - 40;
@@ -417,7 +399,6 @@ export class WorldScene extends Phaser.Scene {
     const keys = (event: KeyboardEvent) => {
       if (this.bridge.blocked || event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return;
       const key = event.key.toLowerCase();
-      // North is up the map and further along the journey.
       const direction = key === "arrowup" || key === "w" || key === "arrowright" || key === "d" ? 1 : key === "arrowdown" || key === "s" || key === "arrowleft" || key === "a" ? -1 : 0;
       if (!direction || event.repeat && this.walk) return;
       event.preventDefault();
@@ -430,10 +411,8 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private resize() {
-    // Fill the width on wide screens; on phones keep stops large enough to tap.
     const zoom = Math.max(0.62, Math.min(1.25, this.scale.width / WORLD_WIDTH));
     this.cameras.main.setZoom(zoom);
-    // Narrow screens put the checkpoint panel under the avatar, so keep the avatar high.
     this.followY = this.scale.width < 700 ? -(this.scale.height * 0.08) / zoom : 0;
     this.cameras.main.setFollowOffset(0, this.followY);
   }
@@ -459,7 +438,6 @@ export class WorldScene extends Phaser.Scene {
     this.bridge.onArrive(Math.round(this.at));
   }
 
-  /** Redraw stop states, the lit trail and the "you are here" flag after a save change. */
   private refresh() {
     this.version = this.bridge.version;
     const { states, here } = this.bridge.view;
@@ -512,7 +490,6 @@ export class WorldScene extends Phaser.Scene {
     this.selectRing.setVisible(!!selected);
     if (selected) this.selectRing.setPosition(selected.x, selected.y - 2).setScale(1 + Math.sin(t * 4) * 0.05);
 
-    // The land under the camera's centre sets the weather and the HUD's road.
     const centre = this.cameras.main.worldView.centerY;
     const band = this.layout.bands.find((b) => centre >= b.top && centre < b.bottom) ?? this.layout.bands[0]!;
     if (band.road.id !== this.road) {
@@ -531,7 +508,6 @@ export class WorldScene extends Phaser.Scene {
     }
     if (!this.following && this.walk) this.following = true;
 
-    // Read-only diagnostics for QA, like the forest's.
     const canvas = this.game.canvas.dataset;
     canvas["stop"] = String(Math.round(this.at));
     canvas["here"] = String(this.bridge.view.here);

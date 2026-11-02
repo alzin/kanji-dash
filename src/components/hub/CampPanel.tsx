@@ -11,7 +11,6 @@ import { dueCount, learningLevel, levelMasteryPct, selectLevel, streakCount, use
 import { localDay, stackOf } from "@/lib/stack-progress";
 import { GameDrawer } from "./GameDrawer";
 
-/** The camp at the trailhead: who you are on the journey, today's quests, other ways to play, settings. */
 export function CampPanel({ onClose, onShowTitle }: { onClose: () => void; onShowTitle: () => void }) {
   const save = useSave();
   const level = learningLevel(save), rank = explorerRank(save), due = dueCount(save);

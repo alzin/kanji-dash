@@ -9,14 +9,9 @@ import { levelOfChapter } from "@/data";
 import { buildQuestion, selectLevel, vocabKana, type Question } from "@/lib/srs";
 
 const primary = "min-h-12 rounded-xl bg-primary px-5 py-3 font-bold text-primary-foreground shadow-e1 transition-colors hover:bg-primary-hover disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none";
-/** Recall answers are the whole interaction on that stage, so they get body size and a full tap row. */
 const choice = "min-h-14 w-full rounded-xl border border-border bg-surface px-4 py-3 text-base font-bold shadow-e1 transition-colors hover:border-primary hover:bg-secondary disabled:opacity-60 disabled:hover:border-border disabled:hover:bg-surface";
 const STEPS = ["Learn & write", "Recall", "Run"] as const;
 
-/**
- * Preparation and the runner share one frozen queue, including the exact vocabulary. A region
- * checkpoint uses the learning half as its first step, every word of the region, under its own rail.
- */
 export function RunPreparation({ questions, title, onStart, learnOnly: learnOnlyProp = false, checkpoint }: {
   questions: Question[];
   title: string;
@@ -63,7 +58,6 @@ export function RunPreparation({ questions, title, onStart, learnOnly: learnOnly
           </h1>
         </div>
 
-        {/* Three segments rather than three boxes: the rail never wraps on a phone. */}
         {checkpoint ? <div className="mt-5">{checkpoint.rail}</div> : <ol aria-label="Learning steps" className="mt-5 flex items-center gap-2">
           {(learnOnly ? ["Learn & write", "Stack & recall"] : STEPS).map((label, i) => (
             <li key={label} aria-current={i === step ? "step" : undefined} className="min-w-0 flex-1">

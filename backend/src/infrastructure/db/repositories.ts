@@ -96,7 +96,6 @@ export class PgReminderRepository implements ReminderRepository {
   constructor(private readonly pool: Pool) {}
 
   async save(r: ReminderRegistration): Promise<void> {
-    // The newest play day wins, with its streak and freezes; an older tab cannot rewind them.
     await this.pool.query(`
       INSERT INTO push_subscriptions (endpoint, p256dh, auth, time_zone, reminder_hour, last_played_on, streak_count, freeze_count)
       VALUES ($1, $2, $3, $4, $5, $6::date, $7, $8)

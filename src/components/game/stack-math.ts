@@ -22,7 +22,6 @@ export const INK_SECONDS = 1.2;
 
 export function fallTime(mastery: number, rt = 0, tempo = 0): number {
   const base = mastery >= 3 ? 2.5 : mastery === 2 ? 4 : 6;
-  // Slower measured recall can ease known cards, but new cards always get six seconds.
   const adapted = mastery >= 2 && rt > base * 800 ? Math.min(6, rt / 800) : base;
   return Math.max(1.6, adapted * Math.pow(0.95, tempo));
 }
@@ -57,7 +56,6 @@ function gravity(s: StackState) {
   }
 }
 
-/** No rescue is permitted while ANY queued or held retrieval is reachable. */
 export function rescueIfBlocked(s: StackState): boolean {
   if ([...s.queue, ...(s.hold ? [s.hold] : []), ...(s.current ? [s.current] : [])].some((t) => legalColumns(s, t).length > 0)) return false;
   const oldest = s.board.flat().filter((t): t is StackTile => t?.kind === "G").sort((a, b) => a.born - b.born || a.id - b.id)[0];
@@ -74,7 +72,6 @@ function remove(s: StackState, ids: Set<number>) {
 }
 
 function readableSeed(s: StackState): boolean {
-  // A perfect path must exist before any garbage or rescue. Destructive only on a copy.
   const copy = { ...s, current: null, board: s.board.map((r) => [...r]), queue: [...s.queue] };
   for (let i = 0; i < s.queue.length; i++) {
     const task = copy.queue.find((t, i) => !copy.queue.slice(0, i).some((earlier) => earlier.word === t.word) && legalColumns(copy, t).length);
@@ -95,7 +92,6 @@ export function createSheet(words: StackWord[], cols: number, rows: number, rng:
     elapsed: 0, combo: 0, score: 0, correct: 0, wrong: 0, bestCombo: 0, redeemed: 0, chains: 0, link: 0,
     nextId: seed.tiles.length, spawned: 0, removed: 0, created: seed.tiles.length, clearIds: [], clearedWords: [], missedKanji: [], attempts: words.map(() => 0),
     done: false, cleared: false, last: null, feedback: "", feedbackId: 0, tempo: options.tempo ?? 0, forceFast: options.forceFast ?? false,
-    // The last word studied needs two intervening pieces; reviews take precedence.
     introducedOrder: words.map((_, i) => i).reverse(), marathon: options.marathon ?? false, riseIn: 12,
   };
   if (!words.length) { s.done = true; s.cleared = true; s.phase = "done"; return s; }
@@ -117,8 +113,6 @@ function spawn(s: StackState, rng: () => number, replacement?: StackTask, holdUs
   let task = replacement;
   if (!task) {
     const reachable = s.queue.filter((t) => legalColumns(s, t).length);
-    // Preserve the learning direction when possible, but a queued retry must be
-    // able to uncover the target of its other direction after a miss.
     const ordered = reachable.filter((t) => !s.queue.slice(0, s.queue.indexOf(t)).some((earlier) => earlier.word === t.word));
     const freshDelay = (t: StackTask) => s.words[t.word]!.fresh && s.spawned < Math.max(0, 2 - (s.words.length - 1 - t.word));
     task = ordered.find((t) => !freshDelay(t)) ?? ordered[0] ?? reachable[0] ?? s.queue[0];
@@ -205,7 +199,6 @@ function lock(s: StackState, onPlacement: (event: StackPlacement) => void) {
     s.wrong++; s.combo = 0;
     if (grade) s.missedKanji.push(word.q.kanji.c);
     s.attempts[p.word] = (s.attempts[p.word] ?? 0) + 1;
-    // Two other spawns, then retrieval with a fading correction hint.
     s.queue.splice(Math.min(2, s.queue.length), 0, { word: p.word, kind: p.kind, target: p.target, attempt: p.attempt + 1, hinted: true });
     s.feedback = `${word.q.vocab.w} · ${vocabKana(word.q.vocab)} · ${word.q.vocab.m}`;
     s.phase = "ink"; s.timer = INK_SECONDS;

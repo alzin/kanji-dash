@@ -19,7 +19,6 @@ export type ForestBridge = {
   delivered?: boolean;
   preview: boolean;
   reducedMotion: boolean;
-  /** The stretch of the Spirit Trail to build. Defaults to Kodama Woods. */
   area?: AreaDefinition;
   onReady: () => void;
   onNear: (site: number | null) => void;
@@ -29,7 +28,6 @@ export type ForestBridge = {
   celebrate?: () => void;
 };
 
-// Rain is decoration: a hard cap keeps phones at frame rate however long the walk.
 const MAX_RAIN = 260;
 
 /** Deterministic 0–1 noise for scenery that must not consume the seeded streams. */
@@ -294,7 +292,6 @@ export class ForestScene extends Phaser.Scene {
       rays.fillTriangle(x, 0, x - 230, 740, x - 95, 740);
     if (area.weather === "rain") this.makeRain();
     this.refreshLandmarks();
-    // Keep the loading screen until textures have actually reached the renderer.
     this.game.events.once(Phaser.Core.Events.POST_RENDER, () => {
       this.game.canvas.dataset["ready"] = "true";
       this.bridge.onReady();
@@ -312,7 +309,6 @@ export class ForestScene extends Phaser.Scene {
     );
     if (this.bridge.preview) this.cameras.main.centerOn(this.area.previewCenter.x, this.area.previewCenter.y);
   }
-  /** Wind-blown rain spawned just above whatever the camera can see, in world space. */
   private makeRain() {
     const camera = this.cameras.main;
     this.rain = this.add.particles(0, 0, "forest-rain", {
@@ -332,7 +328,6 @@ export class ForestScene extends Phaser.Scene {
       scaleX: 1.5,
       scaleY: { min: 1.2, max: 2.1 },
       alpha: { start: 0.7, end: 0.3 },
-      // Each drop lives only as long as it takes to cross the visible world, so the cap buys density.
       lifespan: { onEmit: () => ((camera.worldView.height + 90) / 630) * 1000 },
       frequency: 16,
       quantity: 3,
@@ -386,7 +381,6 @@ export class ForestScene extends Phaser.Scene {
       this.landmarks.add(
         this.add.image(sites[0].x, sites[0].y - 82, "forest-glow").setScale(2).setDepth(sites[0].y + 1),
       );
-    // The crossing, drawn around the point where it spans the water.
     const cx = crossing.x,
       cy = crossing.y;
     const bridge = this.add.graphics().setDepth(cy - 41);
@@ -447,7 +441,6 @@ export class ForestScene extends Phaser.Scene {
   override update(_time: number, delta: number) {
     this.refreshLandmarks();
     const blocked = this.bridge.blocked || this.bridge.preview;
-    // Menus need a still world, not 60 expensive canvas composites behind a dialog.
     const fps = this.bridge.blocked ? 12 : this.bridge.preview ? 24 : 60;
     if (this.fpsLimit !== fps) {
       this.fpsLimit = fps;
@@ -541,7 +534,6 @@ export class ForestScene extends Phaser.Scene {
       this.ripples.lineBetween(x, y, x + 13, y);
     }
     if (this.rain) {
-      // Rain holds still with the world: in menus, on pause and for reduced motion.
       const still = blocked || this.bridge.reducedMotion;
       if (still !== this.rainStill) {
         this.rainStill = still;
@@ -550,7 +542,6 @@ export class ForestScene extends Phaser.Scene {
         this.rain.setVisible(!this.bridge.reducedMotion);
       }
       if (!this.bridge.reducedMotion) {
-        // Rings on the wet ground: each one grows, fades, then lands somewhere new in view.
         const view = this.cameras.main.worldView;
         for (let i = 0; i < 14; i++) {
           const cycle = t * 1.15 + i * 0.37,
@@ -568,7 +559,6 @@ export class ForestScene extends Phaser.Scene {
         mote.sprite.y = mote.point.y - 13 + Math.sin(t * 2 + i) * 5;
         mote.glow.setAlpha(0.6 + Math.sin(t + i) * 0.15);
       }
-    // Read-only diagnostics for QA; no gameplay bypasses or writable global state.
     this.game.canvas.dataset["area"] = this.area.id;
     this.game.canvas.dataset["playerX"] = String(Math.round(this.pos.x));
     this.game.canvas.dataset["playerY"] = String(Math.round(this.pos.y));

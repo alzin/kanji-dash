@@ -9,7 +9,6 @@ export const MUSIC_TEMPO: Record<MusicScene, number> = { forest: 82, shrine: 70,
 const MELODY = [[74, 0, 78, 81, 78, 0, 76, 74], [71, 0, 74, 78, 81, 78, 0, 74], [71, 74, 0, 78, 76, 0, 74, 71], [69, 0, 73, 76, 81, 0, 76, 73]];
 const ROOTS = [50, 47, 43, 45];
 
-/** An original 16-bar woodland score; no downloaded music or audio files. */
 export function musicStep(scene: MusicScene, step: number): MusicNote[] {
   const bar = Math.floor(step / 8) % 4, beat = step % 8, variation = Math.floor(step / 32) % 4;
   const notes: MusicNote[] = [];
@@ -27,7 +26,7 @@ const listeners = new Set<() => void>();
 function load() {
   if (loaded || typeof window === "undefined") return;
   loaded = true;
-  try { enabled = localStorage.getItem(MUSIC_PREF_KEY) !== "off"; } catch { /* Storage is optional. */ }
+  try { enabled = localStorage.getItem(MUSIC_PREF_KEY) !== "off"; } catch {}
   window.addEventListener("storage", (e) => {
     if (e.key !== MUSIC_PREF_KEY && e.key !== null) return;
     try { enabled = localStorage.getItem(MUSIC_PREF_KEY) !== "off"; } catch { enabled = true; }
@@ -37,7 +36,7 @@ function load() {
 export function getMusicEnabled() { load(); return enabled; }
 export function setMusicEnabled(on: boolean) {
   load(); enabled = on;
-  try { localStorage.setItem(MUSIC_PREF_KEY, on ? "on" : "off"); } catch { /* Storage is optional. */ }
+  try { localStorage.setItem(MUSIC_PREF_KEY, on ? "on" : "off"); } catch {}
   if (on) unlock();
   sync(); listeners.forEach((l) => l());
 }
@@ -61,13 +60,13 @@ function updateGain() {
   try {
     bus.gain.cancelScheduledValues(audioContext.currentTime);
     bus.gain.setTargetAtTime(ducks.size ? .045 : .3, audioContext.currentTime, ducks.size ? .035 : .25);
-  } catch { /* Cosmetic audio never interrupts play. */ }
+  } catch {}
 }
 
 function stopNotes() {
   for (const [source, gain] of playing) {
     source.onended = null;
-    try { source.stop(); } catch { /* Already stopped. */ }
+    try { source.stop(); } catch {}
     source.disconnect(); gain.disconnect();
   }
   playing.clear(); audible = false; nextBeat = 0;
@@ -95,14 +94,13 @@ function sync() {
     const audio = getGameAudio();
     if (!session || session.paused || !getMusicEnabled() || !getSoundEnabled() || document.hidden || !audio) { stopNotes(); return; }
     if (audioContext !== audio.context || !bus) {
-      stopNotes(); try { bus?.disconnect(); } catch { /* Stale graph. */ }
+      stopNotes(); try { bus?.disconnect(); } catch {}
       audioContext = audio.context; samples.clear(); bus = audioContext.createGain();
       bus.gain.value = ducks.size ? .045 : .3;
       bus.connect(audio.output); updateGain();
     }
     const now = audio.context.currentTime;
     if (!nextBeat || nextBeat < now - .5) nextBeat = now + .06;
-    // Schedule against the audio clock, not frame rate. At most one short lookahead window.
     while (nextBeat < now + .18) {
       for (const note of musicStep(session.scene, step)) {
         if (playing.size >= 32) break;
@@ -118,7 +116,6 @@ function sync() {
   } catch { stopNotes(); }
 }
 
-/** Read-only diagnostics: useful for audio QA without exposing answers or save data. */
 export function musicStatus() { return { audible, voices: playing.size, scene: session?.scene ?? null, paused: session?.paused ?? false, ducked: ducks.size > 0 }; }
 
 export function useGameMusic(scene: MusicScene, paused = false) {
@@ -132,7 +129,7 @@ export function useGameMusic(scene: MusicScene, paused = false) {
       off(); document.removeEventListener("visibilitychange", sync);
       if (session?.owner !== owner) return;
       clearInterval(timer); timer = undefined; session = null; stopNotes();
-      try { bus?.disconnect(); } catch { /* Optional audio. */ } bus = null;
+      try { bus?.disconnect(); } catch {} bus = null;
     };
   }, [owner]);
   useEffect(() => { if (session?.owner === owner) { session = { owner, scene, paused }; sync(); } }, [owner, scene, paused]);

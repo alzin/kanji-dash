@@ -128,8 +128,8 @@ test("mastery uses every card's weight and only reaches 100% when all cards are 
   save.progress["一"] = card({ mastery: 1 });
   save.progress["二"] = card({ mastery: 2 });
   save.progress["三"] = card({ mastery: 3 });
-  expect(chapterMasteryPct(save, 1)).toBe(40); // 6 / (5 * 3).
-  expect(n5MasteryPct(save)).toBe(2); // 6 / (96 * 3), rounded.
+  expect(chapterMasteryPct(save, 1)).toBe(40);
+  expect(n5MasteryPct(save)).toBe(2);
   save.progress["not-in-curriculum"] = card({ mastery: 3 });
   expect(n5MasteryPct(save)).toBe(2);
 
@@ -137,7 +137,7 @@ test("mastery uses every card's weight and only reaches 100% when all cards are 
   expect(n5MasteryPct(complete)).toBe(100);
   for (const ch of LEVEL_CHAPTERS.N5) expect(chapterMasteryPct(complete, ch)).toBe(100);
   complete.progress[allKanji.at(-1)!.c]!.mastery = 2;
-  expect(n5MasteryPct(complete)).toBe(99); // 287 / 288 must not claim completion.
+  expect(n5MasteryPct(complete)).toBe(99);
   expect(chapterMasteryPct(complete, LEVEL_CHAPTERS.N5.at(-1)!)).toBeLessThan(100);
 });
 
@@ -148,10 +148,10 @@ test("chapter unlock thresholds and chapter identifiers are bounded", () => {
   const chapter = kanjiOfChapter(1);
   for (const k of chapter.slice(0, 2)) save.progress[k.c] = card({ mastery: 3 });
   save.progress[chapter[2]!.c] = card({ mastery: 2 });
-  expect(isChapterUnlocked(save, 13)).toBe(false); // 8/15 < 55%.
+  expect(isChapterUnlocked(save, 13)).toBe(false);
   save.progress[chapter[2]!.c]!.mastery = 3;
-  expect(isChapterUnlocked(save, 13)).toBe(true); // 9/15 >= 55%.
-  expect(isChapterUnlocked(save, 2)).toBe(false); // The next legacy theme is further along the road.
+  expect(isChapterUnlocked(save, 13)).toBe(true);
+  expect(isChapterUnlocked(save, 2)).toBe(false);
 
   const complete = masterAll();
   for (const ch of [-1, 0, 1.5, TOTAL_CHAPTERS + 1, NaN, Infinity]) {
@@ -173,7 +173,7 @@ test("due totals and queues include mastered cards and exclude locked or future 
   const save = emptySave();
   save.progress["一"] = card({ mastery: 3, due: NOW, ivl: 30 });
   save.progress["二"] = card({ mastery: 1, due: NOW + 1 });
-  save.progress["半"] = card({ mastery: 2, due: NOW - DAY }); // Chapter 2 remains locked.
+  save.progress["半"] = card({ mastery: 2, due: NOW - DAY });
   save.progress["三"] = card({ mastery: 0, due: NOW - DAY });
   expect(dueCount(save, NOW - 1)).toBe(0);
   expect(dueCount(save, NOW)).toBe(1);
@@ -182,7 +182,7 @@ test("due totals and queues include mastered cards and exclude locked or future 
   expect(queue.map((q) => q.kanji.c)).toContain("一");
   expect(queue.map((q) => q.kanji.c)).not.toContain("二");
   expect(queue.map((q) => q.kanji.c)).not.toContain("半");
-  expect(queue).toHaveLength(4); // One review and three fresh cards from this region.
+  expect(queue).toHaveLength(4);
 });
 
 test("saved mastery-zero cards remain eligible as fresh cards", () => {
@@ -393,11 +393,11 @@ test("guest grading, rewards, session persistence, and streak updates preserve e
     expect(getSnapshot().coins).toBe(20);
     expect(getSnapshot().runsCompleted).toBe(5);
 
-    expect(clearGate(2)).toBe(0); // Legacy cleared gate cannot pay again.
-    expect(clearGate(5)).toBe(0); // Locked N5 checkpoints cannot be skipped.
+    expect(clearGate(2)).toBe(0);
+    expect(clearGate(5)).toBe(0);
     expect(clearGate(3)).toBe(50);
     expect(clearGate(3)).toBe(0);
-    expect(clearGate(17)).toBe(50); // The new road order advances immediately after a seal.
+    expect(clearGate(17)).toBe(50);
     expect(getSnapshot().clearedChapters).toEqual([1, 2, 3, 13, 14, 15, 16, 17]);
     expect(getSnapshot().gatesCleared).toBe(8);
     expect(getSnapshot().coins).toBe(120);
@@ -405,9 +405,9 @@ test("guest grading, rewards, session persistence, and streak updates preserve e
     expect(isGateCleared(getSnapshot(), 4)).toBe(false);
     const beforeInvalidGate = structuredClone(getSnapshot());
     for (const ch of [-1, 0, 1.5, TOTAL_CHAPTERS + 1, NaN, Infinity]) expect(clearGate(ch)).toBe(0);
-    expect(clearGate(26)).toBe(0); // Later N4 regions still require progress within N4.
+    expect(clearGate(26)).toBe(0);
     expect(getSnapshot()).toEqual(beforeInvalidGate);
-    expect(clearGate(7)).toBe(50); // Starting N4 needs no N5 seals.
+    expect(clearGate(7)).toBe(50);
     expect(clearGate(7)).toBe(0);
 
     process.env.TZ = "Asia/Tokyo";

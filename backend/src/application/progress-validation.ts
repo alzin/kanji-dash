@@ -83,7 +83,6 @@ export function parseSaveData(value: unknown): SaveData {
   };
 }
 
-/** Steps complete in order, so a region can only have stacked after learning, and rescued after stacking. */
 function parseCheckpointSteps(value: unknown): CheckpointSteps {
   const raw = object(value, ["learned", "stacked", "rescued"], "checkpointSteps");
   const learned = chapterList(raw.learned, "checkpointSteps.learned");
@@ -99,7 +98,7 @@ function parseRunner(value: unknown): RunnerProgress {
   const records = object(raw.best, ["N5", "N4", "N3"], "runner.best", ["N2"]);
   const best: RunnerProgress["best"] = { N5: { standard: 0, relaxed: 0 }, N4: { standard: 0, relaxed: 0 }, N3: { standard: 0, relaxed: 0 }, N2: { standard: 0, relaxed: 0 } };
   for (const level of ["N5", "N4", "N3", "N2"] as const) {
-    if (level === "N2" && !Object.hasOwn(records, level)) continue; // Older clients have no N2 record.
+    if (level === "N2" && !Object.hasOwn(records, level)) continue;
     const score = object(records[level], ["standard", "relaxed"], `runner.best.${level}`);
     best[level] = { standard: count(score.standard, `runner.best.${level}.standard`), relaxed: count(score.relaxed, `runner.best.${level}.relaxed`) };
   }
