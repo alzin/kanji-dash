@@ -12,7 +12,7 @@ import type { SaveData } from "../src/domain/models.js";
 import { readMigrations, runMigrations } from "../src/infrastructure/db/migrate.js";
 import { deleteExpiredSessions } from "../src/infrastructure/db/maintenance.js";
 import { createDatabasePool } from "../src/infrastructure/db/pool.js";
-import { PgProgressRepository, PgReminderRepository, PgSessionRepository, PgUserRepository } from "../src/infrastructure/db/repositories.js";
+import { PgProgressRepository, PgReminderRepository, PgSessionRepository, PgTravellerRepository, PgUserRepository } from "../src/infrastructure/db/repositories.js";
 
 const emptySave = (): SaveData => ({
   curriculumVersion: 2, unlockedChapters: [], progress: {},
@@ -88,7 +88,7 @@ test("migration checksums accept Windows/Unix line endings and reject substantiv
 
 async function exerciseDatabase(pool: Pool) {
   const migrations = await readMigrations(new URL("../migrations/", import.meta.url));
-  assert.deepEqual(await runMigrations(pool, migrations), ["001_initial.sql", "002_push_subscriptions.sql", "003_reminder_freezes_and_rejections.sql"]);
+  assert.deepEqual(await runMigrations(pool, migrations), ["001_initial.sql", "002_push_subscriptions.sql", "003_reminder_freezes_and_rejections.sql", "004_traveller_positions.sql"]);
   assert.deepEqual(await runMigrations(pool, migrations), []);
   await assert.rejects(runMigrations(pool, [{ ...migrations[0]!, sql: `${migrations[0]!.sql}\n-- changed` }]), /has changed/);
   await assert.rejects(runMigrations(pool, [{ name: "002_failure.sql", sql: "CREATE TABLE should_rollback (id integer); SELECT missing_column;" }]));
@@ -175,8 +175,11 @@ async function exerciseDatabase(pool: Pool) {
   assert.deepEqual(emptied.save?.checkpointSteps, { learned: [], stacked: [], rescued: [] }, "An explicit steps snapshot replaces the stored one.");
   await assert.rejects(repository.save(randomUUID(), emptySave(), 0), "Foreign keys reject progress for missing accounts.");
 
+  await exerciseTravellers(pool, user.id, other.id);
+
   await pool.query("DELETE FROM users WHERE id = $1", [user.id]);
   assert.deepEqual(await progress.get(user.id), { save: null, version: 0 });
+  assert.deepEqual((await new PgTravellerRepository(pool).recent(new Date(0), 10)).map((t) => t.userId), [other.id], "Account deletion removes the traveller from the shared map.");
   const deletedSessions = await pool.query("SELECT count(*)::integer AS count FROM sessions WHERE user_id = $1", [user.id]);
   assert.equal(deletedSessions.rows[0].count, 0, "Account deletion cascades to all sessions and progress.");
 
@@ -249,4 +252,24 @@ async function exerciseReminders(pool: Pool, reminders: PgReminderRepository) {
   await reminders.remove(endpoint);
   await reminders.remove(`${endpoint}-lapsed`);
   assert.deepEqual(await reminders.candidates(), []);
+}
+
+async function exerciseTravellers(pool: Pool, userId: string, otherId: string) {
+  const travellers = new PgTravellerRepository(pool);
+  await travellers.report(userId, { stop: 13, seals: 12 });
+  await travellers.report(otherId, { stop: 2, seals: 1, anonymous: true });
+  await travellers.report(userId, { stop: 14, seals: 13 });
+  await pool.query("UPDATE traveller_positions SET seen_at = CURRENT_TIMESTAMP - interval '30 seconds' WHERE user_id = $1", [otherId]);
+  const recent = await travellers.recent(new Date(Date.now() - 60_000), 10);
+  assert.deepEqual(recent.map(({ userId, name, stop, seals, anonymous }) => ({ userId, name, stop, seals, anonymous })), [
+    { userId, name: "Renamed", stop: 14, seals: 13, anonymous: false },
+    { userId: otherId, name: "Learner", stop: 2, seals: 1, anonymous: true },
+  ], "A report moves the traveller; the most recently seen come first, joined to their current name.");
+  assert.ok(recent[0]!.seenAt instanceof Date);
+  await travellers.report(otherId, { stop: 3, seals: 2 });
+  assert.equal((await travellers.recent(new Date(0), 10)).find((t) => t.userId === otherId)?.anonymous, true, "A report without a choice keeps the anonymity chosen before.");
+  await pool.query("UPDATE traveller_positions SET seen_at = CURRENT_TIMESTAMP - interval '20 days' WHERE user_id = $1", [otherId]);
+  assert.deepEqual((await travellers.recent(new Date(Date.now() - 14 * 86_400_000), 10)).map((t) => t.userId), [userId], "Long-quiet travellers leave the map.");
+  assert.equal((await travellers.recent(new Date(0), 1)).length, 1);
+  await assert.rejects(travellers.report(randomUUID(), { stop: 1, seals: 0 }), "Foreign keys reject positions for missing accounts.");
 }

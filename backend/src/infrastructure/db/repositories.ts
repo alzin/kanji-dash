@@ -1,7 +1,8 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
-import type { ProgressRepository, ReminderRepository, SessionRecord, SessionRepository, UserRepository } from "../../application/ports.js";
+import type { ProgressRepository, ReminderRepository, SessionRecord, SessionRepository, TravellerRepository, UserRepository } from "../../application/ports.js";
 import type { GoogleIdentity, ProgressSnapshot, SaveData, User } from "../../domain/models.js";
+import type { TravellerReport, TravellerRow } from "../../domain/travellers.js";
 import { REMINDER_GIVE_UP_DAYS, type ReminderRegistration, type ReminderSubscription } from "../../domain/reminders.js";
 
 export class PgUserRepository implements UserRepository {
@@ -81,6 +82,34 @@ export class PgProgressRepository implements ProgressRepository {
           WHERE user_id = $1 AND version = $3
           RETURNING save_data, version`, [userId, JSON.stringify(save), expectedVersion]);
     return result.rows[0] ? snapshot(result.rows[0]) : null;
+  }
+}
+
+export class PgTravellerRepository implements TravellerRepository {
+  constructor(private readonly pool: Pool) {}
+
+  async report(userId: string, report: TravellerReport): Promise<void> {
+    await this.pool.query(`
+      INSERT INTO traveller_positions (user_id, stop, seals, anonymous, seen_at)
+      VALUES ($1, $2, $3, COALESCE($4::boolean, false), CURRENT_TIMESTAMP)
+      ON CONFLICT (user_id) DO UPDATE
+        SET stop = EXCLUDED.stop, seals = EXCLUDED.seals,
+            anonymous = COALESCE($4::boolean, traveller_positions.anonymous),
+            seen_at = CURRENT_TIMESTAMP`,
+    [userId, report.stop, report.seals, report.anonymous ?? null]);
+  }
+
+  async recent(since: Date, limit: number): Promise<TravellerRow[]> {
+    const result = await this.pool.query<{ user_id: string; name: string; stop: number; seals: number; anonymous: boolean; seen_at: Date }>(`
+      SELECT t.user_id, u.name, t.stop, t.seals, t.anonymous, t.seen_at
+      FROM traveller_positions t JOIN users u ON u.id = t.user_id
+      WHERE t.seen_at > $1
+      ORDER BY t.seen_at DESC
+      LIMIT $2`, [since, limit]);
+    return result.rows.map((row) => ({
+      userId: row.user_id, name: row.name, stop: Number(row.stop), seals: Number(row.seals),
+      anonymous: row.anonymous, seenAt: new Date(row.seen_at),
+    }));
   }
 }
 

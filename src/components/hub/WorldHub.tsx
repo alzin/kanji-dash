@@ -9,7 +9,8 @@ import { WorldCanvas } from "@/components/game/world/WorldCanvas";
 import type { WorldBridge, WorldView } from "@/components/game/world/WorldScene";
 import { nodeOfRegion, worldLayout } from "@/components/game/world/layout";
 import { areaForLevel } from "@/components/game/forest/areas";
-import { useAccount } from "@/lib/account";
+import { openAccountPrompt, useAccount } from "@/lib/account";
+import { useTravellerFeed, useTravellers, type Traveller } from "@/lib/travellers";
 import { diffFx, readFx, rememberFx } from "@/lib/celebrations";
 import { CHECKPOINT_STEPS } from "@/lib/checkpoint-steps";
 import { isNewTraveller, rememberTitleSeen, titleSeen } from "@/lib/hub";
@@ -65,6 +66,8 @@ export function WorldHub({ search }: { search: HubSearch }) {
     blocked: false,
     reducedMotion: false,
     selected: null,
+    crowd: [],
+    crowdVersion: 0,
     ...(arrival.focus !== undefined ? { focus: arrival.focus } : {}),
     onReady: () => setReady(true),
     onArrive: setSelected,
@@ -75,6 +78,13 @@ export function WorldHub({ search }: { search: HubSearch }) {
     bridge.view = view;
     bridge.version += 1;
   }, [bridge, view]);
+  const seals = journeySeals(save);
+  const crowd = useTravellers();
+  useTravellerFeed({ stop: nodes[view.here]!.ch!, seals });
+  useEffect(() => {
+    bridge.crowd = crowd.travellers;
+    bridge.crowdVersion += 1;
+  }, [bridge, crowd.travellers]);
   useEffect(() => {
     const media = matchMedia("(prefers-reduced-motion: reduce)");
     const update = () => { bridge.reducedMotion = media.matches; };
@@ -176,7 +186,8 @@ export function WorldHub({ search }: { search: HubSearch }) {
             ? `Region ${here.regionIndex + 1} of ${hereRoad.regions.length}`
             : "Every seal on this road earned"}
         </p>
-        <p className="world-position-line"><b>{journeySeals(save)}</b> of {JOURNEY_STOPS.length} seals on the journey</p>
+        <p className="world-position-line"><b>{seals}</b> of {JOURNEY_STOPS.length} seals on the journey</p>
+        <Crowd travellers={crowd.travellers} seals={seals} signedIn={!!account.user} />
         <div className="world-actions">
           <button className="forest-track" disabled={!ready} onClick={() => bridge.recenter?.()}>
             You are here <span aria-hidden="true">◆</span>
@@ -215,6 +226,29 @@ export function WorldHub({ search }: { search: HubSearch }) {
       {overlay === "journey" && <JourneyLogPanel newSeals={arrival.seals} onClose={closePanel} onShowOnMap={showOnMap} />}
       {overlay === "title" && <TitleCard onStart={startJourney} />}
     </main>
+  );
+}
+
+/** Who else is on the road, and how this learner measures up against them. */
+function Crowd({ travellers, seals, signedIn }: { travellers: readonly Traveller[]; seals: number; signedIn: boolean }) {
+  if (!travellers.length) return null;
+  const online = travellers.filter((t) => t.online).length;
+  const ahead = travellers.filter((t) => t.seals > seals).length;
+  const total = travellers.length;
+  return (
+    <p className="world-crowd" data-testid="world-crowd">
+      {online > 0 && <><i aria-hidden="true" /><b>{online}</b> on the map now · </>}
+      {!signedIn ? (
+        <>
+          <b>{total}</b> {total === 1 ? "traveller" : "travellers"} on the road{" "}
+          <button type="button" onClick={openAccountPrompt}>Join them</button>
+        </>
+      ) : ahead ? (
+        <><b>{ahead}</b> of {total} ahead of you</>
+      ) : (
+        <>You lead {total === 1 ? "the only other traveller" : <>all <b>{total}</b> travellers</>}</>
+      )}
+    </p>
   );
 }
 

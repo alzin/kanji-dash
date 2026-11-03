@@ -1,5 +1,6 @@
 import type { GoogleIdentity, ProgressSnapshot, SaveData, User } from "../domain/models.js";
 import type { PushTarget, ReminderMessage, ReminderRegistration, ReminderSubscription } from "../domain/reminders.js";
+import type { TravellerReport, TravellerRow } from "../domain/travellers.js";
 
 export interface UserRepository {
   upsertGoogle(identity: GoogleIdentity): Promise<User>;
@@ -17,6 +18,13 @@ export interface ProgressRepository {
   get(userId: string): Promise<ProgressSnapshot>;
   /** Atomic compare-and-set. A stale expected version returns null. */
   save(userId: string, save: SaveData, expectedVersion: number): Promise<ProgressSnapshot | null>;
+}
+
+export interface TravellerRepository {
+  /** Without `anonymous`, the stored choice is kept (false for a first report). */
+  report(userId: string, report: TravellerReport): Promise<void>;
+  /** Seen after `since`, most recently seen first. */
+  recent(since: Date, limit: number): Promise<TravellerRow[]>;
 }
 
 export interface ReminderRepository {
