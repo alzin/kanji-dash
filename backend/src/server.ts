@@ -2,8 +2,9 @@ import { readConfig, reminderConfig } from './config.js';
 import { AuthService } from './application/auth-service.js';
 import { ProgressService } from './application/progress-service.js';
 import { ReminderService } from './application/reminder-service.js';
+import { TravellerService } from './application/traveller-service.js';
 import { createDatabasePool } from './infrastructure/db/pool.js';
-import { PgUserRepository, PgSessionRepository, PgProgressRepository, PgReminderRepository } from './infrastructure/db/repositories.js';
+import { PgUserRepository, PgSessionRepository, PgProgressRepository, PgReminderRepository, PgTravellerRepository } from './infrastructure/db/repositories.js';
 import { GoogleOAuthProvider } from './infrastructure/auth/google-provider.js';
 import { secureTokens } from './infrastructure/auth/tokens.js';
 import { WebPushSender } from './infrastructure/push/web-push-sender.js';
@@ -22,6 +23,7 @@ const reminders = push && {
 };
 const app = createApp({
   config, auth, google, progress: new ProgressService(new PgProgressRepository(pool)), reminders,
+  travellers: new TravellerService(new PgTravellerRepository(pool)),
   ready: async () => { await pool.query('SELECT 1 FROM users, sessions, user_progress LIMIT 1'); },
   // Intentionally avoid URLs, cookies, tokens, request bodies, and raw DB errors.
   reportError: () => console.error('API request failed'),

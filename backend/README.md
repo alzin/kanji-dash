@@ -81,6 +81,8 @@ All paths are relative to the API origin. Responses containing account data use 
 | GET | `/api/reminders` | `{ publicKey: string \| null }`; null when daily reminders are not configured |
 | PUT | `/api/reminders/subscription` | `{ subscription: PushSubscriptionJSON, timeZone, hour, lastPlayedOn, streak, freezes? }`; 204. No account needed |
 | POST | `/api/reminders/unsubscribe` | `{ endpoint }`; 204 |
+| GET | `/api/travellers` | Public. `{ travellers: { id, name, stop, seals, online }[], me: { anonymous } \| null }`: up to 150 learners seen on the map in 14 days, never the caller. `name` is the first word of the display name, or null when anonymous |
+| PUT | `/api/travellers/me` | `{ stop, seals, anonymous? }` from the open map; 204. Without `anonymous` the stored choice is kept |
 | POST | `/api/reminders/dispatch` | Hourly from Cloud Scheduler with `Authorization: Bearer REMINDER_DISPATCH_SECRET`; sends due reminders and returns counts |
 
 Use `credentials: "include"`. Mutations require `Origin` matching `FRONTEND_URL` and `X-CSRF-Token` from the session response. The frontend also supplies that token on progress reads to detect an account switch in another tab between identifying the user and loading progress. PUT requires `Content-Type: application/json`. A new save starts at expected version 0; the first stored version is 1. Stale writes return `{ error: { code: "PROGRESS_CONFLICT", message }, current: { save, version } }`. Other errors use `{ error: { code, message } }`; invalid payloads return 400, oversized bodies 413, and missing sessions 401.

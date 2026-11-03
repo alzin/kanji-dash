@@ -14,6 +14,10 @@
 .world-position a, .world-position button { pointer-events: auto; }
 .world-position-line { margin: 0 0 4px; color: #d7dcc4; font-size: 13px; line-height: 1.5; }
 .world-position-line b { color: var(--f-gold); font-size: 15px; }
+.world-crowd { display: flex; flex-wrap: wrap; align-items: center; gap: 0 4px; margin: 0 0 4px; color: #d7dcc4; font-size: 13px; line-height: 1.5; }
+.world-crowd b { color: var(--f-gold); font-size: 15px; }
+.world-crowd i { width: 8px; height: 8px; margin-right: 2px; border-radius: 50%; background: #8fe39a; box-shadow: 0 0 6px #8fe39a; }
+.world-crowd button { min-height: 32px; padding: 0 4px; color: #f1dfb0; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
 .world-actions { display: flex; flex-wrap: wrap; gap: 4px 18px; }
 .world-actions .forest-track { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; color: #f1dfb0; text-decoration: none; }
 .world-actions .forest-track:disabled { opacity: .5; cursor: default; }
@@ -92,6 +96,8 @@
   .world-position h1 { font-size: 19px; margin: 4px 0 4px; }
   .world-position-line { font-size: 12px; }
   .world-position-line + .world-position-line { display: none; }
+  .world-crowd { font-size: 12px; }
+  .world-crowd b { font-size: 13px; }
   .world-actions .forest-track { min-height: 32px; margin-top: 4px; }
   .world-roads { top: auto; bottom: auto; top: 200px; translate: none; right: 10px; gap: 4px; }
   .world-roads button { min-width: 52px; padding: 5px 4px; }

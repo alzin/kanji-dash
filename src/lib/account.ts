@@ -144,7 +144,7 @@ class ApiError extends Error {
   constructor(readonly status: number, readonly body: unknown) { super("Cloud request failed"); }
 }
 
-async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+export async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), 12_000);
   try {
@@ -340,6 +340,13 @@ export function initializeAccount() {
       void refreshAccount();
     }
   });
+}
+
+/** A JSON write as the signed-in learner; false when nobody is signed in. */
+export async function sendAsUser(path: string, method: "PUT" | "POST", body: unknown): Promise<boolean> {
+  if (!owner || !csrfToken) return false;
+  await request(path, { method, headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken }, body: JSON.stringify(body) });
+  return true;
 }
 
 export function beginGoogleSignIn() {

@@ -61,6 +61,21 @@ function PrivacyPage() {
         <p>This is study data only. We do not collect anything you write beyond your answers in the game.</p>
       </Section>
 
+      <Section heading="The shared map">
+        <p>
+          While you are signed in and the world map is open, we record the checkpoint you are working
+          on, how many seals you have earned, and when you were last on the map. Anyone who opens the
+          map, signed in or not, sees your traveller standing at that checkpoint with the first word
+          of your display name, your seal count, and whether you are on the map right now. Your
+          email address, picture and full name are never shown to other people.
+        </p>
+        <p>
+          You can hide your name in Camp's settings; your traveller then appears as an anonymous
+          旅人. Travellers who have not opened the map for 14 days leave it until they return, and
+          deleting your account removes your traveller.
+        </p>
+      </Section>
+
       <Section heading="Daily reminders">
         <p>
           Reminders are off unless you turn them on, with or without an account. When you do, your
