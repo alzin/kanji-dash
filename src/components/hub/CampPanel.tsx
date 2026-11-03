@@ -9,7 +9,25 @@ import { LEVELS, kanjiOfLevel } from "@/data";
 import { explorerRank } from "@/lib/expedition";
 import { dueCount, learningLevel, levelMasteryPct, selectLevel, streakCount, useSave } from "@/lib/srs";
 import { localDay, stackOf } from "@/lib/stack-progress";
+import { setTravelAnonymously, useTravellers } from "@/lib/travellers";
 import { GameDrawer } from "./GameDrawer";
+
+/** Signed-in learners appear on everyone's map; this chooses whether their first name goes with them. */
+function MapNameSetting() {
+  const { signedIn, anonymous } = useTravellers();
+  if (!signedIn) return null;
+  return (
+    <div className="reminder-setting">
+      <button type="button" role="switch" aria-checked={!anonymous} onClick={() => void setTravelAnonymously(!anonymous)} className="music-toggle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" />{anonymous && <path d="m3 3 18 18" />}
+        </svg>
+        <span>Name on the shared map {anonymous ? "hidden" : "shown"}</span>
+      </button>
+      <p className="camp-fine">Other learners see your traveller at your checkpoint, {anonymous ? "as an anonymous 旅人." : "with your first name."}</p>
+    </div>
+  );
+}
 
 export function CampPanel({ onClose, onShowTitle }: { onClose: () => void; onShowTitle: () => void }) {
   const save = useSave();
@@ -110,6 +128,7 @@ export function CampPanel({ onClose, onShowTitle }: { onClose: () => void; onSho
           <MusicToggle />
         </div>
         <ReminderSetting />
+        <MapNameSetting />
         <InstallApp />
         <button type="button" className="forest-text-button camp-title-link" onClick={onShowTitle}>
           <AppIcon name="seal" className="h-4 w-4" /> View the title screen

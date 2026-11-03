@@ -1,10 +1,11 @@
 import Phaser from "phaser";
 import type { RoadId } from "@/data";
 import type { StopState } from "@/lib/journey";
+import type { Traveller } from "@/lib/travellers";
 import type { Grade } from "../forest/areas";
 import { makeForestArt, regradeTexture } from "../forest/art";
 import { seeded } from "../forest/world";
-import { worldLayout, WORLD_WIDTH, type WorldNode } from "./layout";
+import { nodeOfRegion, worldLayout, WORLD_WIDTH, type WorldNode } from "./layout";
 
 export type WorldView = {
   states: ReadonlyMap<number, StopState>;
@@ -17,6 +18,8 @@ export type WorldBridge = {
   blocked: boolean;
   reducedMotion: boolean;
   selected: number | null;
+  crowd: readonly Traveller[];
+  crowdVersion: number;
   onReady: () => void;
   onArrive: (index: number) => void;
   onRoad: (road: RoadId) => void;
@@ -51,6 +54,35 @@ const MAX_WEATHER = 150;
 const WALK_SPEED = 4.5;
 const LONGEST_WALK = 2.4;
 
+/** Robe, scarf and hat swaps that tell fellow travellers apart from Aki's straw hat and from each other. */
+const ROBE = ["#e2ad5d", "#f1cd7b", "#bc633f", "#e38b51", "#806442", "#d5b56e", "#f1d18b", "#98844f"];
+const TRAVELLER_ROBES = [
+  ["#5b7bb8", "#86a3d6", "#e2c45d", "#f1d98a", "#2f3d63", "#4f6699", "#7088c0", "#3d4f7a"],
+  ["#d98aa6", "#f0b5c8", "#6b8f5e", "#8fb27e", "#7c3f58", "#b8607f", "#d98aa6", "#94506b"],
+  ["#5fa486", "#8cc7a8", "#c4553f", "#e07c5c", "#2f5443", "#4f8a6c", "#76b292", "#3d6a55"],
+  ["#8e6aa8", "#b495cc", "#e2ad5d", "#f1cd7b", "#45305a", "#6e4f8a", "#9273ad", "#56406c"],
+  ["#6f8796", "#9ab0bd", "#d0743f", "#eb9a5f", "#7a3a22", "#b25a33", "#d07a4c", "#8f4628"],
+  ["#b5493f", "#d8735f", "#e8d08a", "#f6e3a8", "#2c2a2e", "#4a464d", "#6b6670", "#3a373d"],
+];
+/** Fellow travellers stand beside the road at their stop: alternate sides, then a step further out. */
+const SLOTS = [[-48, 10], [48, 10], [-80, 4], [80, 4]] as const;
+const TRAVELLER_SPEED = 2.5;
+const RESTING_ALPHA = 0.62;
+
+type Walker = {
+  traveller: Traveller;
+  sprite: Phaser.GameObjects.Sprite;
+  shadow: Phaser.GameObjects.Ellipse;
+  label: Phaser.GameObjects.Text;
+  at: number;
+  walk: { from: number; to: number; elapsed: number; duration: number } | null;
+  slot: number;
+  x: number;
+  y: number;
+  steps: number;
+  leaving: boolean;
+};
+
 export class WorldScene extends Phaser.Scene {
   private bridge: WorldBridge;
   private layout = worldLayout();
@@ -76,6 +108,11 @@ export class WorldScene extends Phaser.Scene {
   private followY = 0;
   private waves!: Phaser.GameObjects.Graphics;
   private coast = 0;
+  private walkers = new Map<string, Walker>();
+  private crowds: Phaser.GameObjects.Text[] = [];
+  private crowdVersion = -1;
+  private tag!: Phaser.GameObjects.Text;
+  private tagged: { walker: Walker; timer: Phaser.Time.TimerEvent } | null = null;
 
   constructor(bridge: WorldBridge) {
     super("world");
@@ -168,6 +205,8 @@ export class WorldScene extends Phaser.Scene {
     const flagText = this.add.text(0, -18, "YOU ARE HERE", { fontFamily: "sans-serif", fontSize: "11px", fontStyle: "bold", color: "#243e32", backgroundColor: "#eccb8a", padding: { x: 6, y: 3 }, letterSpacing: 2 }).setOrigin(0.5, 1);
     const gem = this.add.text(0, -10, "◆", { fontFamily: "serif", fontSize: "18px", color: "#ffe2a5", stroke: "#354d3f", strokeThickness: 4 }).setOrigin(0.5);
     this.hereFlag = this.add.container(0, 0, [flagText, gem]).setDepth(height + 1);
+    this.tag = this.add.text(0, 0, "", { fontFamily: "sans-serif", fontSize: "12px", color: "#f4e8cc", backgroundColor: "#1b2e29e6", padding: { x: 8, y: 5 }, align: "center", lineSpacing: 2 })
+      .setOrigin(0.5, 1).setDepth(height + 3).setVisible(false);
 
     const start = this.pointAt(this.at);
     this.shadow = this.add.ellipse(start.x, start.y, 34, 13, 0x132e29, 0.38);
@@ -274,6 +313,24 @@ export class WorldScene extends Phaser.Scene {
     stop("world-stop-open", "#3d5a4c", "#efcb7e", undefined, "#ffd98a88");
     stop("world-stop-locked", "#4a5752", "#6f7c76");
     stop("world-stop-ghost", "#c9d4d899", "#e8eef1aa");
+    const player = this.textures.get("forest-player").getSourceImage() as HTMLCanvasElement;
+    TRAVELLER_ROBES.forEach((robe, k) => {
+      const swaps = new Map(ROBE.map((from, i) => [parseInt(from.slice(1), 16), parseInt(robe[i]!.slice(1), 16)]));
+      canvas(`world-traveller-${k}`, player.width, player.height, (c) => {
+        c.drawImage(player, 0, 0);
+        const data = c.getImageData(0, 0, player.width, player.height);
+        for (let i = 0; i < data.data.length; i += 4) {
+          const to = data.data[i + 3] ? swaps.get((data.data[i]! << 16) | (data.data[i + 1]! << 8) | data.data[i + 2]!) : undefined;
+          if (to === undefined) continue;
+          data.data[i] = to >> 16;
+          data.data[i + 1] = (to >> 8) & 255;
+          data.data[i + 2] = to & 255;
+        }
+        c.putImageData(data, 0, 0);
+      });
+      const texture = this.textures.get(`world-traveller-${k}`);
+      for (let d = 0; d < 4; d++) for (let f = 0; f < 4; f++) texture.add(d * 4 + f, 0, f * 32, d * 40, 32, 40);
+    });
     canvas("world-petal", 4, 3, (c) => { c.fillStyle = "#f3c4d2"; c.fillRect(0, 0, 4, 2); c.fillStyle = "#e9a6bb"; c.fillRect(1, 2, 2, 1); });
     canvas("world-leaf", 4, 4, (c) => { c.fillStyle = "#d8743c"; c.fillRect(0, 1, 4, 2); c.fillStyle = "#b8542c"; c.fillRect(1, 0, 2, 4); });
     canvas("world-snow", 3, 3, (c) => { c.fillStyle = "#ffffff"; c.fillRect(1, 0, 1, 3); c.fillRect(0, 1, 3, 1); });
@@ -438,6 +495,119 @@ export class WorldScene extends Phaser.Scene {
     this.bridge.onArrive(Math.round(this.at));
   }
 
+  /** Places every fellow traveller at their stop; one who moved since the last poll walks there. */
+  private syncCrowd() {
+    this.crowdVersion = this.bridge.crowdVersion;
+    const byStop = new Map<number, Traveller[]>();
+    for (const traveller of this.bridge.crowd) {
+      const node = nodeOfRegion(traveller.stop);
+      if (!node) continue;
+      byStop.set(node.index, [...(byStop.get(node.index) ?? []), traveller]);
+    }
+    for (const badge of this.crowds) badge.destroy();
+    this.crowds = [];
+    const present = new Set<string>();
+    for (const [index, group] of byStop) {
+      // A stable order, so travellers keep their places from one poll to the next.
+      group.sort((a, b) => Number(b.online) - Number(a.online) || (a.id < b.id ? -1 : 1));
+      group.slice(0, SLOTS.length).forEach((traveller, slot) => {
+        present.add(traveller.id);
+        const walker = this.walkers.get(traveller.id) ?? this.addWalker(traveller, index, slot);
+        walker.traveller = traveller;
+        walker.slot = slot;
+        walker.leaving = false;
+        walker.label.setText(traveller.name ?? "旅人").setColor(traveller.online ? "#c8f5c0" : "#e6e1cc");
+        const alpha = traveller.online ? 1 : RESTING_ALPHA;
+        this.tweens.killTweensOf([walker.sprite, walker.label, walker.shadow]);
+        this.tweens.add({ targets: [walker.sprite, walker.label], alpha, duration: 400 });
+        this.tweens.add({ targets: walker.shadow, alpha: 1, duration: 400 });
+        if ((walker.walk?.to ?? walker.at) === index) return;
+        const duration = this.bridge.reducedMotion ? 0 : Math.min(LONGEST_WALK * 2, Math.abs(index - walker.at) / TRAVELLER_SPEED);
+        walker.walk = duration ? { from: walker.at, to: index, elapsed: 0, duration } : null;
+        if (!duration) walker.at = index;
+      });
+      const extra = group.length - SLOTS.length;
+      if (extra > 0) {
+        const node = this.layout.nodes[index]!;
+        this.crowds.push(this.add.text(node.x + 116, node.y - 8, `+${extra}`, { fontFamily: "sans-serif", fontSize: "13px", fontStyle: "bold", color: "#f4e8cc", backgroundColor: "#1b2e29cc", padding: { x: 6, y: 3 } })
+          .setOrigin(0.5).setDepth(node.y + 4));
+      }
+    }
+    for (const [id, walker] of this.walkers) {
+      if (present.has(id) || walker.leaving) continue;
+      walker.leaving = true;
+      if (this.tagged?.walker === walker) this.hideTag();
+      this.tweens.killTweensOf([walker.sprite, walker.label, walker.shadow]);
+      this.tweens.add({ targets: [walker.sprite, walker.label, walker.shadow], alpha: 0, duration: 400, onComplete: () => {
+        if (!walker.leaving) return;
+        walker.sprite.destroy();
+        walker.label.destroy();
+        walker.shadow.destroy();
+        this.walkers.delete(id);
+      } });
+    }
+  }
+
+  private addWalker(traveller: Traveller, index: number, slot: number): Walker {
+    let hash = 0;
+    for (const ch of traveller.id) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+    const p = this.pointAt(index);
+    const [dx, dy] = SLOTS[slot]!;
+    const sprite = this.add.sprite(p.x + dx, p.y + dy, `world-traveller-${hash % TRAVELLER_ROBES.length}`, 0).setOrigin(0.5, 0.95).setScale(1.45).setAlpha(0);
+    const shadow = this.add.ellipse(p.x + dx, p.y + dy + 1, 28, 11, 0x132e29, 0.3).setAlpha(0);
+    const label = this.add.text(p.x + dx, p.y + dy + 3, "", { fontFamily: "sans-serif", fontSize: "11px", fontStyle: "bold", color: "#e6e1cc", stroke: "#1b2e29", strokeThickness: 3 }).setOrigin(0.5, 0).setAlpha(0);
+    const walker: Walker = { traveller, sprite, shadow, label, at: index, walk: null, slot, x: p.x + dx, y: p.y + dy, steps: (hash % 8) * 60, leaving: false };
+    sprite.setInteractive({ useHandCursor: true });
+    sprite.on("pointerup", () => { if (!this.drag?.moved && !this.bridge.blocked && !walker.leaving) this.showTag(walker); });
+    this.walkers.set(traveller.id, walker);
+    return walker;
+  }
+
+  private showTag(walker: Walker) {
+    const { name, stop, seals, online } = walker.traveller;
+    const road = nodeOfRegion(stop)?.road.id ?? "";
+    this.tag.setText([`${name ?? "A fellow traveller"} · ${road} road`, `印 ${seals} ${seals === 1 ? "seal" : "seals"} · ${online ? "on the map now" : "resting"}`]).setVisible(true);
+    this.tagged?.timer.remove(false);
+    this.tagged = { walker, timer: this.time.delayedCall(3500, () => this.hideTag()) };
+  }
+
+  private hideTag() {
+    this.tagged?.timer.remove(false);
+    this.tagged = null;
+    this.tag.setVisible(false);
+  }
+
+  private moveWalkers(delta: number) {
+    const ease = this.bridge.reducedMotion ? 1 : 1 - Math.exp(-delta / 90);
+    // Names stay one size on screen, however far the camera has zoomed out.
+    const text = 1 / this.cameras.main.zoom;
+    for (const walker of this.walkers.values()) {
+      let north = true;
+      if (walker.walk && !this.bridge.blocked) {
+        walker.walk.elapsed += delta / 1000;
+        const f = Math.min(1, walker.walk.elapsed / walker.walk.duration);
+        north = walker.walk.to > walker.walk.from;
+        walker.at = walker.walk.from + (walker.walk.to - walker.walk.from) * (f < 0.5 ? 2 * f * f : 1 - Math.pow(-2 * f + 2, 2) / 2);
+        if (f >= 1) walker.walk = null;
+      }
+      const p = this.pointAt(walker.at);
+      const [dx, dy] = SLOTS[walker.slot]!;
+      const gap = Math.hypot(p.x + dx - walker.x, p.y + dy - walker.y);
+      walker.x += (p.x + dx - walker.x) * ease;
+      walker.y += (p.y + dy - walker.y) * ease;
+      if (walker.walk || gap > 1.5) {
+        walker.steps += delta;
+        walker.sprite.setFrame((north ? 1 : 0) * 4 + (Math.floor(walker.steps / 130) % 4));
+      } else walker.sprite.setFrame(0);
+      walker.sprite.setPosition(walker.x, walker.y).setDepth(walker.y + 3);
+      walker.shadow.setPosition(walker.x, walker.y + 1).setDepth(walker.y + 2);
+      // Names sit at the feet, clear of the "you are here" flag; the outer slot's a line lower.
+      walker.label.setPosition(walker.x, walker.y + 3 + (walker.slot >= 2 ? 15 * text : 0)).setDepth(walker.y + 4).setScale(text);
+    }
+    for (const badge of this.crowds) badge.setScale(text);
+    if (this.tagged) this.tag.setPosition(this.tagged.walker.x, this.tagged.walker.y - 64).setScale(text);
+  }
+
   private refresh() {
     this.version = this.bridge.version;
     const { states, here } = this.bridge.view;
@@ -454,6 +624,7 @@ export class WorldScene extends Phaser.Scene {
 
   override update(_time: number, delta: number) {
     if (this.bridge.version !== this.version) this.refresh();
+    if (this.bridge.crowdVersion !== this.crowdVersion) this.syncCrowd();
     this.game.loop.setFPSLimit(this.bridge.blocked ? 20 : 60);
     if (!this.bridge.blocked) this.elapsed += Math.min(delta, 50);
     const t = this.bridge.reducedMotion ? 0 : this.elapsed / 1000;
@@ -507,11 +678,13 @@ export class WorldScene extends Phaser.Scene {
       }
     }
     if (!this.following && this.walk) this.following = true;
+    this.moveWalkers(delta);
 
     const canvas = this.game.canvas.dataset;
     canvas["stop"] = String(Math.round(this.at));
     canvas["here"] = String(this.bridge.view.here);
     canvas["road"] = band.road.id;
+    canvas["travellers"] = String([...this.walkers.values()].filter((w) => !w.leaving).length);
     const view = this.cameras.main.worldView, zoom = this.cameras.main.zoom;
     canvas["campX"] = String(Math.round((this.layout.camp.x - view.x) * zoom));
     canvas["campY"] = String(Math.round((this.layout.camp.y - 22 - view.y) * zoom));

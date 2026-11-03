@@ -72,6 +72,22 @@ or scroll to explore; the road strip flies the camera to any road, and “You ar
 here” walks back. Each road has its own season: graded tree textures and capped
 weather (petals, rain, leaves, snow) around the camera.
 
+### Fellow travellers
+
+Every signed-in learner seen on the map in the last 14 days stands beside the
+road at their own next checkpoint, in one of six hat-and-robe colours so nobody
+is mistaken for Aki. Up to four stand at a stop (online first); the rest fold into
+a “+N” badge. Their first name sits at their feet, or 旅人 for anyone who hid
+their name in Camp. Learners on the map in the last two minutes are drawn bright;
+the rest are dimmed as resting. Tap one for their road, seals and status.
+
+The hub polls `GET /api/travellers` every 20 seconds while the tab is visible (the
+API serves every map from one query per instance every few seconds). A signed-in
+learner reports `{ stop, seals }` on arrival, whenever either changes, and every 45
+seconds. When a traveller's stop changes between polls, they walk the road to it.
+The position panel counts who is on the map now and how many are ahead of you;
+guests see the total and a “Join them” sign-in invitation.
+
 `layout.ts` owns the geometry (testable without Phaser), `WorldScene.ts` draws
 it and moves the avatar along a spline through every stop, and `hub/WorldHub.tsx`
 owns the HUD, the checkpoint panel, the Camp and Journey log drawers and the

@@ -8,6 +8,7 @@ import type { AuthService } from '../../application/auth-service.js';
 import type { GoogleProvider } from '../../application/auth-ports.js';
 import type { ProgressService } from '../../application/progress-service.js';
 import type { ReminderService } from '../../application/reminder-service.js';
+import type { TravellerService } from '../../application/traveller-service.js';
 import { AppError } from '../../domain/errors.js';
 import { OAuthCookie, equalToken, secureTokens } from '../../infrastructure/auth/tokens.js';
 
@@ -17,11 +18,12 @@ export type AppDependencies = {
   google: GoogleProvider;
   progress: ProgressService;
   reminders?: { service: ReminderService; publicKey: string; dispatchSecret: string } | null;
+  travellers?: TravellerService | null;
   ready: () => Promise<void>;
   reportError?: (error: unknown) => void;
 };
 
-export function createApp({ config, auth, google, progress, reminders = null, ready, reportError = () => {} }: AppDependencies) {
+export function createApp({ config, auth, google, progress, reminders = null, travellers = null, ready, reportError = () => {} }: AppDependencies) {
   const app = express();
   const secure = config.NODE_ENV === 'production';
   const sessionName = secure ? '__Host-kq_session' : 'kq_session';
@@ -142,6 +144,24 @@ export function createApp({ config, auth, google, progress, reminders = null, re
     const header = req.get('Authorization') ?? '';
     if (!reminders || !header.startsWith('Bearer ') || !equalToken(header.slice(7), reminders.dispatchSecret)) throw new AppError('NOT_FOUND', 'Endpoint not found.', 404);
     res.json(await reminders.service.dispatch());
+  });
+
+  // The shared map is public, so guests see who is on the road; only signed-in learners appear on it.
+  const travellerLimit = rateLimit({ windowMs: 15 * 60_000, limit: 300, standardHeaders: 'draft-8', legacyHeaders: false,
+    message: { error: { code: 'RATE_LIMITED', message: 'Too many map updates. Please try again later.' } } });
+  const travellerService = () => {
+    if (!travellers) throw new AppError('TRAVELLERS_UNAVAILABLE', 'The shared map is not available right now.', 503);
+    return travellers;
+  };
+  app.get('/api/travellers', travellerLimit, async (req, res) => {
+    const service = travellerService();
+    const session = await auth.session(readCookie(req, sessionName));
+    res.json(await service.list(session?.user.id));
+  });
+  app.put('/api/travellers/me', travellerLimit, authenticated, csrf, async (req, res) => {
+    if (!req.is('application/json')) throw new AppError('INVALID_REQUEST', 'Provide your position as JSON.', 400);
+    await travellerService().report(res.locals['session'].user.id, req.body);
+    res.sendStatus(204);
   });
 
   app.use((_req, _res, next) => next(new AppError('NOT_FOUND', 'Endpoint not found.', 404)));
