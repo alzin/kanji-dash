@@ -430,6 +430,7 @@ export function LanternRunnerGame({
           </button>
         )}
         <WordAudio
+          word={q ? q.vocab.w : ""}
           reading={q ? vocabKana(q.vocab) : ""}
           wordKey={q}
           paused={blocked}

@@ -222,6 +222,6 @@ function SealCheck({ questions, done, onComplete }: { questions: Question[]; don
           <span className="text-sm text-muted-foreground">{tally}</span>
         </span>
       </div>
-      <WordAudio reading={vocabKana(q.vocab)} wordKey={index} /><button ref={next} className={primary} onClick={() => { if (index === 2) onComplete(correct.current); else { submitted.current = false; setIndex((v) => v + 1); setValue(""); setFeedback(null); } }}>{index === 2 ? "See my seal" : "Next reading"}</button></div>}
+      <WordAudio word={q.vocab.w} reading={vocabKana(q.vocab)} wordKey={index} /><button ref={next} className={primary} onClick={() => { if (index === 2) onComplete(correct.current); else { submitted.current = false; setIndex((v) => v + 1); setValue(""); setFeedback(null); } }}>{index === 2 ? "See my seal" : "Next reading"}</button></div>}
   </div>;
 }

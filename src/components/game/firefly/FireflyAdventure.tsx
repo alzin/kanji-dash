@@ -10,7 +10,7 @@ import { useGameMusic } from "@/lib/music";
 import { play, unlock } from "@/lib/sfx";
 import { SoundToggle } from "../../SoundToggle";
 import { MusicToggle } from "../../MusicToggle";
-import { WordAudio, primeSpeech, speakReading } from "../../WordAudio";
+import { WordAudio, primeSpeech, speakReading, stopPronunciation } from "../../WordAudio";
 import { advanceWithGates, burst, chooseLane, chooseTrail, createFireflyState, getFireflyResult, multiplierOf, takeGateResults, type FireflyEntity, type FireflyState, type GateResult } from "./simulation";
 import type { FireflyView } from "./FireflyScene";
 import { ReminderOffer } from "../../DailyReminder";
@@ -106,7 +106,7 @@ export function FireflyAdventure({ checkpoint }: { checkpoint?: FireflyCheckpoin
     </Panel>}
     {drawer === "study" && <Panel label="Words along the trail" onClose={() => setDrawer(null)}>
       <p className="ff-eyebrow">A MOMENT WITH AKI</p><h2>Words along the trail</h2><p>{region ? "Every gate on this trail asks one of these words, and each one comes back several times." : "Take your time. New words are introduced on the trail too, and each one comes back several times."}</p>
-      <div className="ff-study">{preview.map(w => <div key={`${w.kanji.c}-${w.vocab.w}`}><strong lang="ja">{w.vocab.w}</strong><span lang="ja">{w.origin === "fresh" ? "New · " : ""}{vocabKana(w.vocab)}</span><small>{w.vocab.m}</small><WordAudio reading={vocabKana(w.vocab)} wordKey={`${w.kanji.c}-${w.vocab.w}`} autoPlay={false} /></div>)}</div>
+      <div className="ff-study">{preview.map(w => <div key={`${w.kanji.c}-${w.vocab.w}`}><strong lang="ja">{w.vocab.w}</strong><span lang="ja">{w.origin === "fresh" ? "New · " : ""}{vocabKana(w.vocab)}</span><small>{w.vocab.m}</small><WordAudio word={w.vocab.w} reading={vocabKana(w.vocab)} wordKey={`${w.kanji.c}-${w.vocab.w}`} autoPlay={false} /></div>)}</div>
       <button className="ff-primary" onClick={start}>I’m ready for the forest →</button>
     </Panel>}
   </main>;
@@ -144,7 +144,7 @@ function LanternCall({ gate, echo, idle, subtitle, badges, progress, paused }: {
       {gate && mode === "intro" && <><strong lang="ja" className="ff-call-word">{gate.vocab.w}</strong><span lang="ja" className="ff-call-kana">{gate.kana}</span></>}
       {gate && mode === "reading" && <strong lang="ja" className="ff-call-word"><Segments gate={gate} /></strong>}
       {gate && mode === "listen" && <strong lang="ja" className="ff-call-word ff-call-heard">{gate.kana}</strong>}
-      {gate && (mode === "listen" || mode === "intro") && <WordAudio variant="hud" reading={gate.kana} wordKey={`gate-${gate.index}`} paused={paused} className="ff-call-audio" />}
+      {gate && (mode === "listen" || mode === "intro") && <WordAudio variant="hud" word={gate.vocab.w} reading={gate.kana} wordKey={`gate-${gate.index}`} paused={paused} className="ff-call-audio" />}
     </div>
     {gate && mode === "intro"
       ? <p className="ff-call-sub ff-call-meaning"><b>{gate.vocab.m}</b> · {gate.kanji.mn}</p>
@@ -186,7 +186,7 @@ function FireflyRun({ ticket, onAgain, onExit, onSeal }: { ticket: Ticket; onAga
     if (moved && bursted && ticket.tutorial) markRunnerTutorial();
   }, [moved, bursted, ticket.tutorial]);
 
-  useEffect(() => { if (paused || receipt) window.speechSynthesis?.cancel(); }, [paused, receipt]);
+  useEffect(() => { if (paused || receipt) stopPronunciation(); }, [paused, receipt]);
 
   useEffect(() => {
     const banner = call.current, field = host.current;
@@ -220,7 +220,7 @@ function FireflyRun({ ticket, onAgain, onExit, onSeal }: { ticket: Ticket; onAga
       if (!gate) return;
       if (result.mode === "intro") play("gateIntro");
       else if (result.correct) play(result.charged ? "gateStreak" : "gateHit", { combo: state.gateStreak });
-      else { play("gateMiss"); speakReading(gate.kana); }
+      else { play("gateMiss"); speakReading(gate.vocab.w, gate.kana); }
       if (!result.correct) misses.current++;
       setEcho({ gate, correct: result.correct, firstMiss: !result.correct && misses.current === 1 });
     };

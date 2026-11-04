@@ -45,6 +45,7 @@ type Snapshot = {
   feedback: string;
   feedbackId: number;
   spoken: string;
+  spokenWord: string;
   columns: string[];
   cleared: number;
   phase: string;
@@ -61,6 +62,7 @@ const empty: Snapshot = {
   feedback: "",
   feedbackId: 0,
   spoken: "",
+  spokenWord: "",
   columns: [],
   cleared: 0,
   phase: "fall",
@@ -121,6 +123,7 @@ export function RiverStackGame({
       ended = false,
       signature = "",
       spoken = "",
+      spokenWord = "",
       loaded = false;
     let game: { destroy: (remove: boolean) => void } | undefined;
     const rng = seededRandom(seed),
@@ -165,6 +168,7 @@ export function RiverStackGame({
         feedbackId: state.feedbackId,
         phase: state.phase,
         spoken,
+        spokenWord,
         hint,
         columns: Array.from(
           { length: state.cols },
@@ -198,6 +202,7 @@ export function RiverStackGame({
         hinted: event.hinted || controls.current.guided,
       });
       spoken = vocabKana(event.word.q.vocab);
+      spokenWord = event.word.q.vocab.w;
       play(event.correct ? "correct" : "wrong", { combo: state.combo });
       if (event.redeemed) play("wash");
     };
@@ -554,6 +559,7 @@ export function RiverStackGame({
               <SoundToggle variant="hud" />
             )}
             <WordAudio
+              word={view.spokenWord}
               reading={view.spoken}
               wordKey={view.feedbackId}
               paused={disabled}
