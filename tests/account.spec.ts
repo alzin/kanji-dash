@@ -121,6 +121,8 @@ test("Google sign-in transfers guest progress, saves with CSRF, and sign-out iso
   await expect(page.getByText("aki@gmail.com")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Sign out" })).toHaveCount(0);
   await page.goto("collection");
+  // The reopened page must finish reading user A's progress before the mock switches people.
+  await expect.poll(() => api.readHeaders.length).toBe(2);
   api.user = userB;
   api.cloud = { save: save(222, 8), version: 4 };
   await page.reload();
