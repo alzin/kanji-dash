@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 import { openAccountPrompt, useAccount } from "@/lib/account";
 import { BrandMark } from "@/components/BrandMark";
+import { MusicToggle } from "@/components/MusicToggle";
 import { LEVELS, levelWeeks } from "@/data";
 
 export function TitleCard({ onStart }: { onStart: () => void }) {
@@ -63,6 +64,7 @@ export function TitleCard({ onStart }: { onStart: () => void }) {
               Already travelling? Sign in
             </button>
           )}
+          <MusicToggle />
           <span>
             <Link to="/privacy">Privacy</Link>
             <Link to="/terms">Terms</Link>

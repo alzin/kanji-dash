@@ -6,9 +6,9 @@ Answer feedback adds a short sparkle ring, floating light and mon amounts, anima
 
 ## Audio
 
-`src/lib/music.ts` generates an original 16-bar woodland composition with synthesized bells, a soft pad, and bass. The trail uses a relaxed 82 BPM arrangement, typed recall a sparse 70 BPM variation, Word Weaver 94 BPM, and Torii Run 108 BPM. It uses the existing shared Web Audio context and starts only after user activation. No audio downloads or external service are needed.
+`src/lib/music.ts` holds a list of six original, energetic tracks (128–160 BPM) synthesized in the browser from drums, bass, a plucked arpeggio or chord stabs, and a saw or bell lead. Each visit picks one at random; when it ends (a four-bar intro, then the 8-bar melody four times with a breakdown in the third pass) the next random track follows. Torii Run thickens the hi-hats. No audio downloads or external service are needed.
 
-The music note button saves its preference separately as `kanji-dash-music`; the existing game-sound button remains the master mute. Music pauses with the game, stops when the tab is hidden or the game unmounts, and lowers its volume while Japanese speech is active. Buffer sources and gain nodes are disconnected on completion or interruption, scheduling has a short lookahead, and polyphony is capped at 32 voices. Unsupported audio devices remain playable.
+The soundtrack is mounted at the root, so it starts as soon as someone lands on any page and carries on between pages. Where the browser allows audio without a gesture it plays immediately; otherwise it starts on the first tap, click or key press anywhere. A mounted game takes over the soundtrack while it runs, so pausing the game still silences it. The music note button saves its preference separately as `kanji-dash-music` and shows the current track's name; the existing game-sound button remains the master mute. Music stops when the tab is hidden and lowers its volume while Japanese speech is active. Buffer sources and gain nodes are disconnected on completion or interruption, scheduling has a short lookahead, and polyphony is capped at 32 voices. Unsupported audio devices remain playable.
 
 ### Word pronunciation
 

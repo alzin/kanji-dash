@@ -13,6 +13,7 @@ import { SaveProgressDialog } from "@/components/SaveProgressDialog";
 import { InstallAppProvider } from "@/components/InstallApp";
 import { GameScreen } from "@/components/GameScreen";
 import { boot } from "@/lib/sfx";
+import { useSiteMusic } from "@/lib/music";
 import { initializeAccount } from "@/lib/account";
 import { initializeReminders } from "@/lib/reminders";
 
@@ -144,6 +145,7 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   useEffect(() => boot(), []);
+  useSiteMusic();
   useEffect(() => initializeAccount(), []);
   useEffect(() => initializeReminders(), []);
 
