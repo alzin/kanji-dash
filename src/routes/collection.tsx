@@ -7,6 +7,7 @@ import { allKanji, kanjiOfLevel, CHAPTER_NAMES, LEVEL_CHAPTERS } from "@/data";
 import type { Kanji } from "@/data/n5/types";
 import { useSave, getCard, type CardProgress } from "@/lib/srs";
 import { vocabKana } from "@/lib/words";
+import { VOICE } from "@/lib/voice-clips";
 
 export const Route = createFileRoute("/collection")({
   head: () => ({
@@ -324,6 +325,9 @@ function CollectionPage() {
         {(level === "N3" || level === "N2") && <p className="mt-6 text-xs leading-relaxed text-muted-foreground">
           {level} dictionary data uses <a className="underline" href="https://www.edrdg.org/wiki/index.php/JMdict-EDICT_Dictionary_Project">JMdict</a> and <a className="underline" href="https://www.edrdg.org/wiki/index.php/KANJIDIC_Project">KANJIDIC2</a>, copyright Jim Breen and the <a className="underline" href="https://www.edrdg.org/edrdg/licence.html">EDRDG</a>, under <a className="underline" href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>. Vocabulary is selected and formatted for this study road.
         </p>}
+        <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+          Word audio: the <a className="underline" href={`https://hub.aivis-project.com/aivm-models/${VOICE.modelUuid}`}>morioki</a> voice, voiced by もりおき, generated with <a className="underline" href="https://aivis-project.com/cloud-api/">Aivis Cloud API</a> under <a className="underline" href="https://github.com/Aivis-Project/ACML/blob/master/ACML-1.0.md">ACML 1.0</a>.
+        </p>
 
         {selected && (
           <KanjiDialog kanji={selected} progress={getCard(save, selected.c)} returnFocusTo={openerRef.current} onDismiss={dismissDetail} />

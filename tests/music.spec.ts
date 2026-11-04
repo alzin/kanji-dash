@@ -45,7 +45,12 @@ async function start(page: Page) {
 }
 const pause = (page: Page) => page.getByRole("button", { name: "Pause adventure" }).click();
 const resume = (page: Page) => page.getByRole("button", { name: "Back to the trail" }).click();
-test.beforeEach(async ({ page }) => { await silenceSavePrompt(page); await page.addInitScript(installProbe); });
+test.beforeEach(async ({ page }) => {
+  await silenceSavePrompt(page);
+  // Ducking is observed through the stubbed device voice, so recorded clips stay out of the way.
+  await page.route("**/audio/words/**", (route) => route.fulfill({ status: 404, body: "" }));
+  await page.addInitScript(installProbe);
+});
 
 test("music starts on a gesture, ducks for Japanese, and survives pause without extra contexts", async ({ page }) => {
   test.skip(!await page.evaluate(() => "AudioContext" in window || "webkitAudioContext" in window), "Windows Playwright WebKit has no Web Audio implementation; graceful fallback is tested separately.");

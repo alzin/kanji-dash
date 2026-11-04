@@ -21,7 +21,8 @@
     "test:pwa": "npm run build && playwright test",
     "test:pages": "npm run build:pages && playwright test --config playwright.pages.config.ts",
     "test:forest": "npm run build && playwright test --config playwright.forest.config.ts",
-    "test:firefly": "playwright test --config playwright.firefly.config.ts firefly.spec.ts"
+    "test:firefly": "playwright test --config playwright.firefly.config.ts firefly.spec.ts",
+    "voice:generate": "tsx scripts/generate-voice.ts"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.1",
@@ -43,6 +44,7 @@
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^5.2.0",
     "nitro": "3.0.260603-beta",
+    "tsx": "^4.23.13",
     "typescript": "^5.8.3",
     "vite": "8.1.5"
   }

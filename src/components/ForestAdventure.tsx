@@ -492,6 +492,7 @@ export function ForestAdventure() {
           {words[studyWord] && (
             <div className="forest-journal-audio">
               <WordAudio
+                word={words[studyWord]!.vocab.w}
                 reading={vocabKana(words[studyWord]!.vocab)}
                 wordKey={words[studyWord]!.vocab.w}
                 paused={paused}

@@ -1,31 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getVoiceEnabled, setVoiceEnabled, useVoiceEnabled } from "@/lib/voice-preference";
-import { duckMusic, releaseMusicDuck } from "@/lib/music";
+import { pronounce, type Playback } from "@/lib/pronunciation";
 
-/** Speaks a silent utterance inside a tap so later automatic speech is allowed on mobile browsers. */
-export function primeSpeech(): void {
-  if (!getVoiceEnabled() || !("speechSynthesis" in window) || !("SpeechSynthesisUtterance" in window)) return;
-  const silent = new SpeechSynthesisUtterance(" ");
-  silent.volume = 0;
-  try { window.speechSynthesis.speak(silent); }
-  catch { /* Speech remains available through the replay buttons. */ }
-}
+export { primeSpeech, stopPronunciation } from "@/lib/pronunciation";
 
-export function speakReading(reading: string): void {
+export function speakReading(word: string, reading: string): void {
   if (!reading || document.hidden || !getVoiceEnabled()) return;
-  if (!("speechSynthesis" in window) || !("SpeechSynthesisUtterance" in window)) return;
-  const speech = new SpeechSynthesisUtterance(reading);
-  speech.lang = "ja-JP";
-  speech.rate = 0.85;
-  const voice = window.speechSynthesis.getVoices().find((v) => /^ja(?:[-_]|$)/i.test(v.lang));
-  if (voice) speech.voice = voice;
-  speech.onend = speech.onerror = () => releaseMusicDuck(speech);
-  duckMusic(speech);
-  try { window.speechSynthesis.speak(speech); }
-  catch { releaseMusicDuck(speech); }
+  pronounce(word, reading);
 }
 
-export function WordAudio({ reading, wordKey, paused = false, autoPlay = true, variant = "inline", className = "" }: {
+export function WordAudio({ word, reading, wordKey, paused = false, autoPlay = true, variant = "inline", className = "" }: {
+  /** The written word: it picks the recorded clip, so homophones like 橋 and 箸 sound right. */
+  word: string;
   reading: string;
   wordKey: unknown;
   paused?: boolean;
@@ -35,39 +21,19 @@ export function WordAudio({ reading, wordKey, paused = false, autoPlay = true, v
 }) {
   const enabled = useVoiceEnabled();
   const [status, setStatus] = useState<"ready" | "unavailable" | "blocked">("ready");
-  const current = useRef<SpeechSynthesisUtterance | null>(null);
+  const current = useRef<{ playback?: Playback } | null>(null);
   const stop = useCallback(() => {
-    if (!current.current) return;
-    current.current.onend = null;
-    current.current.onerror = null;
-    releaseMusicDuck(current.current);
+    current.current?.playback?.stop();
     current.current = null;
-    window.speechSynthesis?.cancel();
   }, []);
   const speak = useCallback(() => {
     if (!enabled || paused || !reading || document.hidden) return;
-    if (!("speechSynthesis" in window) || !("SpeechSynthesisUtterance" in window)) {
-      setStatus("unavailable");
-      return;
-    }
     stop();
-    const speech = new SpeechSynthesisUtterance(reading);
-    speech.lang = "ja-JP";
-    speech.rate = 0.85;
-    const voice = window.speechSynthesis.getVoices().find((v) => /^ja(?:[-_]|$)/i.test(v.lang));
-    if (voice) speech.voice = voice;
-    const finished = () => { releaseMusicDuck(speech); if (current.current === speech) current.current = null; };
-    speech.onend = finished;
-    speech.onerror = (event) => {
-      finished();
-      if (event.error !== "interrupted" && event.error !== "canceled") setStatus("blocked");
-    };
-    current.current = speech;
-    duckMusic(speech);
-    setStatus("ready");
-    try { window.speechSynthesis.speak(speech); }
-    catch { finished(); setStatus("blocked"); }
-  }, [enabled, paused, reading, stop]);
+    // Status can arrive synchronously, before pronounce returns, when the device voice is used straight away.
+    const entry: { playback?: Playback } = {};
+    current.current = entry;
+    entry.playback = pronounce(word, reading, (next) => { if (current.current === entry) setStatus(next); });
+  }, [enabled, paused, word, reading, stop]);
 
   useEffect(() => {
     if (autoPlay) speak();

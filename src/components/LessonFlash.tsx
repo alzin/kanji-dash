@@ -14,7 +14,7 @@ export function LessonFlash({ lesson, onDismiss }: { lesson: Question; onDismiss
                 <div className="mt-2 text-sm text-muted-foreground">
                   <span className="font-serif">{vocabKana(lesson.vocab)}</span> · {lesson.vocab.m}
                 </div>
-                <WordAudio reading={vocabKana(lesson.vocab)} wordKey={lesson} className="mt-2" />
+                <WordAudio word={lesson.vocab.w} reading={vocabKana(lesson.vocab)} wordKey={lesson} className="mt-2" />
               </div>
               <div className="lesson-detail">
                 <KanjiDetail kanji={lesson.kanji} />
