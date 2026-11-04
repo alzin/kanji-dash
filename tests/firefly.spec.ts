@@ -6,11 +6,15 @@ import { allVocab, correctReadings } from "../src/lib/words";
 import { beginFirefly, clickToFireflyReady, inspectFirefly, savedFirefly, steerFirefly, travel, type FireflyInspection } from "./helpers/firefly";
 import { regionSteps, typeSeal } from "./helpers/seal";
 
-const stubSpeech = (page: Page) => page.addInitScript(() => {
-  (window as any).__spokenFirefly = [];
-  Object.defineProperty(window, "SpeechSynthesisUtterance", { configurable: true, value: class { volume = 1; constructor(public text: string) {} } });
-  Object.defineProperty(window, "speechSynthesis", { configurable: true, value: { getVoices: () => [], speak: (u: { text: string; volume: number }) => { if (u.volume > 0) (window as any).__spokenFirefly.push(u.text); }, cancel() {} } });
-});
+const stubSpeech = async (page: Page) => {
+  // Speech is observed through the stubbed device voice, so recorded clips stay out of the way.
+  await page.route("**/audio/words/**", (route) => route.fulfill({ status: 404, body: "" }));
+  await page.addInitScript(() => {
+    (window as any).__spokenFirefly = [];
+    Object.defineProperty(window, "SpeechSynthesisUtterance", { configurable: true, value: class { volume = 1; constructor(public text: string) {} } });
+    Object.defineProperty(window, "speechSynthesis", { configurable: true, value: { getVoices: () => [], speak: (u: { text: string; volume: number }) => { if (u.volume > 0) (window as any).__spokenFirefly.push(u.text); }, cancel() {} } });
+  });
+};
 const distinctWords = (s: FireflyInspection) => new Set(s.recalls.map(r => r.word)).size;
 
 test("one-click launch supports keys, lane taps, swipes, Burst, pause, blur and 320px reduced motion", async ({ page }, info) => {

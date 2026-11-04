@@ -1,7 +1,10 @@
 import { expect, test } from "@playwright/test";
 import { completePreparation } from "./helpers/preparation";
+import { VOICE_DIRECTORY } from "../src/lib/voice-clips";
 
 test.beforeEach(async ({ page }) => {
+  // Most tests here exercise the device voice; the clip tests route clips themselves.
+  await page.route("**/audio/words/**", (route) => route.fulfill({ status: 404, body: "" }));
   await page.addInitScript(() => {
     const log: { text: string; lang: string; voice: string }[] = [];
     (window as any).__speechLog = log;
@@ -50,6 +53,48 @@ test("preparation speaks exact kana, replays, and respects saved mute", async ({
   await expect(page.getByRole("button", { name: "Replay Japanese pronunciation" })).toBeEnabled();
   await expect.poll(() => page.evaluate(() => (window as any).__speechLog.length)).toBe(1);
   await expect(page.getByRole("button", { name: "Unmute sounds", exact: true })).toHaveAttribute("aria-pressed", "true");
+});
+
+test("the recorded clip reads the word, is fetched once, and keeps the device voice quiet", async ({ page }) => {
+  const requested: string[] = [];
+  await page.route("**/audio/words/**", (route) => {
+    requested.push(new URL(route.request().url()).pathname);
+    return route.fulfill({ status: 200, contentType: "audio/mpeg", body: Buffer.from("mp3") });
+  });
+  await page.addInitScript(() => {
+    (window as any).__played = [] as string[];
+    // Playwright's WebKit on Windows cannot decode audio, so no element loads media here.
+    Object.defineProperty(HTMLMediaElement.prototype, "src", { configurable: true,
+      get(this: { __src?: string }) { return this.__src ?? ""; },
+      set(this: { __src?: string }, value: string) { this.__src = value; } });
+    HTMLMediaElement.prototype.play = function (this: HTMLMediaElement) {
+      if (!this.src.startsWith("data:")) {
+        (window as any).__played.push(this.src);
+        setTimeout(() => this.dispatchEvent(new Event("ended")), 50);
+      }
+      return Promise.resolve();
+    };
+  });
+  await page.goto("run?mode=runner&gate=1");
+  await expect.poll(() => page.evaluate(() => (window as any).__played.length)).toBe(1);
+  expect(requested).toHaveLength(1);
+  expect(requested[0]).toMatch(new RegExp(`/${VOICE_DIRECTORY}/[0-9a-f]{14}\\.mp3$`));
+  await page.getByRole("button", { name: "Replay Japanese pronunciation" }).click();
+  await expect.poll(() => page.evaluate(() => (window as any).__played.length)).toBe(2);
+  expect(requested).toHaveLength(1);
+  expect(await page.evaluate(() => (window as any).__speechLog)).toEqual([]);
+});
+
+test("a word without a clip is read by the device voice, without asking for the clip again", async ({ page }) => {
+  let requests = 0;
+  await page.route("**/audio/words/**", (route) => { requests++; return route.fulfill({ status: 404, body: "" }); });
+  await page.goto("run?mode=runner&gate=1");
+  const reading = await page.getByTestId("study-reading").textContent();
+  await expect.poll(() => page.evaluate(() => (window as any).__speechLog.at(-1)?.text)).toBe(reading);
+  const count = await page.evaluate(() => (window as any).__speechLog.length);
+  await page.getByRole("button", { name: "Replay Japanese pronunciation" }).click();
+  await expect.poll(() => page.evaluate(() => (window as any).__speechLog.length)).toBe(count + 1);
+  expect(requests).toBe(1);
 });
 
 test("Firefly optional word study speaks only on request and retains manual pronunciation", async ({ page }) => {

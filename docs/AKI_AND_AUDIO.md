@@ -10,6 +10,16 @@ Answer feedback adds a short sparkle ring, floating light and mon amounts, anima
 
 The music note button saves its preference separately as `kanji-dash-music`; the existing game-sound button remains the master mute. Music pauses with the game, stops when the tab is hidden or the game unmounts, and lowers its volume while Japanese speech is active. Buffer sources and gain nodes are disconnected on completion or interruption, scheduling has a short lookahead, and polyphony is capped at 32 voices. Unsupported audio devices remain playable.
 
+### Word pronunciation
+
+Every vocabulary word has a recorded clip in `public/audio/words/<voice id>/`, generated once with the [Aivis Cloud API](https://aivis-project.com/cloud-api/) in the AivisHub [morioki](https://hub.aivis-project.com/aivm-models/baaae3c0-7b22-4605-8ba5-80c959b41a48) voice (ACML 1.0: commercial use allowed, credit optional; the collection page credits it). Players never call Aivis; the clips are static files. Each request sends the kanji with the taught reading pinned (`<sub alias="ひとり">一人</sub>`), so the voice gets the word's accent from the kanji and can never pick another reading. File names hash the word and reading, so homophones such as 橋 and 箸 get separate clips and the app needs no lookup table. Voice settings live in `src/lib/voice-clips.ts`.
+
+- **New words:** run `npm run voice:generate`. It reads `AIVIS_API_KEY` from the environment or `backend/.env`, generates only missing clips, and reports the credits used (about 0.044 per kanji; the first full run of 2,432 words cost about 220). `npm run voice:generate -- --dry-run` shows the count and cost first. A unit test fails while any word lacks a clip.
+- **A word that sounds wrong:** listen, then `npm run voice:generate -- --redo 橋`. For a lasting accent fix, add the word to an Aivis user dictionary (katakana reading plus accent type) and pass its `user_dictionary_uuid`.
+- **Changing the voice or its settings:** bump `VOICE.id` so the clips land in a new folder that browsers have not cached, regenerate everything, and delete the old folder.
+
+A word without a clip, a clip that has not arrived within four seconds, or one that fails to play falls back to the device's Japanese voice reading the kana. Clips are not precached for offline play; the browser caches each one after its first play.
+
 ## Art assets and provenance
 
 Generated with the built-in **image_gen** tool, then normalized through Game Studio's `normalize_sprite_strip.py` into four 384 × 384 frames with a shared scale and bottom-center anchor. The normalized frames were encoded as WebP with alpha at quality 88. The four shipped frames total 154,136 bytes; no source outside the repository is required to run the game.

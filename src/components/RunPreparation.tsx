@@ -104,7 +104,7 @@ export function RunPreparation({ questions, title, onStart, learnOnly: learnOnly
                 <WordRuby vocab={word.vocab} focus={word.kanji.c} className="text-4xl font-bold sm:text-5xl" />
                 <p data-testid="study-reading" className="mt-4 font-serif text-xl text-muted-foreground">{vocabKana(word.vocab)}</p>
                 <p data-testid="study-meaning" className="mt-1 text-lg font-bold">{word.vocab.m}</p>
-                <WordAudio reading={vocabKana(word.vocab)} wordKey={`learn-${index}`} className="mt-4 justify-center" />
+                <WordAudio word={word.vocab.w} reading={vocabKana(word.vocab)} wordKey={`learn-${index}`} className="mt-4 justify-center" />
               </div>
               <div className="mt-6 rounded-xl bg-surface-sunken p-4 text-sm leading-relaxed">
                 <p><b className="font-serif text-xl text-primary">{word.kanji.c}</b> · {learnOnly ? word.kanji.keyword ?? word.kanji.m : word.kanji.m}</p>
@@ -131,7 +131,7 @@ export function RunPreparation({ questions, title, onStart, learnOnly: learnOnly
             <span className="ring-fill block h-full rounded-full bg-primary" style={{ width: `${(recallIndex / checks.length) * 100}%` }} />
           </span>
           <h2 className="mt-7 text-center font-serif text-5xl font-bold">{check.vocab.w}</h2>
-          <WordAudio reading={vocabKana(check.vocab)} wordKey={`recall-${recallIndex}`} className="mt-4 w-full justify-center" />
+          <WordAudio word={check.vocab.w} reading={vocabKana(check.vocab)} wordKey={`recall-${recallIndex}`} className="mt-4 w-full justify-center" />
           <p className="mt-6 text-center text-base font-bold">{check.sub}</p>
           <div role="group" aria-label="Answer choices" className="mt-4 grid gap-2.5">
             {check.choices.map((c) => <button key={c} type="button" disabled={feedback === "correct"} className={choice}
