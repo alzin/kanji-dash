@@ -22,6 +22,7 @@ import { CampPanel } from "./CampPanel";
 import { JourneyLogPanel } from "./JourneyLogPanel";
 import { TitleCard } from "./TitleCard";
 import { BrandMark } from "@/components/BrandMark";
+import { MusicToggle } from "@/components/MusicToggle";
 
 export type HubPanel = "camp" | "journey";
 export type HubSearch = { panel?: HubPanel; stop?: number; title?: true };
@@ -167,6 +168,7 @@ export function WorldHub({ search }: { search: HubSearch }) {
         </button>
         <div className="forest-hud-right">
           <span className="hub-chips"><ResourceChips /><span className="hub-account"><AccountStatus /></span></span>
+          <MusicToggle compact />
           <button type="button" className="hub-button" onClick={() => openPanel("camp")} aria-haspopup="dialog" aria-expanded={panel === "camp"}>
             <AppIcon name="home" />
             <span>Camp</span>

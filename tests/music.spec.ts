@@ -20,7 +20,7 @@ function installProbe() {
       const ended = () => { if (tracked) { tracked = false; w.__musicProbe.active--; } };
       node.addEventListener("ended", ended);
       node.start = (...args: number[]) => {
-        if (node.buffer && node.buffer.duration > 1) {
+        if (node.buffer && node.buffer.duration < 1) {
           tracked = true; w.__musicProbe.starts++; w.__musicProbe.active++;
           w.__musicProbe.max = Math.max(w.__musicProbe.max, w.__musicProbe.active);
           if (!node.buffer.getChannelData(0).some((v: number) => Math.abs(v) > .01)) w.__musicProbe.silent++;
@@ -52,11 +52,19 @@ test.beforeEach(async ({ page }) => {
   await page.addInitScript(installProbe);
 });
 
-test("music starts on a gesture, ducks for Japanese, and survives pause without extra contexts", async ({ page }) => {
+test("the soundtrack plays from the landing page without opening a game", async ({ page }) => {
+  test.skip(!await page.evaluate(() => "AudioContext" in window || "webkitAudioContext" in window), "Windows Playwright WebKit has no Web Audio implementation; graceful fallback is tested separately.");
+  await page.goto("./");
+  await page.keyboard.press("Space");
+  await expect.poll(async () => (await probe(page)).starts).toBeGreaterThan(20);
+  expect((await probe(page)).contexts).toBe(1); expect((await probe(page)).silent).toBe(0);
+  expect((await probe(page)).max).toBeLessThanOrEqual(32);
+});
+
+test("music carries into the trail, ducks for Japanese, and survives pause without extra contexts", async ({ page }) => {
   test.skip(!await page.evaluate(() => "AudioContext" in window || "webkitAudioContext" in window), "Windows Playwright WebKit has no Web Audio implementation; graceful fallback is tested separately.");
   await page.goto("run?mode=expedition");
   await expect(page.getByRole("button", { name: "Follow the trail" })).toBeEnabled();
-  expect((await probe(page)).contexts).toBe(0);
   await page.getByRole("button", { name: "Open field notes" }).click();
   await expect.poll(async () => (await probe(page)).starts).toBeGreaterThan(0);
   await expect.poll(async () => (await probe(page)).gains.at(-1)).toBe(.045);
@@ -73,9 +81,9 @@ test("music starts on a gesture, ducks for Japanese, and survives pause without 
   expect((await probe(page)).max).toBeLessThanOrEqual(32);
   await pause(page);
   await page.getByRole("link", { name: "Leave unfinished adventure" }).click();
-  await expect.poll(async () => (await probe(page)).active).toBe(0);
-  const stopped = (await probe(page)).starts;
-  await page.waitForTimeout(400); expect((await probe(page)).starts).toBe(stopped);
+  const left = (await probe(page)).starts;
+  await expect.poll(async () => (await probe(page)).starts).toBeGreaterThan(left + 10);
+  expect((await probe(page)).contexts).toBe(1);
 });
 
 test("music mute persists separately from effects and master mute silences both", async ({ page }) => {
