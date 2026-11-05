@@ -36,8 +36,13 @@ const escapeXml = (text: string) => text.replace(/&/g, "&amp;").replace(/</g, "&
 
 /**
  * The kanji give the voice the word's accent; the alias pins the reading we teach,
- * so a word with several readings is never read the wrong way.
+ * so a word with several readings is never read the wrong way. A one-kana reading
+ * has no accent to borrow, and the voice ignores the alias there: it read
+ * <sub alias="き">木</sub> as こ in two takes. Those words send the sound alone, in
+ * katakana so a lone は or へ is never taken for a particle (わ, え).
  */
 export function clipScript(word: string, reading: string): string {
-  return word === reading ? escapeXml(word) : `<sub alias="${escapeXml(reading)}">${escapeXml(word)}</sub>`;
+  if (Array.from(reading).length === 1 && word !== reading) return reading.replace(/[ぁ-ゖ]/g, (k) => String.fromCharCode(k.charCodeAt(0) + 0x60));
+  if (word === reading) return escapeXml(word);
+  return `<sub alias="${escapeXml(reading)}">${escapeXml(word)}</sub>`;
 }
