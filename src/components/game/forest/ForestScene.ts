@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { KODAMA, type AreaDefinition } from "./areas";
 import { grader, makeForestArt } from "./art";
+import { densityFor, fitToHost } from "../density";
 import {
   approachOf,
   distance,
@@ -39,6 +40,7 @@ const noise = (n: number) => {
 export class ForestScene extends Phaser.Scene {
   private bridge: ForestBridge;
   private area: AreaDefinition;
+  density = 1;
   private player!: Phaser.GameObjects.Sprite;
   private fox!: Phaser.GameObjects.Sprite;
   private shadow!: Phaser.GameObjects.Ellipse;
@@ -298,15 +300,20 @@ export class ForestScene extends Phaser.Scene {
     });
   }
   private resize() {
-    const w = this.scale.width,
-      h = this.scale.height;
-    this.cameras.main.setZoom(
-      this.bridge.preview
-        ? Math.max(w / 1430, h / 850)
-        : w < 600
-          ? 0.92
-          : Math.min(1.45, Math.max(1, h / 650)),
-    );
+    const w = this.scale.width / this.density,
+      h = this.scale.height / this.density;
+    const zoom = this.bridge.preview
+      ? Math.max(w / 1430, h / 850)
+      : w < 600
+        ? 0.92
+        : Math.min(1.45, Math.max(1, h / 650));
+    this.cameras.main.setZoom(zoom * this.density);
+    const resolution = Math.min(4, Math.ceil(zoom * this.density));
+    const sharpen = (object: Phaser.GameObjects.GameObject) => {
+      if (object instanceof Phaser.GameObjects.Text) object.setResolution(resolution);
+      else if (object instanceof Phaser.GameObjects.Container) object.list.forEach(sharpen);
+    };
+    this.children.list.forEach(sharpen);
     if (this.bridge.preview) this.cameras.main.centerOn(this.area.previewCenter.x, this.area.previewCenter.y);
   }
   private makeRain() {
@@ -570,19 +577,29 @@ export class ForestScene extends Phaser.Scene {
 }
 
 export function mountForest(parent: HTMLElement, bridge: ForestBridge) {
-  return new Phaser.Game({
+  const scene = new ForestScene(bridge);
+  const width = Math.max(1, parent.clientWidth),
+    height = Math.max(1, parent.clientHeight);
+  scene.density = densityFor(width, height);
+  const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent,
     backgroundColor: grader((bridge.area ?? KODAMA).grade)("#284c3e"),
-    pixelArt: true,
-    antialias: false,
+    antialias: true,
     scale: {
-      mode: Phaser.Scale.RESIZE,
-      width: parent.clientWidth,
-      height: parent.clientHeight,
+      mode: Phaser.Scale.NONE,
+      width: Math.round(width * scene.density),
+      height: Math.round(height * scene.density),
     },
     audio: { noAudio: true },
-    scene: [new ForestScene(bridge)],
-    render: { roundPixels: true },
+    scene: [scene],
+    render: { antialiasGL: false, roundPixels: true },
   });
+  const release = fitToHost(game, parent, (density) => { scene.density = density; });
+  return {
+    destroy(removeCanvas: boolean) {
+      release();
+      game.destroy(removeCanvas);
+    },
+  };
 }

@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { makeForestArt } from "./art";
+import { densityFor, fitToHost } from "../density";
 import {
   getDecisionX,
   getGameLayout,
@@ -29,6 +30,7 @@ class LanternRunnerScene extends Phaser.Scene {
     layer: number;
   }[] = [];
   private last = 0;
+  density = 1;
   constructor(private view: DashView) {
     super("lantern-dash");
   }
@@ -55,7 +57,7 @@ class LanternRunnerScene extends Phaser.Scene {
       .setOrigin(0.5, 0.95)
       .setDepth(4)
       .setFlipX(true);
-    const resize = () => this.view.resize(this.scale.width, this.scale.height);
+    const resize = () => this.view.resize(this.scale.width / this.density, this.scale.height / this.density);
     resize();
     this.scale.on("resize", resize);
     this.events.once("shutdown", () => this.scale.off("resize", resize));
@@ -71,8 +73,10 @@ class LanternRunnerScene extends Phaser.Scene {
     this.last = now;
     const v = this.view,
       s = v.state,
-      width = this.scale.width,
-      height = this.scale.height;
+      width = this.scale.width / this.density,
+      height = this.scale.height / this.density;
+    const camera = this.cameras.main;
+    if (camera.zoom !== this.density) camera.setOrigin(0, 0).setZoom(this.density);
     const layout = getGameLayout(width, height),
       laneY = (lane: number) =>
         layout.laneTop + (layout.laneSpan * (lane + 0.5)) / 3;
@@ -234,19 +238,31 @@ class LanternRunnerScene extends Phaser.Scene {
   }
 }
 export function mountLanternRunner(host: HTMLElement, view: DashView) {
-  return new Phaser.Game({
+  const scene = new LanternRunnerScene(view);
+  const width = Math.max(1, host.clientWidth),
+    height = Math.max(1, host.clientHeight);
+  scene.density = densityFor(width, height);
+  const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent: host,
     backgroundColor: "#183d33",
-    pixelArt: true,
+    antialias: true,
     scale: {
-      mode: Phaser.Scale.RESIZE,
-      width: host.clientWidth,
-      height: host.clientHeight,
+      mode: Phaser.Scale.NONE,
+      width: Math.round(width * scene.density),
+      height: Math.round(height * scene.density),
     },
     fps: { target: 60, limit: 60 },
     audio: { noAudio: true },
     input: { keyboard: false, mouse: false, touch: false },
-    scene: [new LanternRunnerScene(view)],
+    scene: [scene],
+    render: { antialiasGL: false },
   });
+  const release = fitToHost(game, host, (density) => { scene.density = density; });
+  return {
+    destroy(removeCanvas: boolean) {
+      release();
+      game.destroy(removeCanvas);
+    },
+  };
 }

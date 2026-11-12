@@ -3,9 +3,12 @@ import type { RoadId } from "@/data";
 import type { StopState } from "@/lib/journey";
 import type { Traveller } from "@/lib/travellers";
 import type { Grade } from "../forest/areas";
-import { makeForestArt, regradeTexture } from "../forest/art";
+import { ART_DETAIL, addArt, addSheet, addTree, artCanvas, drawTraveller, foliageTone, makeForestArt } from "../forest/art";
 import { seeded } from "../forest/world";
+import { densityFor, fitToHost } from "../density";
 import { nodeOfRegion, worldLayout, WORLD_WIDTH, type WorldNode } from "./layout";
+
+const STOP_DETAIL = 3;
 
 export type WorldView = {
   states: ReadonlyMap<number, StopState>;
@@ -55,7 +58,6 @@ const WALK_SPEED = 4.5;
 const LONGEST_WALK = 2.4;
 
 /** Robe, scarf and hat swaps that tell fellow travellers apart from Aki's straw hat and from each other. */
-const ROBE = ["#e2ad5d", "#f1cd7b", "#bc633f", "#e38b51", "#806442", "#d5b56e", "#f1d18b", "#98844f"];
 const TRAVELLER_ROBES = [
   ["#5b7bb8", "#86a3d6", "#e2c45d", "#f1d98a", "#2f3d63", "#4f6699", "#7088c0", "#3d4f7a"],
   ["#d98aa6", "#f0b5c8", "#6b8f5e", "#8fb27e", "#7c3f58", "#b8607f", "#d98aa6", "#94506b"],
@@ -106,6 +108,8 @@ export class WorldScene extends Phaser.Scene {
   private weatherStill = false;
   private elapsed = 0;
   private followY = 0;
+  private textResolution = 1;
+  density = 1;
   private waves!: Phaser.GameObjects.Graphics;
   private coast = 0;
   private walkers = new Map<string, Walker>();
@@ -121,7 +125,8 @@ export class WorldScene extends Phaser.Scene {
   }
 
   create() {
-    makeForestArt(this);
+    makeForestArt(this, false, undefined, ["forest-ground", "forest-tree-", "forest-inn", "forest-rock", "forest-lantern-"]);
+    this.textResolution = this.sharpness();
     this.makeTextures();
     const { nodes, bands, height, summit } = this.layout;
     this.path = new Phaser.Curves.Spline(nodes.map((n) => new Phaser.Math.Vector2(n.x, n.y)));
@@ -159,11 +164,11 @@ export class WorldScene extends Phaser.Scene {
     campBoard.lineStyle(2, 0xe9c580, 0.85).strokeRoundedRect(-64, -15, 128, 30, 7);
     this.add.container(tx, ty + 32, [
       campBoard,
-      this.add.text(0, 0, "野営 · CAMP", { fontFamily: "sans-serif", fontSize: "12px", fontStyle: "bold", color: "#f4e8cc", letterSpacing: 2 }).setOrigin(0.5),
+      this.label(0, 0, "野営 · CAMP", { fontFamily: "sans-serif", fontSize: "12px", fontStyle: "bold", color: "#f4e8cc", letterSpacing: 2 }).setOrigin(0.5),
     ]).setDepth(first.y + 121);
     const campZone = this.add.zone(tx, ty - 22, 180, 140).setInteractive({ useHandCursor: true }).setDepth(first.y + 122);
     campZone.on("pointerup", () => { if (!this.drag?.moved && !this.bridge.blocked) this.bridge.onCamp(); });
-    this.add.text(first.x, coast - 92, "出発 · THE JOURNEY BEGINS", { fontFamily: "serif", fontSize: "16px", color: "#2a3b33" }).setOrigin(0.5).setDepth(first.y + 121);
+    this.label(first.x, coast - 92, "出発 · THE JOURNEY BEGINS", { fontFamily: "serif", fontSize: "16px", color: "#2a3b33" }).setOrigin(0.5).setDepth(first.y + 121);
 
     this.drawRoad();
     this.trail = this.add.graphics().setDepth(-80);
@@ -184,28 +189,28 @@ export class WorldScene extends Phaser.Scene {
       board.lineStyle(2, 0xe9c580, 0.8).strokeRoundedRect(-118, -34, 236, 68, 8);
       sign.add([
         board,
-        this.add.text(0, -14, `${road.id} · ${road.jp}`, { fontFamily: "serif", fontSize: "22px", color: "#f4e8cc" }).setOrigin(0.5),
-        this.add.text(0, 14, road.level ? road.romaji.toUpperCase() : "白河の関 · UNCHARTED", { fontFamily: "sans-serif", fontSize: "11px", color: "#e9c580", letterSpacing: 3 }).setOrigin(0.5),
+        this.label(0, -14, `${road.id} · ${road.jp}`, { fontFamily: "serif", fontSize: "22px", color: "#f4e8cc" }).setOrigin(0.5),
+        this.label(0, 14, road.level ? road.romaji.toUpperCase() : "白河の関 · UNCHARTED", { fontFamily: "sans-serif", fontSize: "11px", color: "#e9c580", letterSpacing: 3 }).setOrigin(0.5),
       ]);
     }
     this.add.image(summit.x, summit.y + 40, "forest-shrine-1").setScale(1.6).setOrigin(0.5, 1).setDepth(summit.y + 40).setTint(0xf2f6f8);
-    this.add.text(summit.x, summit.y + 70, "頂 · JOURNEY’S END", { fontFamily: "serif", fontSize: "18px", color: "#3a4a52" }).setOrigin(0.5).setDepth(summit.y + 70);
+    this.label(summit.x, summit.y + 70, "頂 · JOURNEY’S END", { fontFamily: "serif", fontSize: "18px", color: "#3a4a52" }).setOrigin(0.5).setDepth(summit.y + 70);
 
     for (const node of nodes) {
-      const image = this.add.image(node.x, node.y, "world-stop-locked").setDepth(node.y + 1);
-      const label = this.add.text(node.x, node.y + 1, "", { fontFamily: "serif", fontSize: "15px", fontStyle: "bold", color: "#f4e8cc", stroke: "#1b2e29", strokeThickness: 3 }).setOrigin(0.5).setDepth(node.y + 2);
+      const image = this.add.image(node.x, node.y, "world-stop-locked").setScale(1 / STOP_DETAIL).setDepth(node.y + 1);
+      const label = this.label(node.x, node.y + 1, "", { fontFamily: "serif", fontSize: "15px", fontStyle: "bold", color: "#f4e8cc", stroke: "#1b2e29", strokeThickness: 3 }).setOrigin(0.5).setDepth(node.y + 2);
       if (node.ch !== undefined) {
-        image.setInteractive({ useHandCursor: true, hitArea: new Phaser.Geom.Circle(24, 24, 30), hitAreaCallback: Phaser.Geom.Circle.Contains });
+        image.setInteractive({ useHandCursor: true, hitArea: new Phaser.Geom.Circle(24 * STOP_DETAIL, 24 * STOP_DETAIL, 30 * STOP_DETAIL), hitAreaCallback: Phaser.Geom.Circle.Contains });
         image.on("pointerup", () => { if (!this.drag?.moved && !this.bridge.blocked) this.walkTo(node.index); });
       }
       this.stops.push({ node, image, label });
     }
 
     this.selectRing = this.add.ellipse(0, 0, 70, 70).setStrokeStyle(3, 0xffe1a1, 0.95).setVisible(false).setDepth(height);
-    const flagText = this.add.text(0, -18, "YOU ARE HERE", { fontFamily: "sans-serif", fontSize: "11px", fontStyle: "bold", color: "#243e32", backgroundColor: "#eccb8a", padding: { x: 6, y: 3 }, letterSpacing: 2 }).setOrigin(0.5, 1);
-    const gem = this.add.text(0, -10, "◆", { fontFamily: "serif", fontSize: "18px", color: "#ffe2a5", stroke: "#354d3f", strokeThickness: 4 }).setOrigin(0.5);
+    const flagText = this.label(0, -18, "YOU ARE HERE", { fontFamily: "sans-serif", fontSize: "11px", fontStyle: "bold", color: "#243e32", backgroundColor: "#eccb8a", padding: { x: 6, y: 3 }, letterSpacing: 2 }).setOrigin(0.5, 1);
+    const gem = this.label(0, -10, "◆", { fontFamily: "serif", fontSize: "18px", color: "#ffe2a5", stroke: "#354d3f", strokeThickness: 4 }).setOrigin(0.5);
     this.hereFlag = this.add.container(0, 0, [flagText, gem]).setDepth(height + 1);
-    this.tag = this.add.text(0, 0, "", { fontFamily: "sans-serif", fontSize: "12px", color: "#f4e8cc", backgroundColor: "#1b2e29e6", padding: { x: 8, y: 5 }, align: "center", lineSpacing: 2 })
+    this.tag = this.label(0, 0, "", { fontFamily: "sans-serif", fontSize: "12px", color: "#f4e8cc", backgroundColor: "#1b2e29e6", padding: { x: 8, y: 5 }, align: "center", lineSpacing: 2 })
       .setOrigin(0.5, 1).setDepth(height + 3).setVisible(false);
 
     const start = this.pointAt(this.at);
@@ -280,7 +285,9 @@ export class WorldScene extends Phaser.Scene {
       });
     }
     const stop = (key: string, fill: string, rim: string, glyph?: { text: string; color: string }, glow?: string) =>
-      canvas(key, 48, 48, (c) => {
+      canvas(key, 48 * STOP_DETAIL, 48 * STOP_DETAIL, (c) => {
+        c.imageSmoothingEnabled = true;
+        c.scale(STOP_DETAIL, STOP_DETAIL);
         c.fillStyle = "#10201d55";
         c.beginPath();
         c.ellipse(24, 40, 18, 6, 0, 0, 7);
@@ -313,23 +320,16 @@ export class WorldScene extends Phaser.Scene {
     stop("world-stop-open", "#3d5a4c", "#efcb7e", undefined, "#ffd98a88");
     stop("world-stop-locked", "#4a5752", "#6f7c76");
     stop("world-stop-ghost", "#c9d4d899", "#e8eef1aa");
-    const player = this.textures.get("forest-player").getSourceImage() as HTMLCanvasElement;
     TRAVELLER_ROBES.forEach((robe, k) => {
-      const swaps = new Map(ROBE.map((from, i) => [parseInt(from.slice(1), 16), parseInt(robe[i]!.slice(1), 16)]));
-      canvas(`world-traveller-${k}`, player.width, player.height, (c) => {
-        c.drawImage(player, 0, 0);
-        const data = c.getImageData(0, 0, player.width, player.height);
-        for (let i = 0; i < data.data.length; i += 4) {
-          const to = data.data[i + 3] ? swaps.get((data.data[i]! << 16) | (data.data[i + 1]! << 8) | data.data[i + 2]!) : undefined;
-          if (to === undefined) continue;
-          data.data[i] = to >> 16;
-          data.data[i + 1] = (to >> 8) & 255;
-          data.data[i + 2] = to & 255;
+      const { canvas: sheet, c } = artCanvas(128, 160, ART_DETAIL);
+      for (let d = 0; d < 4; d++)
+        for (let f = 0; f < 4; f++) {
+          c.save();
+          c.translate(f * 32, d * 40);
+          drawTraveller(c, d, f, robe);
+          c.restore();
         }
-        c.putImageData(data, 0, 0);
-      });
-      const texture = this.textures.get(`world-traveller-${k}`);
-      for (let d = 0; d < 4; d++) for (let f = 0; f < 4; f++) texture.add(d * 4 + f, 0, f * 32, d * 40, 32, 40);
+      addSheet(addArt(this, `world-traveller-${k}`, sheet, ART_DETAIL), 4, 4, 32, 40);
     });
     canvas("world-petal", 4, 3, (c) => { c.fillStyle = "#f3c4d2"; c.fillRect(0, 0, 4, 2); c.fillStyle = "#e9a6bb"; c.fillRect(1, 2, 2, 1); });
     canvas("world-leaf", 4, 4, (c) => { c.fillStyle = "#d8743c"; c.fillRect(0, 1, 4, 2); c.fillStyle = "#b8542c"; c.fillRect(1, 0, 2, 4); });
@@ -397,7 +397,7 @@ export class WorldScene extends Phaser.Scene {
         if (near.some(covers)) continue;
         if (this.layout.bands.some((b) => covers(b.gate) || covers({ x: b.gate.x + 190, y: b.gate.y }) || covers({ x: b.gate.x - 190, y: b.gate.y }))) continue;
         const key = `world-tree-${node.road.id}-${grade}-${variant}`;
-        regradeTexture(this, `forest-tree-${variant}`, key, season.grades[grade]!);
+        addTree(this, key, variant, foliageTone(season.grades[grade]!));
         this.add.image(x, y, key).setOrigin(0.5, 0.91).setScale(scale).setDepth(y);
       }
     }
@@ -436,7 +436,7 @@ export class WorldScene extends Phaser.Scene {
       if (!this.drag || !pointer.isDown || this.bridge.blocked) return;
       const dx = pointer.x - this.drag.x,
         dy = pointer.y - this.drag.y;
-      if (!this.drag.moved && Math.hypot(dx, dy) < 8) return;
+      if (!this.drag.moved && Math.hypot(dx, dy) < 8 * this.density) return;
       this.drag.moved = true;
       this.following = false;
       camera.stopFollow();
@@ -467,11 +467,30 @@ export class WorldScene extends Phaser.Scene {
     this.events.once("destroy", release);
   }
 
+  private sharpness() {
+    const zoom = Math.max(0.62, this.scale.width / this.density / WORLD_WIDTH) * this.density;
+    return Math.min(4, Math.ceil(Math.max(zoom, this.density)));
+  }
+
+  private label(x: number, y: number, text: string, style: Phaser.Types.GameObjects.Text.TextStyle) {
+    return this.add.text(x, y, text, { ...style, resolution: this.textResolution });
+  }
+
   private resize() {
-    const zoom = Math.max(0.62, Math.min(1.25, this.scale.width / WORLD_WIDTH));
+    const width = this.scale.width / this.density;
+    const zoom = Math.max(0.62, width / WORLD_WIDTH) * this.density;
     this.cameras.main.setZoom(zoom);
-    this.followY = this.scale.width < 700 ? -(this.scale.height * 0.08) / zoom : 0;
+    this.followY = width < 700 ? -(this.scale.height * 0.08) / zoom : 0;
     this.cameras.main.setFollowOffset(0, this.followY);
+    const resolution = this.sharpness();
+    if (resolution !== this.textResolution) {
+      this.textResolution = resolution;
+      const sharpen = (object: Phaser.GameObjects.GameObject) => {
+        if (object instanceof Phaser.GameObjects.Text) object.setResolution(resolution);
+        else if (object instanceof Phaser.GameObjects.Container) object.list.forEach(sharpen);
+      };
+      this.children.list.forEach(sharpen);
+    }
   }
 
   private walkTo(index: number) {
@@ -529,7 +548,7 @@ export class WorldScene extends Phaser.Scene {
       const extra = group.length - SLOTS.length;
       if (extra > 0) {
         const node = this.layout.nodes[index]!;
-        this.crowds.push(this.add.text(node.x + 116, node.y - 8, `+${extra}`, { fontFamily: "sans-serif", fontSize: "13px", fontStyle: "bold", color: "#f4e8cc", backgroundColor: "#1b2e29cc", padding: { x: 6, y: 3 } })
+        this.crowds.push(this.label(node.x + 116, node.y - 8, `+${extra}`, { fontFamily: "sans-serif", fontSize: "13px", fontStyle: "bold", color: "#f4e8cc", backgroundColor: "#1b2e29cc", padding: { x: 6, y: 3 } })
           .setOrigin(0.5).setDepth(node.y + 4));
       }
     }
@@ -555,7 +574,7 @@ export class WorldScene extends Phaser.Scene {
     const [dx, dy] = SLOTS[slot]!;
     const sprite = this.add.sprite(p.x + dx, p.y + dy, `world-traveller-${hash % TRAVELLER_ROBES.length}`, 0).setOrigin(0.5, 0.95).setScale(1.45).setAlpha(0);
     const shadow = this.add.ellipse(p.x + dx, p.y + dy + 1, 28, 11, 0x132e29, 0.3).setAlpha(0);
-    const label = this.add.text(p.x + dx, p.y + dy + 3, "", { fontFamily: "sans-serif", fontSize: "11px", fontStyle: "bold", color: "#e6e1cc", stroke: "#1b2e29", strokeThickness: 3 }).setOrigin(0.5, 0).setAlpha(0);
+    const label = this.label(p.x + dx, p.y + dy + 3, "", { fontFamily: "sans-serif", fontSize: "11px", fontStyle: "bold", color: "#e6e1cc", stroke: "#1b2e29", strokeThickness: 3 }).setOrigin(0.5, 0).setAlpha(0);
     const walker: Walker = { traveller, sprite, shadow, label, at: index, walk: null, slot, x: p.x + dx, y: p.y + dy, steps: (hash % 8) * 60, leaving: false };
     sprite.setInteractive({ useHandCursor: true });
     sprite.on("pointerup", () => { if (!this.drag?.moved && !this.bridge.blocked && !walker.leaving) this.showTag(walker); });
@@ -580,7 +599,7 @@ export class WorldScene extends Phaser.Scene {
   private moveWalkers(delta: number) {
     const ease = this.bridge.reducedMotion ? 1 : 1 - Math.exp(-delta / 90);
     // Names stay one size on screen, however far the camera has zoomed out.
-    const text = 1 / this.cameras.main.zoom;
+    const text = this.density / this.cameras.main.zoom;
     for (const walker of this.walkers.values()) {
       let north = true;
       if (walker.walk && !this.bridge.blocked) {
@@ -685,22 +704,32 @@ export class WorldScene extends Phaser.Scene {
     canvas["here"] = String(this.bridge.view.here);
     canvas["road"] = band.road.id;
     canvas["travellers"] = String([...this.walkers.values()].filter((w) => !w.leaving).length);
-    const view = this.cameras.main.worldView, zoom = this.cameras.main.zoom;
+    const view = this.cameras.main.worldView, zoom = this.cameras.main.zoom / this.density;
     canvas["campX"] = String(Math.round((this.layout.camp.x - view.x) * zoom));
     canvas["campY"] = String(Math.round((this.layout.camp.y - 22 - view.y) * zoom));
   }
 }
 
 export function mountWorld(parent: HTMLElement, bridge: WorldBridge) {
-  return new Phaser.Game({
+  const scene = new WorldScene(bridge);
+  const width = Math.max(1, parent.clientWidth),
+    height = Math.max(1, parent.clientHeight);
+  scene.density = densityFor(width, height);
+  const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent,
     backgroundColor: "#2b5a45",
-    pixelArt: true,
-    antialias: false,
-    scale: { mode: Phaser.Scale.RESIZE, width: parent.clientWidth, height: parent.clientHeight },
+    antialias: true,
+    scale: { mode: Phaser.Scale.NONE, width: Math.round(width * scene.density), height: Math.round(height * scene.density) },
     audio: { noAudio: true },
-    scene: [new WorldScene(bridge)],
-    render: { roundPixels: true },
+    scene: [scene],
+    render: { antialiasGL: false, roundPixels: true },
   });
+  const release = fitToHost(game, parent, (density) => { scene.density = density; });
+  return {
+    destroy(removeCanvas: boolean) {
+      release();
+      game.destroy(removeCanvas);
+    },
+  };
 }

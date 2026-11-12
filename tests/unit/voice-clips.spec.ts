@@ -16,6 +16,10 @@ test("the voice reads the kanji with the taught reading pinned", () => {
   expect(clipScript("一人", "ひとり")).toBe('<sub alias="ひとり">一人</sub>');
   expect(clipScript("ひらがな", "ひらがな")).toBe("ひらがな");
   expect(clipScript("A&B", "えー")).toBe('<sub alias="えー">A&amp;B</sub>');
+  // One-kana readings go as the sound alone: the alias let 木 come out as こ.
+  // Katakana keeps a lone は from being read as the particle わ.
+  expect(clipScript("木", "き")).toBe("キ");
+  expect(clipScript("歯", "は")).toBe("ハ");
 });
 
 test("every vocabulary word has a recorded clip (run npm run voice:generate after adding words)", () => {
