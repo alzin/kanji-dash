@@ -29,9 +29,9 @@ export function SpiritMark({ id, hidden = false }: { id: SpiritId; hidden?: bool
   </span>;
 }
 
-function Panel({ children, label, onClose }: { children: ReactNode; label: string; onClose?: () => void }) {
+function Panel({ children, label, onClose, focusPrimary = false }: { children: ReactNode; label: string; onClose?: () => void; focusPrimary?: boolean }) {
   const ref = useRef<HTMLDialogElement>(null);
-  useEffect(() => { const d = ref.current!; d.showModal(); return () => d.close(); }, []);
+  useEffect(() => { const d = ref.current!; d.showModal(); if (focusPrimary) d.querySelector<HTMLElement>(".ff-primary")?.focus(); return () => d.close(); }, []);
   return <dialog ref={ref} className="ff-dialog" aria-label={label} onCancel={e => { e.preventDefault(); onClose?.(); }}>
     {onClose && <button className="ff-close" aria-label="Close" onClick={onClose}>×</button>}{children}
   </dialog>;
@@ -346,7 +346,7 @@ function FireflyRun({ ticket, onAgain, onExit, onSeal }: { ticket: Ticket; onAga
     </div>
     <aside className="ff-side ff-side-right" aria-hidden="true"><p>THE SPIRIT TRAIL</p><div>{STAGES.map((stage, i) => <span key={stage.name} className={i === hud.stage ? "active" : ""}><i>{stage.kanji}</i>{stage.name}</span>)}</div><small>MOVE ← → / 1 2 3<br />BURST SPACE</small></aside>
     {invalid && <Panel label="Your progress changed"><p className="ff-eyebrow">A FRESH START</p><h2>Your save changed.</h2><p>Your account or saved progress changed. Start a new adventure with the current save.</p><button className="ff-primary" onClick={onExit}>Return to the lantern</button></Panel>}
-    {!invalid && paused && !receipt && <Panel label="Adventure paused" onClose={() => setPaused(false)}><p className="ff-eyebrow">PAUSED</p><h2>Take a breather.</h2><p>Your run picks up right where you left it.</p><button className="ff-primary" onClick={() => setPaused(false)}>Back to the trail →</button><div className="ff-audio"><SoundToggle variant="inline" /><MusicToggle /></div><button className="ff-text-button" onClick={onExit}>Leave this adventure</button></Panel>}
+    {!invalid && paused && !receipt && <Panel label="Adventure paused" focusPrimary onClose={() => setPaused(false)}><p className="ff-eyebrow">PAUSED</p><h2>Take a breather.</h2><p>Your run picks up right where you left it.</p><button className="ff-primary" onClick={() => setPaused(false)}>Back to the trail →</button><div className="ff-audio"><SoundToggle variant="inline" /><MusicToggle /></div><button className="ff-text-button" onClick={onExit}>Leave this adventure</button></Panel>}
     {!invalid && !paused && !receipt && hud.phase === "fork" && <Panel label="Choose your next trail"><p className="ff-eyebrow">CHOOSE A TRAIL</p><h2>Where shall we go?</h2><p>Take a gift from the forest. It stays with you until you reach home.</p><div className="ff-forks">{(hud.stage === 0 ? ["grove", "bramble"] : ["bridge", "moonpath"]).map(id => {
       const trail = TRAILS[id as TrailId]; return <button key={id} onClick={() => { chooseTrail(state, id as TrailId); play("paceUp"); setAnnouncement(`${trail.boon} received · the trail quickens`); refresh(); }}><span className="ff-fork-kanji">{trail.kanji}</span><small>{trail.risk}</small><h3>{trail.name}</h3><b>+ {trail.boon}</b><p>{trail.description}</p><span className="ff-fork-go">Take this path →</span></button>;
     })}</div></Panel>}

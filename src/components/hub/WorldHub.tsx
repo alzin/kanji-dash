@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { CHAPTER_NAMES, JOURNEY_STOPS, ROADS, journeyNumber, kanjiOfChapter, type RoadId } from "@/data";
 import { AccountStatus } from "@/components/AccountStatus";
 import { AppIcon } from "@/components/AppIcon";
@@ -138,6 +138,21 @@ export function WorldHub({ search }: { search: HubSearch }) {
     bridge.sleep?.(covered);
   }, [bridge, ready, covered]);
 
+  const stopPanel = useRef<HTMLElement>(null);
+  const stopOpen = overlay === "stop" && !account.prompt;
+  useEffect(() => {
+    if (!stopOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || event.repeat || event.altKey || event.ctrlKey || event.metaKey) return;
+      if (document.querySelector("dialog[open]")) return;
+      if (event.key === "Escape") setSelected(null);
+      else if (event.key === "Enter" && (event.target === document.body || event.target instanceof HTMLCanvasElement))
+        stopPanel.current?.querySelector<HTMLElement>(".forest-primary")?.click();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [stopOpen]);
+
   const showOnMap = (ch: number | undefined) => {
     const node = ch === undefined ? view.here : nodeOfRegion(ch)?.index;
     closePanel();
@@ -180,6 +195,7 @@ export function WorldHub({ search }: { search: HubSearch }) {
         </div>
       </header>
 
+      <div className="world-top">
       <section className="forest-objective world-position" aria-label="Your position">
         <span className="forest-eyebrow">THE KANJI JOURNEY <span>•</span> 五街道</span>
         <h1>You are on the {hereRoad.id} road</h1>
@@ -210,9 +226,11 @@ export function WorldHub({ search }: { search: HubSearch }) {
           </button>
         ))}
       </nav>
+      {toast && <div className="forest-toast hub-toast" role="status">{toast}</div>}
+      </div>
 
       {overlay === "stop" && node ? (
-        <StopPanel key={node.index} index={node.index} save={save} here={node.index === view.here} newTraveller={newTraveller}
+        <StopPanel key={node.index} panelRef={stopPanel} index={node.index} save={save} here={node.index === view.here} newTraveller={newTraveller}
           onStep={(direction) => bridge.step?.(direction)} onClose={() => setSelected(null)} />
       ) : overlay === null && (
         <div className="forest-bottom">
@@ -221,8 +239,6 @@ export function WorldHub({ search }: { search: HubSearch }) {
           </div>
         </div>
       )}
-
-      {toast && <div className="forest-toast hub-toast" role="status">{toast}</div>}
 
       {overlay === "camp" && <CampPanel onClose={closePanel} onShowTitle={showTitleAgain} />}
       {overlay === "journey" && <JourneyLogPanel newSeals={arrival.seals} onClose={closePanel} onShowOnMap={showOnMap} />}
@@ -254,8 +270,8 @@ function Crowd({ travellers, seals, signedIn }: { travellers: readonly Traveller
   );
 }
 
-function StopPanel({ index, save, here, newTraveller, onStep, onClose }: {
-  index: number; save: SaveData; here: boolean; newTraveller: boolean;
+function StopPanel({ panelRef, index, save, here, newTraveller, onStep, onClose }: {
+  panelRef: RefObject<HTMLElement | null>; index: number; save: SaveData; here: boolean; newTraveller: boolean;
   onStep: (direction: 1 | -1) => void; onClose: () => void;
 }) {
   const { nodes } = worldLayout();
@@ -269,19 +285,24 @@ function StopPanel({ index, save, here, newTraveller, onStep, onClose }: {
       <button className="forest-close" onClick={onClose} aria-label="Close checkpoint">×</button>
     </div>
   );
-  const steps = (
-    <div className="world-steps">
-      <button onClick={() => onStep(-1)} disabled={index === 0}>‹ Previous stop</button>
-      <button onClick={() => onStep(1)} disabled={index === nodes.length - 1}>Next stop ›</button>
-    </div>
+  const steps = (canStart: boolean) => (
+    <>
+      <div className="world-steps">
+        <button onClick={() => onStep(-1)} disabled={index === 0}>‹ Previous stop</button>
+        <button onClick={() => onStep(1)} disabled={index === nodes.length - 1}>Next stop ›</button>
+      </div>
+      <p className="world-keys" aria-hidden="true">
+        <span><kbd>↑</kbd><kbd>↓</kbd> Step</span>{canStart && <span><kbd>Enter</kbd> Start</span>}<span><kbd>Esc</kbd> Close</span>
+      </p>
+    </>
   );
   if (node.ch === undefined)
     return (
-      <section className="world-panel" aria-label="Uncharted stop">
+      <section ref={panelRef} className="world-panel" aria-label="Uncharted stop">
         {header}
         <h2>The road north is still being surveyed.</h2>
         <p>N1’s checkpoints will continue the journey from the last N2 seal, all the way to the summit.</p>
-        {steps}
+        {steps(false)}
       </section>
     );
   const ch = node.ch;
@@ -305,7 +326,7 @@ function StopPanel({ index, save, here, newTraveller, onStep, onClose }: {
     </div>
   );
   return (
-    <section className="world-panel" aria-label={`${name.name} checkpoint`} data-state={state.status}>
+    <section ref={panelRef} className="world-panel" aria-label={`${name.name} checkpoint`} data-state={state.status}>
       {header}
       <h2>{name.name} <small lang="ja">{name.jp}</small></h2>
       <p className="world-kanji" lang="ja">
@@ -333,7 +354,7 @@ function StopPanel({ index, save, here, newTraveller, onStep, onClose }: {
       {state.status === "locked" && previous !== undefined && (
         <p className="world-fine">Opens when you clear {CHAPTER_NAMES[previous]!.name}, or reach 55% mastery progress there.</p>
       )}
-      {steps}
+      {steps(state.status === "open" || trailFirst)}
     </section>
   );
 }

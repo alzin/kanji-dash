@@ -52,12 +52,21 @@ test("every screen keeps a clear, thumb-sized way back to the map at 320px", asy
   }
 });
 
-for (const [width, height] of [[375, 667], [375, 812], [1280, 800]] as const) {
+const CROWD = ["aiko", "ben", "chie"].map((id, i) => ({ id: id.padEnd(12, "x"), name: id, stop: 1 + i, seals: i, online: i < 2 }));
+
+for (const [width, height] of [[320, 568], [375, 667], [375, 812], [667, 375], [844, 390], [1280, 800]] as const) {
   test(`the map HUD, position card, road strip and checkpoint panel never overlap at ${width}×${height}`, async ({ page }) => {
     await skipTitle(page);
+    await page.route("**/api/travellers", (route) => route.fulfill({ json: { travellers: CROWD, me: null } }));
     await page.setViewportSize({ width, height });
     await page.goto("./", { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("region", { name: "The First Five checkpoint" })).toBeVisible();
+    await expect(page.getByTestId("world-crowd")).toBeVisible();
+    for (const control of await page.locator(".world-actions .forest-track, .world-roads button, .world-panel .forest-close").all()) {
+      const b = (await control.boundingBox())!;
+      expect(b.height).toBeGreaterThanOrEqual(40);
+      expect(b.width).toBeGreaterThanOrEqual(44);
+    }
     const boxes = await page.evaluate(() => [".hub-hud", ".world-position", ".world-roads", ".world-panel"].flatMap((selector) => {
       const element = document.querySelector(selector);
       if (!element || getComputedStyle(element).display === "none") return [];

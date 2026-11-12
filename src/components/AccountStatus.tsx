@@ -1,7 +1,7 @@
 import { AppIcon } from "@/components/AppIcon";
 import { openAccountPrompt, useAccount } from "@/lib/account";
 
-const chipClass = "flex min-h-9 items-center gap-1.5 rounded-full px-2 text-xs font-bold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+const chipClass = "relative flex min-h-9 items-center after:absolute after:-inset-x-1.5 after:-inset-y-1 after:content-[''] gap-1.5 rounded-full px-2 text-xs font-bold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 
 function givenName(name: string, email: string) {
   const trimmed = name.trim();
