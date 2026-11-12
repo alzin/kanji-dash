@@ -26,7 +26,7 @@ export function StrokePractice({ kanji }: { kanji: Kanji }) {
     let cancelled = false;
     const drawGuide = () => {
       if (cancelled) return;
-      const ctx = guideRef.current?.getContext("2d");
+      const ctx = guideRef.current?.getContext("2d", { willReadFrequently: true });
       if (!ctx) return;
       ctx.clearRect(0, 0, SIZE, SIZE);
       ctx.font = `800 ${SIZE * 0.72}px "Shippori Mincho B1", serif`;
@@ -48,14 +48,14 @@ export function StrokePractice({ kanji }: { kanji: Kanji }) {
       canvas.releasePointerCapture(activePointer.current);
     }
     activePointer.current = null;
-    const ctx = canvas.getContext("2d")!;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
     ctx.clearRect(0, 0, SIZE, SIZE);
     setStrokes(0);
     setResult(null);
   };
 
   const targetPixels = (): Uint8Array => {
-    const data = guideRef.current!.getContext("2d")!.getImageData(0, 0, SIZE, SIZE).data;
+    const data = guideRef.current!.getContext("2d", { willReadFrequently: true })!.getImageData(0, 0, SIZE, SIZE).data;
     const mask = new Uint8Array(SIZE * SIZE);
     for (let i = 0; i < SIZE * SIZE; i++) mask[i] = (data[i * 4 + 3] ?? 0) > 100 ? 1 : 0;
     return mask;
@@ -63,7 +63,7 @@ export function StrokePractice({ kanji }: { kanji: Kanji }) {
 
   const check = () => {
     const canvas = canvasRef.current!;
-    const ctx = canvas.getContext("2d")!;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
     const drawn = ctx.getImageData(0, 0, SIZE, SIZE).data;
     const target = targetPixels();
     const drawnMask = new Uint8Array(SIZE * SIZE);
@@ -117,7 +117,7 @@ export function StrokePractice({ kanji }: { kanji: Kanji }) {
             e.preventDefault();
             activePointer.current = e.pointerId;
             canvasRef.current!.setPointerCapture(e.pointerId);
-            const ctx = canvasRef.current!.getContext("2d")!;
+            const ctx = canvasRef.current!.getContext("2d", { willReadFrequently: true })!;
             const p = pos(e);
             ctx.strokeStyle = "#b03a2e";
             ctx.fillStyle = "#b03a2e";
@@ -134,7 +134,7 @@ export function StrokePractice({ kanji }: { kanji: Kanji }) {
           }}
           onPointerMove={(e) => {
             if (activePointer.current !== e.pointerId) return;
-            const ctx = canvasRef.current!.getContext("2d")!;
+            const ctx = canvasRef.current!.getContext("2d", { willReadFrequently: true })!;
             const p = pos(e);
             ctx.lineTo(p.x, p.y);
             ctx.stroke();
