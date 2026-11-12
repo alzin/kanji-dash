@@ -45,6 +45,7 @@ test("one-click launch supports keys, lane taps, swipes, Burst, pause, blur and 
   await page.screenshot({ path: info.outputPath("firefly-running.png") });
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog", { name: "Adventure paused" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Back to the trail/ })).toBeFocused();
   const frozen = await inspectFirefly(page);
   await travel(page, 3000);
   await page.keyboard.press("ArrowLeft");

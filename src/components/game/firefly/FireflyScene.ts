@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { LANTERNS, SPIRITS, type LanternId } from "@/lib/firefly-catalog";
 import { makeForestArt } from "../forest/art";
+import { densityFor, watchFrames } from "../density";
 import { makeFireflyArt } from "./art";
 import { multiplierOf, type FireflyEntity, type FireflyState } from "./simulation";
 
@@ -61,10 +62,11 @@ class FireflyScene extends Phaser.Scene {
   private lastStage = 0;
   private last = 0;
   private age = 0;
+  density = 1;
   constructor(private view: FireflyView, private host: HTMLElement) { super("firefly-rescue"); }
   create() {
     makeForestArt(this, true); makeFireflyArt(this);
-    const resolution = Math.min(2, window.devicePixelRatio || 1);
+    const resolution = Math.min(4, Math.ceil(this.density));
     this.paint = this.add.graphics().setDepth(0);
     for (let i = 0; i < 18; i++) this.trees.push(this.add.image(0, 0, `forest-tree-${i % 3}`).setDepth(2));
     this.actors = this.add.graphics().setDepth(3);
@@ -100,15 +102,18 @@ class FireflyScene extends Phaser.Scene {
     const resize = () => {
       const { clientWidth: width, clientHeight: height } = this.host;
       if (width > 0 && height > 0) {
-        if (this.scale.width !== width || this.scale.height !== height) this.scale.resize(width, height);
+        this.density = densityFor(width, height);
+        const w = Math.round(width * this.density), h = Math.round(height * this.density);
+        if (this.scale.width !== w || this.scale.height !== h) this.scale.resize(w, h);
         this.game.canvas.style.width = `${width}px`;
         this.game.canvas.style.height = `${height}px`;
       }
     };
     const observer = new ResizeObserver(resize);
     observer.observe(this.host); resize();
-    this.events.once("shutdown", () => observer.disconnect());
-    this.events.once("destroy", () => observer.disconnect());
+    const unwatch = watchFrames(this.game, this.host, resize);
+    this.events.once("shutdown", () => { observer.disconnect(); unwatch(); });
+    this.events.once("destroy", () => { observer.disconnect(); unwatch(); });
     this.last = performance.now();
     this.game.events.once(Phaser.Core.Events.POST_RENDER, () => {
       this.game.canvas.dataset["ready"] = "true"; this.view.ready();
@@ -273,13 +278,13 @@ class FireflyScene extends Phaser.Scene {
     o.clear();
     if (flash >= 0 && flash < .3) o.fillStyle(this.flash.color, this.flash.strength * (1 - flash / .3) * (still ? .5 : 1)).fillRect(0, 0, w, h);
     const punch = this.age - this.punchAt;
-    this.cameras.main.setZoom(!still && punch >= 0 && punch < .22 ? 1 + .035 * (1 - punch / .22) : 1);
+    this.cameras.main.setZoom(this.density * (!still && punch >= 0 && punch < .22 ? 1 + .035 * (1 - punch / .22) : 1)).centerOn(w / 2, h / 2);
   }
   override update() {
     const now = performance.now(), dt = Math.max(0, (now - this.last) / 1000);
     this.last = now;
     this.view.tick(dt);
-    const v = this.view, s = v.state, w = this.scale.width, h = this.scale.height;
+    const v = this.view, s = v.state, w = this.scale.width / this.density, h = this.scale.height / this.density;
     const moving = !v.paused && (s.phase === "running" || s.phase === "delivery");
     const step = moving ? Math.min(.1, dt) : 0;
     this.age += step;
@@ -467,10 +472,13 @@ class FireflyScene extends Phaser.Scene {
   }
 }
 export function mountFirefly(host: HTMLElement, view: FireflyView) {
+  const scene = new FireflyScene(view, host);
+  const width = Math.max(1, host.clientWidth), height = Math.max(1, host.clientHeight);
+  scene.density = densityFor(width, height);
   return new Phaser.Game({
-    type: Phaser.AUTO, parent: host, backgroundColor: "#102e31", pixelArt: true,
-    scale: { mode: Phaser.Scale.NONE, width: host.clientWidth, height: host.clientHeight },
-    fps: { target: 60, limit: 60 }, audio: { noAudio: true },
-    input: { keyboard: false, mouse: false, touch: false }, scene: [new FireflyScene(view, host)],
+    type: Phaser.AUTO, parent: host, backgroundColor: "#102e31", antialias: true,
+    scale: { mode: Phaser.Scale.NONE, width: Math.round(width * scene.density), height: Math.round(height * scene.density) },
+    fps: { target: 60, limit: 60 }, audio: { noAudio: true }, render: { antialiasGL: false },
+    input: { keyboard: false, mouse: false, touch: false }, scene: [scene],
   });
 }

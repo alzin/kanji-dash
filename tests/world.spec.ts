@@ -65,6 +65,38 @@ test("the traveller walks the road by keys and buttons, and the camera visits an
   await expect(page.getByRole("region", { name: "Everyday Essentials checkpoint" })).toBeVisible();
 });
 
+test("the map and the forest trail fill their frame at one even scale, at the density the device was given", async ({ page }) => {
+  const sharp = () => page.locator("canvas[data-ready]").evaluate((c: HTMLCanvasElement) => {
+    const shown = c.getBoundingClientRect(), across = c.width / shown.width;
+    return across >= 0.98 && Math.abs(across - c.height / shown.height) < 0.02 && Math.abs(across - Number(c.dataset["density"])) < 0.05;
+  });
+  await page.goto("./", { waitUntil: "domcontentloaded" });
+  await expect(canvas(page)).toHaveAttribute("data-stop", String(HERE));
+  expect(await sharp()).toBe(true);
+  await page.setViewportSize({ width: 844, height: 390 });
+  await expect.poll(sharp).toBe(true);
+  await page.goto("./run?mode=expedition", { waitUntil: "domcontentloaded" });
+  await expect(canvas(page)).toBeVisible();
+  expect(await sharp()).toBe(true);
+});
+
+test("Escape closes the checkpoint card and Enter takes its main action", async ({ page }) => {
+  await page.goto("./", { waitUntil: "domcontentloaded" });
+  await expect(canvas(page)).toHaveAttribute("data-stop", String(HERE));
+  const here = page.getByRole("region", { name: "Everyday Essentials checkpoint" });
+  await expect(here).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(here).toHaveCount(0);
+  await page.keyboard.press("ArrowUp");
+  await expect(page.getByRole("region", { name: "Letters & Languages checkpoint" })).toBeVisible();
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(/\/$/);
+  await page.keyboard.press("ArrowDown");
+  await expect(here).toBeVisible();
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(/gate=30/);
+});
+
 test("the forest's Map button asks before leaving an unfinished trail, then returns to the traveller's stop", async ({ page }) => {
   await page.goto("run?mode=expedition", { waitUntil: "domcontentloaded" });
   await expect(page.locator("canvas[data-ready]")).toBeVisible();

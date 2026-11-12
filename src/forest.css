@@ -22,7 +22,8 @@
 }
 .forest-canvas canvas {
   display: block;
-  image-rendering: pixelated;
+  width: 100%;
+  height: 100%;
   touch-action: none;
 }
 .forest-vignette {
@@ -63,8 +64,8 @@
 }
 .forest-wordmark small {
   display: block;
-  font-size: 8px;
-  letter-spacing: 0.22em;
+  font-size: 10px;
+  letter-spacing: 0.16em;
   font-weight: 500;
   color: #c4cdb9;
   margin-top: 4px;
@@ -150,7 +151,7 @@
 .forest-seals {
   display: flex;
   gap: 18px;
-  font-size: 11px;
+  font-size: 12px;
   color: #b1c0aa;
 }
 .forest-seals span {
@@ -204,7 +205,7 @@
 }
 .forest-location small {
   display: block;
-  font-size: 7px;
+  font-size: 10px;
   letter-spacing: 0.2em;
   margin-top: 15px;
 }
@@ -237,7 +238,7 @@
   background: #15352ee8;
   border: 1px solid #d5c19140;
   border-radius: 14px;
-  padding: 10px 36px 12px 0;
+  padding: 10px 48px 12px 0;
   box-shadow: 0 10px 50px #07251d44;
   max-width: 460px;
   backdrop-filter: blur(10px);
@@ -255,7 +256,7 @@
   letter-spacing: 0.15em;
 }
 .forest-guide small {
-  font-size: 7px;
+  font-size: 10px;
   color: #a9b9a5;
   margin-left: 9px;
 }
@@ -267,12 +268,12 @@
 }
 .forest-guide button {
   position: absolute;
-  right: 3px;
+  right: 2px;
   top: 2px;
   font-size: 22px;
   color: #d5d1b5;
-  width: 34px;
-  height: 34px;
+  width: 44px;
+  height: 44px;
   cursor: pointer;
 }
 .forest-controls {
@@ -280,7 +281,7 @@
   align-items: center;
   gap: 14px;
   color: #e2e5cebf;
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 0.04em;
 }
 .forest-controls i {
@@ -294,7 +295,7 @@
   border-radius: 4px;
   padding: 3px 6px;
   font-family: inherit;
-  font-size: 9px;
+  font-size: 11px;
 }
 .forest-primary {
   display: flex;
@@ -425,8 +426,8 @@
 }
 .forest-close {
   font-size: 23px;
-  height: 38px;
-  min-width: 38px;
+  height: 44px;
+  min-width: 44px;
   cursor: pointer;
   color: #c7cbb0;
   border-radius: 5px;
@@ -884,8 +885,8 @@
     gap: 9px;
   }
   .forest-wordmark small {
-    font-size: 6px;
-    letter-spacing: 0.16em;
+    font-size: 10px;
+    letter-spacing: 0.1em;
   }
   .forest-seal {
     width: 34px;
@@ -917,11 +918,11 @@
     margin-bottom: 10px;
   }
   .forest-objective .forest-eyebrow {
-    font-size: 8px;
+    font-size: 10px;
   }
   .forest-seals {
     gap: 14px;
-    font-size: 10px;
+    font-size: 11px;
   }
   .forest-track {
     font-size: 10px;
@@ -939,21 +940,21 @@
   .forest-guide {
     width: 100%;
     max-width: 400px;
-    padding-right: 25px;
+    padding-right: 46px;
   }
   .forest-guide img {
     width: 72px;
     height: 72px;
   }
   .forest-guide small {
-    font-size: 6px;
+    font-size: 10px;
     margin-left: 6px;
   }
   .forest-guide p {
-    font-size: 11px;
+    font-size: 12px;
   }
   .forest-controls {
-    font-size: 9px;
+    font-size: 11px;
     gap: 8px;
   }
   .forest-controls > span:first-child {
@@ -963,7 +964,7 @@
     display: none;
   }
   .forest-controls > span:last-child {
-    font-size: 11px;
+    font-size: 12px;
   }
   .forest-dialog {
     padding: 22px;
@@ -973,7 +974,7 @@
     font-size: 25px;
   }
   .forest-dialog .forest-eyebrow {
-    font-size: 9px;
+    font-size: 10px;
   }
   .forest-question {
     font-size: 48px;

@@ -7,6 +7,7 @@ export type Position = { stop: number; seals: number };
 type Feed = { travellers: readonly Traveller[]; anonymous: boolean; signedIn: boolean };
 
 const POLL_MS = 20_000;
+const POLL_MAX_MS = 320_000;
 const REPORT_MS = 45_000;
 
 let feed: Feed = { travellers: [], anonymous: false, signedIn: false };
@@ -26,7 +27,8 @@ async function poll() {
   try {
     const body = await request<{ travellers: Traveller[]; me: { anonymous: boolean } | null }>("/travellers");
     update({ travellers: body.travellers, signedIn: !!body.me, anonymous: body.me?.anonymous ?? false });
-  } catch { /* The map stays as it was; the next poll tries again. */ }
+    return true;
+  } catch { /* The map stays as it was; the next poll tries again. */ return false; }
 }
 
 async function report(extra: { anonymous?: boolean } = {}) {
@@ -50,13 +52,18 @@ export function useTravellerFeed(here: Position) {
   }, [here.stop, here.seals, reporting]);
   useEffect(() => {
     if (!settled) return;
-    let polls: number | undefined, beats: number | undefined;
+    let polls: number | undefined, beats: number | undefined, run = 0;
     const start = () => {
-      void poll();
-      polls = window.setInterval(() => { void poll(); }, POLL_MS);
+      const mine = ++run;
+      let misses = 0;
+      const next = async () => {
+        misses = (await poll()) ? 0 : misses + 1;
+        if (mine === run) polls = window.setTimeout(next, Math.min(POLL_MAX_MS, POLL_MS * 2 ** misses));
+      };
+      void next();
       if (user) beats = window.setInterval(() => { void report(); }, REPORT_MS);
     };
-    const stop = () => { window.clearInterval(polls); window.clearInterval(beats); };
+    const stop = () => { run++; window.clearTimeout(polls); window.clearInterval(beats); };
     const visibility = () => {
       stop();
       if (document.visibilityState === "visible") {

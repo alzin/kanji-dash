@@ -101,7 +101,7 @@
 @media (max-width: 520px) {
   .game-hud { gap: 8px; padding-left: max(12px, env(safe-area-inset-left)); padding-right: max(12px, env(safe-area-inset-right)); }
   .game-hud-title .forest-seal, .game-hud-title .brand-mark { display: none; }
-  .game-hud-title { font-size: 10px; letter-spacing: 0.12em; }
+  .game-hud-title { font-size: 11px; letter-spacing: 0.1em; }
   .game-chip { min-height: 32px; padding: 0 8px; font-size: 12px; }
 }
 @media (max-width: 400px) {
@@ -153,6 +153,7 @@
   animation: hub-toast-in 420ms cubic-bezier(.2, .9, .3, 1.2) both;
 }
 @keyframes hub-toast-in { from { opacity: 0; translate: -50% -12px; } }
+@keyframes hub-toast-drop { from { opacity: 0; translate: 0 -12px; } }
 
 .world-trail { display: grid; gap: 10px; margin: 6px 0 14px; padding: 12px 14px; border: 1px solid #e9c58040; border-radius: 10px; background: #f2dfb20d; }
 .world-panel .world-trail p { margin: 2px 0 0; color: #f4e8cc; font-size: 13px; }
@@ -216,13 +217,13 @@
 .camp-rank { padding: 16px; border: 1px solid #e6d49c33; border-radius: 12px; background: #0f27214d; }
 .camp-rank-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
 .camp-rank-mark { display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid #e9c58066; border-radius: 50%; color: #f2d9a4; font: 22px "Shippori Mincho B1", serif; background: #e9c58014; }
-.camp-rank small { display: block; font-size: 10px; font-weight: 800; letter-spacing: 0.18em; color: #e9c580; }
+.camp-rank small { display: block; font-size: 11px; font-weight: 800; letter-spacing: 0.18em; color: #e9c580; }
 .camp-rank strong { font: 600 20px/1.3 "Shippori Mincho B1", serif; color: #f4e8cc; }
 .camp-xp { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 6px; font-size: 11px; color: #b6c6a7; }
 .camp-xp b { color: #f4e8cc; font-variant-numeric: tabular-nums; }
 .camp-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0 0; }
 .camp-stats div { padding: 8px 6px; border-radius: 8px; background: #f2dfb20a; text-align: center; }
-.camp-stats dt { font-size: 10px; letter-spacing: 0.08em; color: #b6c6a7; }
+.camp-stats dt { font-size: 11px; letter-spacing: 0.08em; color: #b6c6a7; }
 .camp-stats dd { margin: 2px 0 0; font-size: 20px; font-weight: 800; color: #f4e8cc; font-variant-numeric: tabular-nums; }
 .camp-section { margin-top: 22px; }
 .camp-section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
@@ -286,6 +287,7 @@
 }
 .hub-title::backdrop { background: transparent; }
 .world-game[data-overlay="title"] :is(.hub-hud, .world-position, .world-roads, .forest-bottom) { visibility: hidden; }
+.world-game[data-overlay="title"] .forest-loading > * { visibility: hidden; }
 @keyframes title-in { from { opacity: 0; } }
 .hub-title-inner {
   display: flex;
@@ -310,7 +312,7 @@
 .hub-title-founder blockquote { margin: 0; color: #eadfc2; font: 400 14px/1.75 "Shippori Mincho B1", serif; }
 .hub-title-founder figcaption { margin-top: 6px; color: #9fab93; font-size: 11px; letter-spacing: 0.08em; }
 .hub-title-start { min-width: min(300px, 100%); padding: 16px 23px; font-size: 15px; }
-.hub-title .forest-title-note { margin-top: 18px; }
+.hub-title .forest-title-note { flex-wrap: wrap; margin-top: 18px; font-size: 10px; letter-spacing: 0.1em; }
 .hub-title-footer { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 26px; margin-top: auto; padding-top: 36px; font-size: 12px; color: #b2c0a3; }
 .hub-title-footer button { min-height: 44px; padding: 0 14px; border: 1px solid #d1c39566; border-radius: 6px; background: #18362d99; color: #ead9ae; font-weight: 700; }
 .hub-title-footer span { display: flex; gap: 18px; }
@@ -334,10 +336,10 @@
   .hub-chips { gap: 4px; margin-right: 0; }
   .hub-chips .game-chip { min-height: 32px; padding: 0 7px; font-size: 12px; }
   .hub-account { min-height: 32px; }
-  .hub-button { flex-direction: column; justify-content: center; gap: 2px; min-width: 56px; min-height: 48px; padding: 4px 8px; font-size: 10px; letter-spacing: 0.02em; }
+  .hub-button { flex-direction: column; justify-content: center; gap: 2px; min-width: 56px; min-height: 48px; padding: 4px 8px; font-size: 11px; letter-spacing: 0.02em; }
   .hub-button svg { width: 18px; height: 18px; }
   .hub-hud .music-toggle { position: absolute; top: calc(100% + 8px); right: 0; }
-  .hub-toast { top: 252px; width: max-content; max-width: calc(100vw - 32px); }
+  .world-game .hub-toast { position: static; align-self: center; max-width: 100%; translate: none; animation-name: hub-toast-drop; }
   .game-drawer, .journey-drawer {
     inset: auto 0 0 0;
     width: 100vw;
@@ -365,20 +367,6 @@
   .hub-title-caption { display: none; }
   .forest-icon-button.forest-hud-label { padding: 0 10px 0 8px; font-size: 12px; }
 }
-@media (max-width: 700px) {
-  .world-game .world-roads {
-    top: 196px;
-    left: max(16px, env(safe-area-inset-left));
-    right: max(16px, env(safe-area-inset-right));
-    flex-direction: row;
-    gap: 4px;
-    translate: none;
-  }
-  .world-game .world-roads button { flex: 1; min-width: 0; min-height: 44px; padding: 4px 2px; }
-  .world-game .world-roads button b { font-size: 13px; }
-  .world-game .world-position { max-width: calc(100vw - 32px); }
-  .world-game .world-position .world-actions .forest-track { min-height: 36px; margin-top: 2px; }
-}
 @media (max-width: 420px) {
   .forest-hud .forest-wordmark > span:last-child { display: none; }
   .camp-modes { grid-template-columns: 1fr; }
@@ -393,4 +381,57 @@
 @media (max-width: 480px) {
   .forest-hud .forest-hud-label > span:last-child { display: none; }
   .forest-hud .forest-hud-label:first-child > span:last-child { display: inline; }
+}
+@media (max-width: 519px) and (max-height: 620px) {
+  .world-game .world-position > .forest-eyebrow { display: none; }
+  .world-game .world-panel { max-height: 44svh; }
+}
+@media (max-height: 500px) and (min-width: 520px) {
+  .world-game .forest-hud {
+    top: max(12px, env(safe-area-inset-top));
+    left: max(18px, env(safe-area-inset-left));
+    right: max(18px, env(safe-area-inset-right));
+  }
+  .world-game .hub-hud .music-toggle { position: static; }
+  .world-game .world-top { display: contents; }
+  .world-game .world-position {
+    position: absolute;
+    top: calc(max(12px, env(safe-area-inset-top)) + 58px);
+    left: max(20px, env(safe-area-inset-left));
+    max-width: min(260px, 36vw);
+    min-height: 0;
+    padding: 0;
+  }
+  .world-game .world-position > .forest-eyebrow,
+  .world-game .world-position-line + .world-position-line { display: none; }
+  .world-game .world-position > :is(h1, .world-position-line) { max-width: none; }
+  .world-game .world-position h1 { font-size: 18px; margin: 0 0 2px; }
+  .world-game .world-roads {
+    position: absolute;
+    top: calc(max(12px, env(safe-area-inset-top)) + 58px);
+    right: max(10px, env(safe-area-inset-right));
+    left: auto;
+    flex-direction: column;
+    gap: 4px;
+    translate: none;
+  }
+  .world-game .world-roads button { flex: none; min-width: 56px; min-height: 40px; padding: 2px 4px; }
+  .world-game .world-roads button span { display: none; }
+  .world-game .world-panel {
+    top: calc(max(12px, env(safe-area-inset-top)) + 58px);
+    right: calc(max(10px, env(safe-area-inset-right)) + 66px);
+    bottom: max(10px, env(safe-area-inset-bottom));
+    left: auto;
+    width: min(340px, 42vw);
+    max-height: none;
+    padding: 12px 16px;
+  }
+  .world-game .hub-toast {
+    position: absolute;
+    top: calc(max(12px, env(safe-area-inset-top)) + 58px);
+    left: 50%;
+    translate: -50% 0;
+    animation-name: hub-toast-in;
+  }
+  .world-game .forest-bottom { bottom: max(8px, env(safe-area-inset-bottom)); }
 }

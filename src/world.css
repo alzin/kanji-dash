@@ -9,7 +9,6 @@
   border-bottom: 1px solid #e9c58040;
   padding: 3px 0;
 }
-.forest-position + .forest-track { display: block; }
 .world-position { max-width: min(380px, calc(100vw - 110px)); pointer-events: none; }
 .world-position a, .world-position button { pointer-events: auto; }
 .world-position-line { margin: 0 0 4px; color: #d7dcc4; font-size: 13px; line-height: 1.5; }
@@ -17,10 +16,35 @@
 .world-crowd { display: flex; flex-wrap: wrap; align-items: center; gap: 0 4px; margin: 0 0 4px; color: #d7dcc4; font-size: 13px; line-height: 1.5; }
 .world-crowd b { color: var(--f-gold); font-size: 15px; }
 .world-crowd i { width: 8px; height: 8px; margin-right: 2px; border-radius: 50%; background: #8fe39a; box-shadow: 0 0 6px #8fe39a; }
-.world-crowd button { min-height: 32px; padding: 0 4px; color: #f1dfb0; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
-.world-actions { display: flex; flex-wrap: wrap; gap: 4px 18px; }
-.world-actions .forest-track { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; color: #f1dfb0; text-decoration: none; }
-.world-actions .forest-track:disabled { opacity: .5; cursor: default; }
+.world-crowd button { min-height: 44px; margin-block: -10px; padding: 0 4px; color: #f1dfb0; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.world-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.world-actions .forest-track,
+.forest-objective > .forest-track {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid #e6d49c40;
+  border-radius: 999px;
+  background: #183b32d0;
+  color: #f1dfb0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .03em;
+  text-decoration: none;
+  text-shadow: none;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  transition: background 160ms ease, border-color 160ms ease;
+}
+.world-actions .forest-track { margin: 0; }
+.forest-objective > .forest-track { display: flex; width: max-content; margin-top: 10px; }
+:is(.world-actions, .forest-objective) > .forest-track span { margin-left: 0; color: var(--f-gold); }
+.world-actions a.forest-track { border-color: #e9c58080; }
+:is(.world-actions, .forest-objective) > .forest-track:hover:not(:disabled) { background: #2c5243; border-color: #e9c580b0; }
+:is(.world-actions, .forest-objective) > .forest-track:disabled { opacity: .5; cursor: default; }
+.world-top { display: contents; }
 
 .world-roads {
   position: absolute;
@@ -47,7 +71,7 @@
 }
 .world-roads button b { font-size: 14px; letter-spacing: .06em; }
 .world-roads button span { font-family: "Shippori Mincho B1", serif; font-size: 11px; }
-.world-roads button small { font-size: 10px; color: #a9b79f; font-variant-numeric: tabular-nums; }
+.world-roads button small { font-size: 11px; color: #a9b79f; font-variant-numeric: tabular-nums; }
 .world-roads button[aria-pressed="true"] { border-color: #eccb8a; background: #2a4a3ee8; color: #f7e3b4; }
 .world-roads button:disabled { cursor: default; opacity: .6; }
 
@@ -56,7 +80,7 @@
   right: max(100px, calc(env(safe-area-inset-right) + 100px));
   bottom: max(26px, env(safe-area-inset-bottom));
   width: min(380px, calc(100vw - 48px));
-  max-height: min(70svh, 560px);
+  max-height: min(78svh, 640px);
   overflow: auto;
   padding: 18px 20px 16px;
   border: 1px solid #d7c59460;
@@ -80,7 +104,7 @@
 .world-sealed .forest-text-button { margin: 0; }
 .world-steps { display: flex; justify-content: space-between; gap: 8px; margin-top: 12px; }
 .world-steps button {
-  min-height: 40px;
+  min-height: 44px;
   padding: 0 12px;
   border: 1px solid #e6d49c33;
   border-radius: 8px;
@@ -90,17 +114,39 @@
   cursor: pointer;
 }
 .world-steps button:disabled { opacity: .35; cursor: default; }
+.world-panel .world-keys { display: none; }
+@media (hover: hover) and (pointer: fine) {
+  .world-panel .world-keys { display: flex; justify-content: center; gap: 14px; margin: 12px 0 0; color: #aebba4; font-size: 11px; letter-spacing: .03em; }
+  .world-keys span { display: inline-flex; align-items: center; gap: 4px; }
+  .world-keys kbd { min-width: 20px; padding: 2px 5px; border: 1px solid #d2d8b545; border-radius: 4px; background: #152e29a8; color: #d9dcc4; font: inherit; font-size: 10px; text-align: center; }
+}
 
+@media (min-width: 701px) and (max-width: 1180px) {
+  .world-panel { right: max(92px, calc(env(safe-area-inset-right) + 92px)); width: 340px; }
+}
 @media (max-width: 700px) {
-  .world-position { top: 84px; max-width: calc(100vw - 96px); }
+  .world-top {
+    position: absolute;
+    top: calc(max(18px, env(safe-area-inset-top)) + 64px);
+    left: max(16px, env(safe-area-inset-left));
+    right: max(16px, env(safe-area-inset-right));
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+  }
+  .world-game .world-position { position: static; max-width: none; min-height: 44px; padding-left: 4px; }
+  .world-position > :is(.forest-eyebrow, h1, .world-position-line) { max-width: calc(100% - 56px); }
   .world-position h1 { font-size: 19px; margin: 4px 0 4px; }
   .world-position-line { font-size: 12px; }
   .world-position-line + .world-position-line { display: none; }
   .world-crowd { font-size: 12px; }
   .world-crowd b { font-size: 13px; }
-  .world-actions .forest-track { min-height: 32px; margin-top: 4px; }
-  .world-roads { top: auto; bottom: auto; top: 200px; translate: none; right: 10px; gap: 4px; }
-  .world-roads button { min-width: 52px; padding: 5px 4px; }
+  .world-actions { margin-top: 6px; }
+  .world-actions .forest-track { padding: 0 12px; }
+  .world-game .world-roads { position: static; flex-direction: row; gap: 4px; translate: none; pointer-events: auto; }
+  .world-game .world-roads button { flex: 1; min-width: 0; min-height: 44px; padding: 4px 2px; }
+  .world-roads button b { font-size: 13px; }
   .world-roads button span { display: none; }
   .world-panel { left: 10px; right: 10px; bottom: max(10px, env(safe-area-inset-bottom)); width: auto; max-height: 48svh; padding: 14px 16px 12px; }
   .world-panel h2 { font-size: 20px; }
